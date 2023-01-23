@@ -2,7 +2,7 @@ use super::*;
 use alloc::vec;
 use core::convert::Infallible;
 
-use core::ops::{ControlFlow, FromResidual, Try};
+use core::ops::{ControlFlow, FromResidual, Residual, Try};
 
 impl<T, F, E> FromResidual<Result<Infallible, E>> for Validation<T, F>
 where
@@ -25,9 +25,13 @@ impl<T, E, A> FromResidual<Validation<A, E>> for Validation<T, E> {
     }
 }
 
+impl<T, F> Residual<T> for Validation<Infallible, F> {
+    type TryType = Validation<T, F>;
+}
+
 impl<T, F> Try for Validation<T, F> {
     type Output = T;
-    type Residual = Validation<T, F>;
+    type Residual = Validation<Infallible, F>;
 
     fn from_output(output: Self::Output) -> Self {
         Success { value: output, diagnostics: vec![] }

@@ -1,13 +1,22 @@
-use std::env;
+use std::{env, process::Command};
 
 fn main() {
-    let rust_toolchain = env::var("RUSTUP_TOOLCHAIN").expect("RUSTUP_TOOLCHAIN not found");
-    if rust_toolchain.starts_with("stable") {
-    }
-    else if rust_toolchain.starts_with("nightly") {
+    if is_nightly_toolchain() {
         println!("cargo:rustc-cfg=feature=\"nightly\"");
     }
-    else {
-        panic!("Unexpected value for rustc toolchain")
+}
+
+fn is_nightly_toolchain() -> bool {
+    if let Ok(toolchain) = env::var("RUSTUP_TOOLCHAIN") {
+        if toolchain.starts_with("nightly") {
+            return true;
+        }
+        if toolchain.starts_with("stable") {
+            return false;
+        }
     }
+
+    let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".to_string());
+    let output = Command::new(rustc).arg("--version").output().expect("failed to run `rustc --version`");
+    String::from_utf8_lossy(&output.stdout).contains("nightly")
 }
