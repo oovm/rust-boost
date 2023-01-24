@@ -1,13 +1,13 @@
 [package]
 name = "diagnostic"
-version = "0.6.4"
+version = "0.1.0"
 authors = ["Aster <192607617@qq.com>"]
 description = "Pretty diagnostic report"
 repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/diagnostic"
 documentation = "https://docs.rs/diagnostic"
 readme = "readme.md"
 license = "MPL-2.0"
-edition = "2021"
+edition = "2024"
 exclude = ["package.json", "tests/**"]
 
 [dependencies]
@@ -15,8 +15,8 @@ serde = { version = "1.0.197", features = ["derive"], optional = true }
 unicode-width = "0.1.11"
 
 [dependencies.source-cache]
-version = "0.2.3"
-#path = "../source-cache"
+version = "0.1.0"
+path = "../source-cache"
 
 
 [dev-dependencies]
@@ -24,6 +24,7 @@ version = "0.2.3"
 [features]
 default = []
 serde = ["dep:serde", "source-cache/serde"]
+concolor = []
 
 [package.metadata.docs.rs]
 all-features = true

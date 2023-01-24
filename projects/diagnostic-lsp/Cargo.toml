@@ -1,13 +1,13 @@
 [package]
 name = "diagnostic-lsp"
-version = "0.2.0"
+version = "0.1.0"
 license = "Apache-2.0"
 authors = ["Aster <192607617@qq.com>"]
 description = "Conversions between codespan types and Language Server Protocol types"
 homepage = "https://github.com/oovm/diagnostic-rs"
 repository = "https://github.com/oovm/diagnostic-rs"
 documentation = "https://docs.rs/codespan-lsp"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 lsp-types = "0.95.0"

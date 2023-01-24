@@ -1,6 +1,6 @@
 [package]
 name = "syntax-error"
-version = "0.0.5"
+version = "0.1.0"
 readme = "Readme.md"
 license = "Apache-2.0"
 authors = ["Aster <192607617@qq.com>", "Brendan Zabarauskas <bjzaba@yahoo.com.au>"]
@@ -9,10 +9,10 @@ homepage = "https://github.com/oovm/diagnostic-rs"
 repository = "https://github.com/oovm/diagnostic-rs"
 documentation = "https://docs.rs/diagnostic"
 exclude = ["tests/**"]
-edition = "2021"
+edition = "2024"
 
 [dependencies.diagnostic]
-version = "0.6.*"
+version = "0.1.*"
 path = "../diagnostic"
 
 [dependencies]

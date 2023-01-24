@@ -1,13 +1,13 @@
 [package]
 name = "source-cache"
-version = "0.2.3"
+version = "0.1.0"
 authors = ["Aster <192607617@qq.com>"]
 description = "Query the cache of raw text"
 repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/source-cache"
 documentation = "https://docs.rs/source-cache"
 readme = "readme.md"
 license = "MPL-2.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 url = "2.5.0"
