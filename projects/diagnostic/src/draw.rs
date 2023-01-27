@@ -15,7 +15,6 @@ pub enum StreamType {
 /// Attributes specified through this trait are not composable (i.e: the behaviour of two nested attributes each with a
 /// conflicting attribute is left unspecified).
 pub trait StreamAwareFmt: Sized {
-    #[cfg(not(feature = "concolor"))]
     #[doc(hidden)]
     fn color_enabled_for(_: StreamType) -> bool {
         true
