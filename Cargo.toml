@@ -14,6 +14,50 @@ exclude = [
     "projects/syntax-error",
 ]
 
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Aster <192607617@qq.com>"]
+license = "MPL-2.0"
+
+[workspace.dependencies]
+serde = { version = "1.0.197", features = ["derive"] }
+unicode-width = "0.1.11"
+url = "2.5.0"
+lsp-types = "0.95.0"
+syn = "2.0.52"
+quote = "1.0.35"
+proc-macro2 = { version = "1.0.78", features = ["span-locations"] }
+unindent = "0.2.3"
+dashu = "0.4.2"
+serde_json = "1.0.114"
+toml = "0.8.10"
+num = "0.4.1"
+pex = "0.2.4"
+regex = "1.10.3"
+ropey = "1.6.1"
+rust_decimal = "1.34.3"
+ucd-trie = "0.1.6"
+sled = "0.34.7"
+serde-binary = "0.5.0"
+email_address = { version = "0.2.4", features = ["serde"] }
+semver = { version = "1.0.22", features = ["serde"] }
+mime = { version = "0.3.17", features = [] }
+peginator = "0.7.0"
+tl = "0.7.8"
+chrono = "0.4.35"
+globset = "0.4.14"
+walkdir = "2.5.0"
+async-walkdir = "1.0.0"
+font-kit = "0.12.0"
+pathfinder = "0.6.5"
+image = "0.24.9"
+imageproc = "0.23.0"
+winreg = "0.52.0"
+serial_test = "3.2.0"
+source-cache = { path = "projects/source-cache", version = "0.1.0" }
+diagnostic = { path = "projects/diagnostic", version = "0.1.0" }
+
 [profile.release]
 lto = true
 panic = "abort"
