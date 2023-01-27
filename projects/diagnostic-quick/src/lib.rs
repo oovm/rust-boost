@@ -1,5 +1,6 @@
 #![allow(clippy::needless_return)]
-#![doc = include_str!("../Readme.md")]
+#![doc = include_str!("readme.md")]
+#![deny(missing_docs)]
 
 pub use diagnostic::{
     DiagnosticLevel, SourceID, Span, TextStorage,

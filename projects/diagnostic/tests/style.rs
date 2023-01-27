@@ -1,9 +1,6 @@
-extern crate serial_test;
-
-use self::serial_test::serial;
-
-use super::Color::*;
-use super::{Paint, Style};
+use diagnostic::Color::*;
+use diagnostic::{Paint, Style};
+use serial_test::serial;
 
 macro_rules! assert_renders {
     ($($input:expr => $expected:expr,)*) => {
