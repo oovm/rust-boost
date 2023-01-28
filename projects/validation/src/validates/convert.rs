@@ -2,11 +2,15 @@ use crate::Validation;
 use alloc::{vec, vec::Vec};
 use Validation::{Failure, Success};
 
+/// Convert standard result-like types into [`Validation`].
 pub trait Validate<T, E> {
+    /// Convert `self` into a [`Validation`], treating absence or error as fatal.
     fn valid(self) -> Validation<T, E>;
+    /// Convert `self` into a [`Validation`] and append collected diagnostics to `errors`.
     fn validate(self, errors: &mut Vec<E>) -> Validation<T, E>
     where
         E: Clone;
+    /// Convert `self` into a success [`Validation`], recording recoverable errors in `errors`.
     fn recover(self, errors: &mut Vec<E>) -> Validation<T, E>
     where
         T: Default;
