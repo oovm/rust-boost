@@ -1,11 +1,11 @@
-use walkdir::Error;
+use fs_tools::WalkError;
 
 use diagnostic::SourceID;
 
 use crate::{IOError, QError, QErrorKind, RuntimeError};
 
-impl From<Error> for QError {
-    fn from(value: Error) -> Self {
+impl From<WalkError> for QError {
+    fn from(value: WalkError) -> Self {
         match value.io_error() {
             Some(s) => {
                 let file = match value.path() {
