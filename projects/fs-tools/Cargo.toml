@@ -2,7 +2,7 @@
 name = "fs-tools"
 version.workspace = true
 authors.workspace = true
-description = "Filesystem traversal utilities with sync and async walkers"
+description = "Extended std::fs with recursive walk and async traversal"
 repository = "https://github.com/oovm/rust-boost/tree/dev/projects/fs-tools"
 documentation = "https://docs.rs/fs-tools"
 readme = "readme.md"

@@ -7,27 +7,25 @@ use std::{
 
 /// An error produced while recursively walking a directory tree.
 #[derive(Debug)]
-pub struct WalkError {
+pub struct Error {
     path: Option<PathBuf>,
     depth: usize,
-    kind: WalkErrorKind,
+    kind: ErrorKind,
 }
 
 #[derive(Debug)]
-enum WalkErrorKind {
+enum ErrorKind {
     Io(io::Error),
     Loop { ancestor: PathBuf },
 }
 
-impl WalkError {
-    /// Create an I/O error at the given path and depth.
+impl Error {
     pub(crate) fn io(path: impl Into<PathBuf>, depth: usize, err: io::Error) -> Self {
-        Self { path: Some(path.into()), depth, kind: WalkErrorKind::Io(err) }
+        Self { path: Some(path.into()), depth, kind: ErrorKind::Io(err) }
     }
 
-    /// Create a symlink loop error.
     pub(crate) fn loop_at(path: impl Into<PathBuf>, depth: usize, ancestor: PathBuf) -> Self {
-        Self { path: Some(path.into()), depth, kind: WalkErrorKind::Loop { ancestor } }
+        Self { path: Some(path.into()), depth, kind: ErrorKind::Loop { ancestor } }
     }
 
     /// Returns the path associated with this error if one exists.
@@ -43,24 +41,24 @@ impl WalkError {
     /// Returns the underlying I/O error when the failure was I/O related.
     pub fn io_error(&self) -> Option<&io::Error> {
         match &self.kind {
-            WalkErrorKind::Io(err) => Some(err),
-            WalkErrorKind::Loop { .. } => None,
+            ErrorKind::Io(err) => Some(err),
+            ErrorKind::Loop { .. } => None,
         }
     }
 
     /// Returns the ancestor path when a symlink loop was detected.
     pub fn loop_ancestor(&self) -> Option<&Path> {
         match &self.kind {
-            WalkErrorKind::Loop { ancestor } => Some(ancestor),
-            WalkErrorKind::Io(_) => None,
+            ErrorKind::Loop { ancestor } => Some(ancestor),
+            ErrorKind::Io(_) => None,
         }
     }
 }
 
-impl Display for WalkError {
+impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            WalkErrorKind::Io(err) => {
+            ErrorKind::Io(err) => {
                 if let Some(path) = &self.path {
                     write!(f, "failed to access {}: {}", path.display(), err)
                 }
@@ -68,7 +66,7 @@ impl Display for WalkError {
                     write!(f, "{}", err)
                 }
             }
-            WalkErrorKind::Loop { ancestor } => {
+            ErrorKind::Loop { ancestor } => {
                 if let Some(path) = &self.path {
                     write!(f, "loop detected at {} via ancestor {}", path.display(), ancestor.display())
                 }
@@ -80,20 +78,20 @@ impl Display for WalkError {
     }
 }
 
-impl StdError for WalkError {
+impl StdError for Error {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
         match &self.kind {
-            WalkErrorKind::Io(err) => Some(err),
-            WalkErrorKind::Loop { .. } => None,
+            ErrorKind::Io(err) => Some(err),
+            ErrorKind::Loop { .. } => None,
         }
     }
 }
 
-impl From<WalkError> for io::Error {
-    fn from(value: WalkError) -> Self {
+impl From<Error> for io::Error {
+    fn from(value: Error) -> Self {
         match value.kind {
-            WalkErrorKind::Io(err) => err,
-            WalkErrorKind::Loop { ancestor } => {
+            ErrorKind::Io(err) => err,
+            ErrorKind::Loop { ancestor } => {
                 let path = value.path.map(|p| p.display().to_string()).unwrap_or_default();
                 io::Error::new(
                     io::ErrorKind::Other,

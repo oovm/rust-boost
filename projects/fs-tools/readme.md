@@ -1,6 +1,5 @@
 # fs-tools
 
-Filesystem traversal utilities for the rust-boost workspace.
+Extended `std::fs` for the rust-boost workspace.
 
-`Walker` provides a synchronous depth-first directory iterator.
-Enable the `async` feature for `AsyncWalker`, a `Stream` based walker.
+Use crate-root APIs where you would use `std::fs`. Recursive traversal is `fs_tools::walk::Walker`. Enable the `async` feature for `fs_tools::async_walk::Walker`.
