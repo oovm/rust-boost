@@ -40,8 +40,8 @@ winreg = { workspace = true, optional = true }
 
 [features]
 default = []
-walkdir = ["dep:fs-tools"]
-async-walkdir = ["dep:fs-tools", "fs-tools/async"]
+walk = ["dep:fs-tools"]
+async-walk = ["dep:fs-tools", "fs-tools/async"]
 
 [package.metadata.docs.rs]
 all-features = true
