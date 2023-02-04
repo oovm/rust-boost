@@ -42,7 +42,15 @@ impl SourcePath {
 }
 
 impl SourceID {
-    /// Create a new [`SourceID`] with the given ID.
+    /// Create a [`SourceID`] from a path description.
+    pub fn from_path(path: &SourcePath) -> Self {
+        path.source_id()
+    }
+
+    /// Create a [`SourceID`] from a raw hash value.
+    ///
+    /// Prefer [`SourceID::from_path`] or [`SourceCache`] loaders for public construction.
+    #[deprecated(note = "use SourceID::from_path or SourceCache loaders instead of raw hash construction")]
     pub unsafe fn new(id: u64) -> Self {
         Self { hash: id }
     }
