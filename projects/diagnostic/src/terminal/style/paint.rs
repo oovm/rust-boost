@@ -1,4 +1,4 @@
-use crate::style::style::Property;
+use super::style::Property;
 use std::fmt;
 /// A structure encapsulating an item and styling.
 ///
@@ -366,7 +366,7 @@ macro_rules! impl_fmt_trait {
 impl_fmt_trait!(Display, "{}");
 impl_fmt_trait!(Debug, "{:?}");
 
-use crate::{Color, Style};
+use super::{color::Color, style::Style};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 static ENABLED: AtomicBool = AtomicBool::new(true);
