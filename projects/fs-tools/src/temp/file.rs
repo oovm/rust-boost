@@ -65,14 +65,14 @@ impl std::ops::DerefMut for NamedFile {
 /// The file is unlinked from the filesystem while remaining open, or deleted on close on
 /// platforms that require it.
 pub fn create_file() -> io::Result<File> {
-    create_file_in(&super::env::dir_path()?)
+    create_file_in(&super::env::folder_path()?)
 }
 
-/// Create an anonymous temporary file under `dir`.
-pub fn create_file_in(dir: impl AsRef<Path>) -> io::Result<File> {
-    let dir = dir.as_ref();
+/// Create an anonymous temporary file under `folder`.
+pub fn create_file_in(folder: impl AsRef<Path>) -> io::Result<File> {
+    let folder = folder.as_ref();
     for _ in 0..128 {
-        let path = dir.join(unique::prefix("f"));
+        let path = folder.join(unique::prefix("f"));
         match open_anonymous(&path) {
             Ok(file) => return Ok(file),
             Err(err) if err.kind() == io::ErrorKind::AlreadyExists => continue,
@@ -82,17 +82,16 @@ pub fn create_file_in(dir: impl AsRef<Path>) -> io::Result<File> {
     Err(io::Error::new(io::ErrorKind::AlreadyExists, "failed to allocate a unique temporary file"))
 }
 
-/// Create a named temporary file under [`super::env::dir_path`].
+/// Create a named temporary file under [`super::env::folder_path`].
 pub fn create_named() -> io::Result<NamedFile> {
-    create_named_in(super::env::dir_path()?)
+    create_named_in(super::env::folder_path()?)
 }
 
-/// Create a named temporary file under `dir`.
-pub fn create_named_in(dir: impl AsRef<Path>) -> io::Result<NamedFile> {
-    let dir = dir.as_ref();
+/// Create a named temporary file under `folder`.
+pub fn create_named_in(folder: impl AsRef<Path>) -> io::Result<NamedFile> {
+    let folder = folder.as_ref();
     for _ in 0..128 {
-        let path = dir.join(unique::prefix("n"));
-        match OpenOptions::new().read(true).write(true).create_new(true).open(&path) {
+        let path = folder.join(unique::prefix("n"));        match OpenOptions::new().read(true).write(true).create_new(true).open(&path) {
             Ok(file) => return Ok(NamedFile { file: Some(file), path, keep: false }),
             Err(err) if err.kind() == io::ErrorKind::AlreadyExists => continue,
             Err(err) => return Err(err),
