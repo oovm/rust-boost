@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// An error produced while recursively walking a directory tree.
+/// An error produced while recursively walking a folder tree.
 #[derive(Debug)]
 pub struct Error {
     path: Option<PathBuf>,

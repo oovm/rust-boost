@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// A path discovered while recursively walking a directory tree.
+/// A path discovered while recursively walking a folder tree.
 #[derive(Debug, Clone)]
 pub struct Entry {
     path: PathBuf,
@@ -32,8 +32,8 @@ impl Entry {
         self.file_type
     }
 
-    /// Returns whether this entry is a directory.
-    pub fn is_dir(&self) -> bool {
+    /// Returns whether this entry is a folder.
+    pub fn is_folder(&self) -> bool {
         self.file_type.is_dir()
     }
 

@@ -1,4 +1,4 @@
-//! Asynchronous recursive directory traversal.
+//! Asynchronous recursive folder traversal.
 
 mod filter;
 mod walker;
