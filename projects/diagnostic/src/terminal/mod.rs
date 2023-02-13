@@ -3,6 +3,8 @@
 mod characters;
 mod display;
 mod draw;
+mod source_map;
+mod structured;
 mod style;
 mod windows;
 mod write;
@@ -13,6 +15,8 @@ pub use characters::{BuiltinDrawer, DrawElements};
 pub use draw::{Console, Palette};
 pub use style::{color::Color, paint::Paint, style::Style};
 pub use source_cache::{SourceCache, SourceID, SourceSpan};
+pub use source_map::SourceRegistry;
+pub use structured::{eprint_structured_set, structured_to_terminal, StructuredRenderError};
 pub use windows::enable_ansi_color;
 
 use core::cmp::{Eq, PartialEq};
