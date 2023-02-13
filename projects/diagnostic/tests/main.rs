@@ -1,9 +1,8 @@
 #![allow(unused, dead_code)]
 
-mod simple;
+mod support;
 
-#[cfg(feature = "serde")]
-mod wire;
+mod simple;
 
 #[test]
 fn ready() {

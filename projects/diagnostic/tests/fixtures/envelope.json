@@ -1,0 +1,215 @@
+{
+  "diagnostics": [
+    {
+      "cause": null,
+      "code": "oak.syntax.unexpected-token",
+      "helps": [],
+      "message": {
+        "args": [],
+        "fallback": "unexpected token",
+        "key": "oak.syntax.unexpected-token"
+      },
+      "notes": [],
+      "origin": {
+        "component": "xml",
+        "namespace": "oak",
+        "stage": "parse"
+      },
+      "primary": {
+        "location": {
+          "kind": "text",
+          "range": {
+            "end": 13,
+            "start": 12
+          },
+          "source": {
+            "id": "sample.xml",
+            "namespace": "oak",
+            "revision": "1"
+          }
+        },
+        "message": {
+          "args": [],
+          "fallback": "token",
+          "key": "label.token"
+        },
+        "role": "primary"
+      },
+      "recovery": [],
+      "secondary": [],
+      "severity": "error"
+    },
+    {
+      "cause": null,
+      "code": "acorn.layout.offset-out-of-range",
+      "helps": [],
+      "message": {
+        "args": [],
+        "fallback": "offset out of range",
+        "key": "acorn.layout.offset-out-of-range"
+      },
+      "notes": [],
+      "origin": {
+        "component": "bin",
+        "namespace": "acorn",
+        "stage": null
+      },
+      "primary": {
+        "location": {
+          "address_space": {
+            "id": "file",
+            "namespace": "acorn"
+          },
+          "kind": "binary",
+          "range": {
+            "end": 4100,
+            "start": 4096
+          },
+          "source": {
+            "id": "firmware.bin",
+            "namespace": "acorn",
+            "revision": null
+          }
+        },
+        "message": {
+          "args": [],
+          "fallback": "binary",
+          "key": "label.binary"
+        },
+        "role": "primary"
+      },
+      "recovery": [],
+      "secondary": [],
+      "severity": "error"
+    },
+    {
+      "cause": null,
+      "code": "acorn.container.need-range",
+      "helps": [],
+      "message": {
+        "args": [],
+        "fallback": "need range",
+        "key": "acorn.container.need-range"
+      },
+      "notes": [],
+      "origin": {
+        "component": "zip",
+        "namespace": "acorn",
+        "stage": null
+      },
+      "primary": {
+        "location": {
+          "container": {
+            "id": "docx.zip",
+            "namespace": "acorn",
+            "revision": null
+          },
+          "kind": "member",
+          "member": {
+            "segments": [
+              {
+                "kind": "zip",
+                "name": "word/document.xml"
+              },
+              {
+                "kind": "view",
+                "name": "utf8"
+              }
+            ]
+          },
+          "precision": "container",
+          "range": {
+            "end": 140,
+            "start": 128
+          }
+        },
+        "message": {
+          "args": [],
+          "fallback": "member",
+          "key": "label.member"
+        },
+        "role": "primary"
+      },
+      "recovery": [],
+      "secondary": [],
+      "severity": "warning"
+    },
+    {
+      "cause": null,
+      "code": "acorn.layout.offset-out-of-range",
+      "helps": [],
+      "message": {
+        "args": [],
+        "fallback": "offset out of range",
+        "key": "acorn.layout.offset-out-of-range"
+      },
+      "notes": [],
+      "origin": {
+        "component": "pdf",
+        "namespace": "acorn",
+        "stage": null
+      },
+      "primary": {
+        "location": {
+          "kind": "object",
+          "object": {
+            "id": "42",
+            "kind": "xref"
+          },
+          "source": {
+            "id": "sample.pdf",
+            "namespace": "acorn",
+            "revision": null
+          }
+        },
+        "message": {
+          "args": [],
+          "fallback": "object",
+          "key": "label.object"
+        },
+        "role": "primary"
+      },
+      "recovery": [],
+      "secondary": [],
+      "severity": "error"
+    },
+    {
+      "cause": null,
+      "code": "notedown.semantic.unresolved-target",
+      "helps": [],
+      "message": {
+        "args": [],
+        "fallback": "unresolved target",
+        "key": "notedown.semantic.unresolved-target"
+      },
+      "notes": [],
+      "origin": {
+        "component": "ir",
+        "namespace": "notedown",
+        "stage": null
+      },
+      "primary": {
+        "location": {
+          "document": {
+            "id": "chapter-1",
+            "namespace": "notedown"
+          },
+          "kind": "semantic",
+          "path": "/blocks/17"
+        },
+        "message": {
+          "args": [],
+          "fallback": "semantic",
+          "key": "label.semantic"
+        },
+        "role": "primary"
+      },
+      "recovery": [],
+      "secondary": [],
+      "severity": "error"
+    }
+  ],
+  "dropped": 0,
+  "schemaVersion": 1,
+  "truncated": false
+}

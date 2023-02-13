@@ -1,0 +1,39 @@
+{
+  "cause": null,
+  "code": "oak.syntax.unexpected-token",
+  "helps": [],
+  "message": {
+    "args": [],
+    "fallback": "unexpected token",
+    "key": "oak.syntax.unexpected-token"
+  },
+  "notes": [],
+  "origin": {
+    "component": "xml",
+    "namespace": "oak",
+    "stage": "parse"
+  },
+  "primary": {
+    "location": {
+      "kind": "text",
+      "range": {
+        "end": 13,
+        "start": 12
+      },
+      "source": {
+        "id": "sample.xml",
+        "namespace": "oak",
+        "revision": "1"
+      }
+    },
+    "message": {
+      "args": [],
+      "fallback": "token",
+      "key": "label.token"
+    },
+    "role": "primary"
+  },
+  "recovery": [],
+  "secondary": [],
+  "severity": "error"
+}

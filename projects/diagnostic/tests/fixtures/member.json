@@ -1,0 +1,52 @@
+{
+  "cause": null,
+  "code": "acorn.container.need-range",
+  "helps": [],
+  "message": {
+    "args": [],
+    "fallback": "need range",
+    "key": "acorn.container.need-range"
+  },
+  "notes": [],
+  "origin": {
+    "component": "zip",
+    "namespace": "acorn",
+    "stage": null
+  },
+  "primary": {
+    "location": {
+      "container": {
+        "id": "docx.zip",
+        "namespace": "acorn",
+        "revision": null
+      },
+      "kind": "member",
+      "member": {
+        "segments": [
+          {
+            "kind": "zip",
+            "name": "word/document.xml"
+          },
+          {
+            "kind": "view",
+            "name": "utf8"
+          }
+        ]
+      },
+      "precision": "container",
+      "range": {
+        "end": 140,
+        "start": 128
+      }
+    },
+    "message": {
+      "args": [],
+      "fallback": "member",
+      "key": "label.member"
+    },
+    "role": "primary"
+  },
+  "recovery": [],
+  "secondary": [],
+  "severity": "warning"
+}
