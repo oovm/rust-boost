@@ -3,13 +3,11 @@ name = "diagnostic-svg"
 version.workspace = true
 license = "Apache-2.0"
 authors.workspace = true
-description = "Conversions between codespan types and Language Server Protocol types"
-homepage = "https://github.com/brendanzab/codespan"
-repository = "https://github.com/brendanzab/codespan"
-documentation = "https://docs.rs/codespan-lsp"
+description = "Structured diagnostic SVG preview rendering"
+homepage = "https://github.com/oovm/diagnostic-rs"
+repository = "https://github.com/oovm/diagnostic-rs"
+documentation = "https://docs.rs/diagnostic-svg"
 edition.workspace = true
 
 [dependencies]
-lsp-types = { workspace = true }
-url = { workspace = true }
 diagnostic = { workspace = true }
