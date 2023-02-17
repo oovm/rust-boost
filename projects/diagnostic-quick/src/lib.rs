@@ -2,14 +2,19 @@
 #![doc = include_str!("readme.md")]
 #![deny(missing_docs)]
 
-pub use diagnostic::{
-    DiagnosticLevel, SourceID, Span, TextStorage,
-    Validation::{Failure, Success},
+pub use diagnostic::{DiagnosticSet, Report, SourceID, SourceSpan};
+pub use source_cache::SourceCache;
+
+pub use self::convert::{qerror_to_structured, source_ref_for_id};
+pub use self::errors::{
+    display::print_errors, IOError, QError, QErrorKind, QResult, RuntimeError, SyntaxError,
 };
+pub use self::validation::Validation;
 
-pub use self::errors::{display::print_errors, IOError, QError, QErrorKind, QResult, RuntimeError, SyntaxError, Validation};
-
+/// Conversion from quick errors to structured diagnostics.
+pub mod convert;
+/// Third-party error adapters.
 pub mod error_3rd;
 mod errors;
-// #[cfg(feature = "lsp-types")]
-// mod for_lsp;
+/// Legacy validation container.
+mod validation;

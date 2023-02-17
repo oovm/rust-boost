@@ -4,7 +4,7 @@ use std::{
     str::Utf8Error,
 };
 
-use diagnostic::DiagnosticLevel;
+use diagnostic::DiagnosticSeverity;
 
 use crate::{QError, QErrorKind, SyntaxError};
 
@@ -21,7 +21,7 @@ impl QError {
     pub(crate) fn wrap_syntax_error<E: Error + 'static>(error: E) -> Self {
         QError {
             error: Box::new(QErrorKind::Syntax(SyntaxError::from(&error))),
-            level: DiagnosticLevel::Error,
+            severity: DiagnosticSeverity::Error,
             source: Some(Box::new(error)),
         }
     }

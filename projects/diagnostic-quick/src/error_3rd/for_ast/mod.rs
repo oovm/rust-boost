@@ -19,24 +19,29 @@ pub struct NodeLocation<T> {
 }
 
 impl<T> NodeLocation<T> {
+    /// Create a node location from value, range, and file identifier.
     #[inline]
     pub fn new(value: T, range: &Range<usize>, file: &SourceID) -> Self {
         Self { value, range: range.clone(), file: file.clone() }
     }
+    /// Replace the byte range.
     #[inline]
     pub fn with_range(mut self, range: &Range<usize>) -> Self {
         self.range = range.clone();
         self
     }
+    /// Replace the cached file identifier.
     #[inline]
     pub fn with_file(mut self, file: &SourceID) -> Self {
         self.file = file.clone();
         self
     }
+    /// Map the wrapped value while preserving location metadata.
     #[inline]
     pub fn map<U>(self, f: impl FnOnce(T) -> U) -> NodeLocation<U> {
         NodeLocation { value: f(self.value), range: self.range, file: self.file }
     }
+    /// Compare value, range, and file identifier strictly.
     #[inline]
     pub fn eq_strict(&self, other: &Self) -> bool
     where

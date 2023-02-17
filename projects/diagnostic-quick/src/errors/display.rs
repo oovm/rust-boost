@@ -1,34 +1,36 @@
-use diagnostic::{Diagnostic, DiagnosticError};
+use diagnostic::terminal::{structured_to_terminal, Config, SourceRegistry, StructuredRenderError};
+use source_cache::SourceCache;
 
-use super::*;
+use crate::convert::{qerror_to_structured, source_ref_for_id};
+use crate::{QError, QResult};
 
-pub fn print_errors(store: &TextStorage, errors: &[QError]) -> QResult {
-    let writer = StandardStream::stderr(ColorChoice::Always);
-    let config = TerminalConfig::default();
+/// Print quick errors through the structured terminal renderer.
+pub fn print_errors(cache: &SourceCache, errors: &[QError]) -> QResult {
+    let mut registry = SourceRegistry::new();
     for error in errors {
-        let diagnostic = error.as_diagnostic();
-        emit(&mut writer.lock(), &config, &store, &diagnostic)?;
+        if let Some(file) = error.source_id() {
+            registry.register(&source_ref_for_id(file), file.clone());
+        }
+        if let QErrorKind::Syntax(syntax) = &*error.error {
+            if syntax.file != SourceID::default() {
+                registry.register(&source_ref_for_id(&syntax.file), syntax.file.clone());
+            }
+        }
+    }
+
+    let config = Config::default();
+    for error in errors {
+        let diagnostic = qerror_to_structured(error);
+        structured_to_terminal(&diagnostic, &registry, config)
+            .map_err(structured_render_error)?
+            .eprint(cache)?;
     }
     Ok(())
 }
 
-impl From<DiagnosticError> for QError {
-    fn from(error: DiagnosticError) -> Self {
-        QError::wrap_runtime_error(error)
-    }
-}
+use crate::QErrorKind;
+use source_cache::SourceID;
 
-impl QError {
-    pub fn as_diagnostic(&self) -> Diagnostic {
-        let mut out = Diagnostic::new(self.level);
-        match &*self.error {
-            QErrorKind::IO(e) => out.message = e.message.to_string(),
-            QErrorKind::Syntax(e) => out = out.with_primary(&e.file, e.span.clone(), &e.message),
-            QErrorKind::Runtime(e) => out.message = e.message.to_string(),
-            QErrorKind::Custom(e) => {
-                out.message = e.to_string();
-            }
-        }
-        out
-    }
+fn structured_render_error(error: StructuredRenderError) -> QError {
+    QError::runtime_error(error.to_string())
 }
