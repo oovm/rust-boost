@@ -5,6 +5,8 @@ use serde::{
     ser::Error,
 };
 
+use diagnostic::DiagnosticSeverity;
+
 use crate::{QError, QErrorKind};
 
 impl Error for QError {
@@ -12,7 +14,11 @@ impl Error for QError {
     where
         T: Display,
     {
-        QError { error: Box::new(QErrorKind::Custom(msg.to_string())), level: Default::default(), source: None }
+        QError {
+            error: Box::new(QErrorKind::Custom(msg.to_string())),
+            severity: DiagnosticSeverity::Error,
+            source: None,
+        }
     }
 }
 

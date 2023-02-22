@@ -51,7 +51,6 @@ mod for_tl;
 #[cfg(feature = "globset")]
 mod for_globset;
 
-#[cfg(feature = "serde")]
 mod for_serde;
 
 #[cfg(any(feature = "walk", feature = "async-walk"))]
