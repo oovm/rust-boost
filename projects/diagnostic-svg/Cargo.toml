@@ -10,4 +10,5 @@ documentation = "https://docs.rs/diagnostic-svg"
 edition.workspace = true
 
 [dependencies]
-diagnostic = { workspace = true }
+diagnostic = { workspace = true, features = ["terminal"] }
+source-cache = { workspace = true }
