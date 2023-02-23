@@ -1,5 +1,6 @@
-/// Verify the placeholder proc macro expands in tests.
+mod expand_usage;
+
 #[test]
-fn real_macro_expands() {
-    diagnostic_macro::real_macro!("11");
+fn integration_smoke() {
+    expand_usage::sample().unwrap();
 }

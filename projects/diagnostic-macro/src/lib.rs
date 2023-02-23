@@ -2,13 +2,24 @@
 
 #![deny(missing_docs)]
 
-use proc_macro::TokenStream;
+mod expand;
 
-/// Compile-time diagnostic hook used by integration tests.
+use proc_macro::TokenStream;
+use syn::parse_macro_input;
+
+/// Build a structured [`diagnostic::Diagnostic`] record at the call site.
 ///
-/// The macro currently expands to an empty expression. Future versions may emit
-/// structured diagnostics during macro expansion.
+/// ```ignore
+/// use diagnostic_macro::diagnose;
+///
+/// let record = diagnose! {
+///     code: "oak.syntax.unexpected-token",
+///     severity: error,
+///     message: "unexpected token",
+/// };
+/// ```
 #[proc_macro]
-pub fn real_macro(_input: TokenStream) -> TokenStream {
-    TokenStream::new()
+pub fn diagnose(input: TokenStream) -> TokenStream {
+    let parsed = parse_macro_input!(input as expand::DiagnosticInput);
+    expand::expand(parsed).into()
 }
