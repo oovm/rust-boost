@@ -1,0 +1,23 @@
+[package]
+name = "console"
+version.workspace = true
+authors.workspace = true
+description = "Generic console text styling, ANSI colors, and display formatting"
+repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/console"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+terminal = { workspace = true }
+
+[dev-dependencies]
+serial_test = { workspace = true }
+
+[features]
+default = ["std"]
+std = []
+concolor = []
+
+[package.metadata.docs.rs]
+all-features = true
