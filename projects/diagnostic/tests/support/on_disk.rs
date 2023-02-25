@@ -1,4 +1,4 @@
-use diagnostic::json::{DiagnosticEnvelope, SCHEMA_VERSION};
+use diagnostic::wire::{DiagnosticEnvelope, SCHEMA_VERSION};
 use diagnostic::Diagnostic;
 
 #[test]

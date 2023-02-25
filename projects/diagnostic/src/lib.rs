@@ -4,19 +4,24 @@
 
 extern crate alloc;
 
+pub mod collect;
 pub mod model;
-pub mod report;
-pub mod set;
+pub mod render;
+pub mod source;
 
 #[cfg(feature = "serde")]
-pub mod json;
+pub mod wire;
 
 #[cfg(feature = "terminal")]
 pub mod terminal;
 
+pub use collect::{DiagnosticSet, DiagnosticSink, SinkStatus};
 pub use model::*;
-pub use report::Report;
-pub use set::{DiagnosticEmitter, DiagnosticSet, EmitStatus};
+pub use render::{diagnostic_message, message_fallback};
+pub use source::SourceLookup;
+
+#[cfg(feature = "serde")]
+pub use wire::{DiagnosticEnvelope, SCHEMA_VERSION};
 
 #[cfg(feature = "terminal")]
 pub use terminal::{

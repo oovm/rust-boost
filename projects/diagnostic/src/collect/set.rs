@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 
 use crate::model::Diagnostic;
 
-use super::EmitStatus;
+use super::SinkStatus;
 
 /// Ordered diagnostic collection with truncation metadata.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -26,16 +26,16 @@ impl DiagnosticSet {
     }
 
     /// Push a diagnostic, preserving insertion order.
-    pub fn push(&mut self, diagnostic: Diagnostic) -> EmitStatus {
+    pub fn push(&mut self, diagnostic: Diagnostic) -> SinkStatus {
         if let Some(max) = self.max_diagnostics {
             if self.diagnostics.len() >= max {
                 self.truncated = true;
                 self.dropped = self.dropped.saturating_add(1);
-                return EmitStatus::Truncated;
+                return SinkStatus::Truncated;
             }
         }
         self.diagnostics.push(diagnostic);
-        EmitStatus::Accepted
+        SinkStatus::Accepted
     }
 
     /// Merge another set after this one, preserving order and truncation metadata.

@@ -1,4 +1,5 @@
-use crate::{Diagnostic, DiagnosticSet};
+use crate::collect::DiagnosticSet;
+use crate::model::Diagnostic;
 
 /// Current JSON schema version for diagnostic wire data.
 pub const SCHEMA_VERSION: u32 = 1;

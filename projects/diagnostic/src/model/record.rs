@@ -1,9 +1,9 @@
 use alloc::vec::Vec;
 
 use super::{
-    DiagnosticCode, DiagnosticLabel, DiagnosticOrigin, DiagnosticSeverity, Message, RecoveryAction,
+    DiagnosticAction, DiagnosticCode, DiagnosticLabel, DiagnosticOrigin, DiagnosticSeverity, Message,
 };
-use super::recovery::DiagnosticCause;
+use super::action::DiagnosticCause;
 
 /// Structured diagnostic record.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -18,7 +18,7 @@ pub struct Diagnostic {
     notes: Vec<Message>,
     helps: Vec<Message>,
     cause: Option<DiagnosticCause>,
-    recovery: Vec<RecoveryAction>,
+    actions: Vec<DiagnosticAction>,
 }
 
 impl Diagnostic {
@@ -39,7 +39,7 @@ impl Diagnostic {
             notes: Vec::new(),
             helps: Vec::new(),
             cause: None,
-            recovery: Vec::new(),
+            actions: Vec::new(),
         }
     }
 
@@ -73,9 +73,9 @@ impl Diagnostic {
         self
     }
 
-    /// Attach a recovery action.
-    pub fn with_recovery(mut self, action: RecoveryAction) -> Self {
-        self.recovery.push(action);
+    /// Attach a structured action.
+    pub fn with_action(mut self, action: DiagnosticAction) -> Self {
+        self.actions.push(action);
         self
     }
 
@@ -124,8 +124,8 @@ impl Diagnostic {
         self.cause.as_ref()
     }
 
-    /// Returns recovery actions.
-    pub fn recovery(&self) -> &[RecoveryAction] {
-        &self.recovery
+    /// Returns structured actions.
+    pub fn actions(&self) -> &[DiagnosticAction] {
+        &self.actions
     }
 }

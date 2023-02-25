@@ -35,7 +35,7 @@
         },
         "role": "primary"
       },
-      "recovery": [],
+      "actions": [],
       "secondary": [],
       "severity": "error"
     },
@@ -78,7 +78,7 @@
         },
         "role": "primary"
       },
-      "recovery": [],
+      "actions": [],
       "secondary": [],
       "severity": "error"
     },
@@ -130,7 +130,7 @@
         },
         "role": "primary"
       },
-      "recovery": [],
+      "actions": [],
       "secondary": [],
       "severity": "warning"
     },
@@ -169,7 +169,7 @@
         },
         "role": "primary"
       },
-      "recovery": [],
+      "actions": [],
       "secondary": [],
       "severity": "error"
     },
@@ -204,7 +204,7 @@
         },
         "role": "primary"
       },
-      "recovery": [],
+      "actions": [],
       "secondary": [],
       "severity": "error"
     }
