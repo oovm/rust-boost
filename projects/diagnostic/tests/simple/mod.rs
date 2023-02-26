@@ -1,4 +1,5 @@
-use diagnostic::terminal::{enable_ansi_color, Color, Config, Console, Diagnostic, Label, Palette, ReportKind, SourceID};
+use diagnostic::{Color, Console, Palette};
+use diagnostic::terminal::{enable_ansi_color, Config, Diagnostic, Label, ReportKind, SourceID};
 use source_cache::{SourceCache, SourceText};
 use std::{iter::zip, ops::Range};
 

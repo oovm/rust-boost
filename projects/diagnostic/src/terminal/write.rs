@@ -6,9 +6,9 @@ use std::io::Write;
 
 use super::{
     display::Show,
-    draw::{StreamAwareFmt, StreamType},
     Diagnostic, Label, LabelAttach,
 };
+use console::{StreamAwareFmt, StreamType};
 
 // A WARNING, FOR ALL YE WHO VENTURE IN HERE
 //
