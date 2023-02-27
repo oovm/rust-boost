@@ -15,10 +15,16 @@ pub mod wire;
 #[cfg(feature = "terminal")]
 pub mod terminal;
 
+#[cfg(feature = "console")]
+pub mod console_projection;
+
 pub use collect::{DiagnosticSet, DiagnosticSink, SinkStatus};
 pub use model::*;
 pub use render::{diagnostic_message, message_fallback};
 pub use source::SourceLookup;
+
+#[cfg(feature = "console")]
+pub use console_projection::{diagnostic_to_event, diagnostic_to_payload};
 
 #[cfg(feature = "serde")]
 pub use wire::{DiagnosticEnvelope, SCHEMA_VERSION};
