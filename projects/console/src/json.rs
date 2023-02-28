@@ -167,10 +167,15 @@ fn label_payload_to_json(label: &LabelPayload) -> String {
 fn location_payload_to_json(location: &LocationPayload) -> String {
     match location {
         LocationPayload::TextSpan { source, range } => {
+            let revision = match source.revision() {
+                Some(revision) => format!(",\"revision\":{}", json_string(revision)),
+                None => String::new(),
+            };
             format!(
-                "{{\"kind\":\"text\",\"source\":{{\"namespace\":{},\"id\":{}}},\"range\":{{\"start\":{},\"end\":{}}}}}",
+                "{{\"kind\":\"text\",\"source\":{{\"namespace\":{},\"id\":{}{}}},\"range\":{{\"start\":{},\"end\":{}}}}}",
                 json_string(source.namespace()),
                 json_string(source.id()),
+                revision,
                 range.start,
                 range.end
             )
