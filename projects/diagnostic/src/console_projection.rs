@@ -5,6 +5,7 @@ use console::{
     LocationPayload, MessagePayload, SourceRefPayload,
 };
 
+use crate::collect::DiagnosticSet;
 use crate::model::{
     Diagnostic, DiagnosticAction, DiagnosticCause, DiagnosticLabel, DiagnosticLocation, DiagnosticSeverity, Message,
     MessageArg, SourceRef,
@@ -13,6 +14,18 @@ use crate::model::{
 /// Project a diagnostic record into a console event with `EventKind::Diagnostic`.
 pub fn diagnostic_to_event(diagnostic: &Diagnostic) -> ConsoleEvent {
     ConsoleEvent::diagnostic(diagnostic_to_payload(diagnostic))
+}
+
+/// Emit one diagnostic through the global console facade.
+pub fn emit_diagnostic(diagnostic: &Diagnostic) {
+    console::emit(diagnostic_to_event(diagnostic));
+}
+
+/// Emit every diagnostic in a set through the global console facade.
+pub fn emit_diagnostic_set(set: &DiagnosticSet) {
+    for diagnostic in set.diagnostics() {
+        emit_diagnostic(diagnostic);
+    }
 }
 
 /// Project a diagnostic record into a console-owned payload.
