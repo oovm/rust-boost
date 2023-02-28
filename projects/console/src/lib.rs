@@ -8,6 +8,7 @@ mod color;
 mod draw;
 mod event;
 mod field;
+mod json;
 mod level;
 mod paint;
 mod payload;
@@ -20,6 +21,7 @@ pub use color::Color;
 pub use draw::{Background, Console, Foreground, Palette, StreamAwareFmt, StreamType};
 pub use event::{ConsoleEvent, ConsoleEventBuilder, EventKind};
 pub use field::{Field, FieldValue, Fields};
+pub use json::{event_to_json, JsonLinesSink};
 pub use level::Level;
 pub use paint::Paint;
 pub use payload::{
