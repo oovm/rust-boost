@@ -1,4 +1,4 @@
-use console::{EventKind, LocationPayload};
+use console::{event_to_json, EventKind, LocationPayload};
 
 use super::fixtures::{binary_diagnostic, member_diagnostic, text_diagnostic};
 use diagnostic::{diagnostic_to_event, diagnostic_to_payload};
@@ -33,6 +33,21 @@ fn binary_diagnostic_projects_opaque_location_fields() {
         }
         other => panic!("expected opaque binary location, got {other:?}"),
     }
+}
+
+#[test]
+fn text_diagnostic_console_event_json_matches_fixture() {
+    let event = diagnostic_to_event(&text_diagnostic());
+    let json = event_to_json(&event);
+    let actual: serde_json::Value = serde_json::from_str(&json).expect("console event json");
+    let expected: serde_json::Value =
+        serde_json::from_str(include_str!("../fixtures/console-text-event.json")).expect("fixture json");
+
+    assert_eq!(actual["kind"], expected["kind"]);
+    assert_eq!(actual["level"], expected["level"]);
+    assert_eq!(actual["target"], expected["target"]);
+    assert_eq!(actual["diagnostic"], expected["diagnostic"]);
+    assert!(actual.get("timestampSecs").is_some(), "console events must carry timestampSecs");
 }
 
 #[test]
