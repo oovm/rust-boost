@@ -14,3 +14,6 @@ pub mod wire;
 
 #[cfg(feature = "terminal")]
 pub mod structured_render;
+
+#[cfg(feature = "terminal")]
+pub mod terminal_golden;
