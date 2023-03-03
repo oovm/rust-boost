@@ -1,5 +1,5 @@
 use diagnostic::{
-    ByteRange, Diagnostic, DiagnosticLabel, DiagnosticLocation, DiagnosticSeverity, Message, SourceRef,
+    ByteRange, Diagnostic, DiagnosticLabel, DiagnosticLocation, DiagnosticSet, DiagnosticSeverity, Message, SourceRef,
 };
 use lsp_types::{
     Diagnostic as LspDiagnostic, DiagnosticRelatedInformation, DiagnosticSeverity as LspSeverity, Location, NumberOrString,
@@ -14,6 +14,20 @@ use crate::DiagnosticError;
 pub trait SourceResolver {
     /// Resolve a source reference.
     fn resolve(&self, source: &SourceRef) -> Option<&SourceID>;
+}
+
+/// Convert every diagnostic in a set into LSP diagnostics.
+pub fn structured_set_to_lsp(
+    set: &DiagnosticSet,
+    provider: &impl SourceProvider,
+    resolver: &impl SourceResolver,
+    uri_for: &impl Fn(&SourceID) -> Option<Url>,
+) -> Result<Vec<LspDiagnostic>, DiagnosticError> {
+    set
+        .diagnostics()
+        .iter()
+        .map(|diagnostic| structured_to_lsp(diagnostic, provider, resolver, uri_for))
+        .collect()
 }
 
 /// Convert a structured diagnostic into an LSP diagnostic.
