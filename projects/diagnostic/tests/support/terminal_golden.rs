@@ -40,7 +40,7 @@ fn terminal_text_diagnostic_matches_golden() {
     registry.register(&source_ref, source);
 
     let actual = render_terminal_golden(&sample_text_diagnostic(source_ref), &cache, &registry);
-    let expected = include_str!("../golden/terminal-text.txt");
+    let expected = include_str!("../golden/terminal-text.golden");
     assert_eq!(actual, expected);
 }
 
@@ -58,6 +58,6 @@ fn write_terminal_golden_fixture() {
     registry.register(&source_ref, source);
 
     let rendered = render_terminal_golden(&sample_text_diagnostic(source_ref), &cache, &registry);
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/golden/terminal-text.txt");
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/golden/terminal-text.golden");
     fs::write(path, rendered).expect("write terminal golden");
 }

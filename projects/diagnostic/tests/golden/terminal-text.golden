@@ -1,0 +1,7 @@
+[31mERROR:[0m unexpected token
+   ╭─[sample.tao:2:7]
+   │
+ 2 │     () => 5,
+   │          ┬  
+   │          ╰── token
+───╯
