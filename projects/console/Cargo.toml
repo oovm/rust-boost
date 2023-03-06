@@ -9,6 +9,7 @@ license.workspace = true
 edition.workspace = true
 
 [dependencies]
+logger = { workspace = true }
 terminal = { workspace = true }
 
 [dev-dependencies]
