@@ -57,6 +57,7 @@ winreg = "0.52.0"
 serial_test = "3.2.0"
 source-cache = { path = "projects/source-cache", version = "0.1.0" }
 terminal = { path = "projects/terminal", version = "0.1.0" }
+logger = { path = "projects/logger", version = "0.1.0" }
 console = { path = "projects/console", version = "0.1.0" }
 diagnostic = { path = "projects/diagnostic", version = "0.1.0" }
 

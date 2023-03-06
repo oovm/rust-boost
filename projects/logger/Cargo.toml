@@ -1,0 +1,21 @@
+[package]
+name = "logger"
+version.workspace = true
+authors.workspace = true
+description = "Workspace-wide structured log event facade, sinks, spans, and filters"
+repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/logger"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+serial_test = { workspace = true }
+
+[features]
+default = ["std"]
+std = []
+
+[package.metadata.docs.rs]
+all-features = true
