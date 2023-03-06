@@ -15,6 +15,7 @@ serde = { workspace = true, optional = true }
 unicode-width = { workspace = true, optional = true }
 source-cache = { workspace = true, optional = true }
 terminal = { workspace = true, optional = true }
+logger = { workspace = true, optional = true }
 console = { workspace = true, optional = true }
 
 [dev-dependencies]
@@ -25,7 +26,8 @@ serde_json = { workspace = true }
 [features]
 default = ["std", "console", "terminal", "serde"]
 std = []
-console = ["dep:console", "std"]
+logger = ["dep:logger", "std"]
+console = ["dep:console", "logger"]
 serde = ["dep:serde"]
 terminal = ["console", "dep:terminal", "dep:source-cache", "dep:unicode-width"]
 concolor = ["console/concolor"]
