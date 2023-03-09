@@ -4,6 +4,9 @@ pub mod fixtures;
 pub mod console_projection;
 
 #[cfg(feature = "console")]
+pub mod logger_projection;
+
+#[cfg(feature = "console")]
 pub mod console_emit;
 
 #[cfg(feature = "serde")]
