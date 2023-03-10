@@ -110,3 +110,24 @@ fn diagnostic_event_preserves_kind() {
     assert!(matches!(event.kind(), EventKind::Diagnostic(_)));
     assert_eq!(event.level(), Level::Error);
 }
+
+struct ReentrantSink;
+
+impl LogSink for ReentrantSink {
+    fn emit(&mut self, _event: &LogEvent) {
+        set_global_sink(Box::new(VecSink::new()));
+    }
+}
+
+#[test]
+#[serial]
+fn sink_emit_does_not_hold_global_registration_lock() {
+    clear_global_sink();
+    reset_dropped_events();
+    set_global_sink(Box::new(ReentrantSink));
+    set_global_filter(Filter::new(Level::Trace));
+
+    event!(Info, "reentrant", message = "swap sink during emit");
+
+    clear_global_sink();
+}
