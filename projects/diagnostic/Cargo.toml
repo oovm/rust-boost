@@ -24,11 +24,11 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
-default = ["std", "console", "terminal", "serde"]
+default = ["std"]
 std = []
+serde = ["dep:serde"]
 logger = ["dep:logger", "std"]
 console = ["dep:console", "logger"]
-serde = ["dep:serde"]
 terminal = ["console", "dep:terminal", "dep:source-cache", "dep:unicode-width"]
 concolor = ["console/concolor"]
 
