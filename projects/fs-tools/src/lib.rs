@@ -11,6 +11,7 @@ pub mod file;
 pub mod link;
 pub mod metadata;
 pub mod permissions;
+pub mod publish;
 pub mod read_write;
 pub mod remove;
 pub mod rename;
@@ -29,4 +30,7 @@ pub use metadata::{metadata, symlink_metadata, FileType, Metadata};
 pub use permissions::{set_permissions, Permissions};
 pub use read_write::{copy, read, read_to_string, write};
 pub use remove::{remove_file, remove_folder, remove_folder_all};
+pub use publish::{
+    publish_bytes, publish_bytes_with_options, AtomicPublisher, OverwritePolicy, PublishOptions,
+};
 pub use rename::rename;
