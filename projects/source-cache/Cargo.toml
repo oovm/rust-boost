@@ -2,7 +2,7 @@
 name = "source-cache"
 version.workspace = true
 authors.workspace = true
-description = "Query the cache of raw text"
+description = "Source identity, provenance primitives, and optional text cache"
 repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/source-cache"
 documentation = "https://docs.rs/source-cache"
 readme = "readme.md"
@@ -10,12 +10,16 @@ license.workspace = true
 edition.workspace = true
 
 [dependencies]
-url = { workspace = true }
+url = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 
+[dev-dependencies]
+serde_json = { workspace = true }
+
 [features]
-default = []
-serde = ["dep:serde", "url/serde"]
+default = ["std"]
+std = ["dep:url"]
+serde = ["dep:serde", "url?/serde"]
 
 [package.metadata.docs.rs]
 all-features = true
