@@ -1,6 +1,6 @@
 //! Opaque source references used by diagnostic locations.
 
-pub use crate::model::{
+pub use source_cache::provenance::{
     AddressSpaceRef, DocumentRef, MemberPath, MemberSegment, ObjectRef, SemanticPath, SourceRef,
 };
 

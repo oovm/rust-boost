@@ -13,7 +13,7 @@ exclude = ["package.json", "tests/**"]
 [dependencies]
 serde = { workspace = true, optional = true }
 unicode-width = { workspace = true, optional = true }
-source-cache = { workspace = true, optional = true }
+source-cache = { path = "../source-cache", version = "0.1.0", default-features = false }
 terminal = { workspace = true, optional = true }
 logger = { workspace = true, optional = true }
 console = { workspace = true, optional = true }
@@ -26,10 +26,10 @@ serde_json = { workspace = true }
 [features]
 default = ["std"]
 std = []
-serde = ["dep:serde"]
+serde = ["dep:serde", "source-cache/serde"]
 logger = ["dep:logger", "std"]
 console = ["dep:console", "logger"]
-terminal = ["console", "dep:terminal", "dep:source-cache", "dep:unicode-width"]
+terminal = ["console", "dep:terminal", "source-cache/std", "dep:unicode-width"]
 concolor = ["console/concolor"]
 
 [package.metadata.docs.rs]
