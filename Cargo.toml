@@ -55,6 +55,7 @@ image = "0.24.9"
 imageproc = "0.23.0"
 winreg = "0.52.0"
 serial_test = "3.2.0"
+source = { path = "projects/source", version = "0.1.0" }
 source-cache = { path = "projects/source-cache", version = "0.1.0" }
 terminal = { path = "projects/terminal", version = "0.1.0" }
 logger = { path = "projects/logger", version = "0.1.0" }
