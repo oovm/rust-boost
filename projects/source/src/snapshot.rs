@@ -43,6 +43,7 @@ pub struct SnapshotHandle(u32);
 
 impl SnapshotHandle {
     /// Create a handle from a raw index.
+    #[cfg(feature = "std")]
     pub(crate) fn from_index(index: u32) -> Self {
         Self(index)
     }
