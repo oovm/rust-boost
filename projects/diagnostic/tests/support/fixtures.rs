@@ -13,7 +13,7 @@ pub fn text_diagnostic() -> Diagnostic {
     )
     .with_primary(DiagnosticLabel::new(
         DiagnosticLocation::Text {
-            source: SourceRef::new("oak", "sample.xml").with_revision("1"),
+            source: SourceRef::new("oak", "sample.xml").unwrap().with_revision("1").unwrap(),
             range: ByteRange::new(12, 13).unwrap(),
         },
         Message::new("label.token").with_fallback("token"),
@@ -30,7 +30,7 @@ pub fn binary_diagnostic() -> Diagnostic {
     )
     .with_primary(DiagnosticLabel::new(
         DiagnosticLocation::Binary {
-            source: SourceRef::new("acorn", "firmware.bin"),
+            source: SourceRef::new("acorn", "firmware.bin").unwrap(),
             address_space: AddressSpaceRef::new("acorn", "file"),
             range: ByteRange::new(0x1000, 0x1004).unwrap(),
         },
@@ -48,7 +48,7 @@ pub fn member_diagnostic() -> Diagnostic {
     )
     .with_primary(DiagnosticLabel::new(
         DiagnosticLocation::Member {
-            container: SourceRef::new("acorn", "docx.zip"),
+            container: SourceRef::new("acorn", "docx.zip").unwrap(),
             member: MemberPath::new(vec![
                 MemberSegment::new("zip", "word/document.xml"),
                 MemberSegment::new("view", "utf8"),
@@ -70,7 +70,7 @@ pub fn object_diagnostic() -> Diagnostic {
     )
     .with_primary(DiagnosticLabel::new(
         DiagnosticLocation::Object {
-            source: SourceRef::new("acorn", "sample.pdf"),
+            source: SourceRef::new("acorn", "sample.pdf").unwrap(),
             object: ObjectRef::new("xref", "42"),
         },
         Message::new("label.object").with_fallback("object"),

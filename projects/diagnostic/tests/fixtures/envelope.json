@@ -1,6 +1,7 @@
 {
   "diagnostics": [
     {
+      "actions": [],
       "cause": null,
       "code": "oak.syntax.unexpected-token",
       "helps": [],
@@ -23,8 +24,10 @@
             "start": 12
           },
           "source": {
-            "id": "sample.xml",
-            "namespace": "oak",
+            "identity": {
+              "id": "sample.xml",
+              "namespace": "oak"
+            },
             "revision": "1"
           }
         },
@@ -35,11 +38,11 @@
         },
         "role": "primary"
       },
-      "actions": [],
       "secondary": [],
       "severity": "error"
     },
     {
+      "actions": [],
       "cause": null,
       "code": "acorn.layout.offset-out-of-range",
       "helps": [],
@@ -66,8 +69,10 @@
             "start": 4096
           },
           "source": {
-            "id": "firmware.bin",
-            "namespace": "acorn",
+            "identity": {
+              "id": "firmware.bin",
+              "namespace": "acorn"
+            },
             "revision": null
           }
         },
@@ -78,11 +83,11 @@
         },
         "role": "primary"
       },
-      "actions": [],
       "secondary": [],
       "severity": "error"
     },
     {
+      "actions": [],
       "cause": null,
       "code": "acorn.container.need-range",
       "helps": [],
@@ -100,8 +105,10 @@
       "primary": {
         "location": {
           "container": {
-            "id": "docx.zip",
-            "namespace": "acorn",
+            "identity": {
+              "id": "docx.zip",
+              "namespace": "acorn"
+            },
             "revision": null
           },
           "kind": "member",
@@ -130,11 +137,11 @@
         },
         "role": "primary"
       },
-      "actions": [],
       "secondary": [],
       "severity": "warning"
     },
     {
+      "actions": [],
       "cause": null,
       "code": "acorn.layout.offset-out-of-range",
       "helps": [],
@@ -157,8 +164,10 @@
             "kind": "xref"
           },
           "source": {
-            "id": "sample.pdf",
-            "namespace": "acorn",
+            "identity": {
+              "id": "sample.pdf",
+              "namespace": "acorn"
+            },
             "revision": null
           }
         },
@@ -169,11 +178,11 @@
         },
         "role": "primary"
       },
-      "actions": [],
       "secondary": [],
       "severity": "error"
     },
     {
+      "actions": [],
       "cause": null,
       "code": "notedown.semantic.unresolved-target",
       "helps": [],
@@ -204,7 +213,6 @@
         },
         "role": "primary"
       },
-      "actions": [],
       "secondary": [],
       "severity": "error"
     }

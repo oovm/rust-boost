@@ -1,4 +1,5 @@
 {
+  "actions": [],
   "cause": null,
   "code": "oak.syntax.unexpected-token",
   "helps": [],
@@ -21,8 +22,10 @@
         "start": 12
       },
       "source": {
-        "id": "sample.xml",
-        "namespace": "oak",
+        "identity": {
+          "id": "sample.xml",
+          "namespace": "oak"
+        },
         "revision": "1"
       }
     },
@@ -33,7 +36,6 @@
     },
     "role": "primary"
   },
-  "actions": [],
   "secondary": [],
   "severity": "error"
 }

@@ -1,7 +1,7 @@
-use source_cache::provenance::{
-    AddressSpaceRef, ByteRange, DocumentRef, MappingPrecision, MemberPath, ObjectRef, SemanticPath,
-    SourceRef,
+use crate::provenance::{
+    AddressSpaceRef, DocumentRef, MappingPrecision, MemberPath, ObjectRef, SemanticPath,
 };
+use source::{ByteRange, SourceRef};
 
 /// Tagged diagnostic location across text, binary, container, object, and semantic domains.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

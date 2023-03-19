@@ -10,7 +10,7 @@ use source_cache::SourceCache;
 fn structured_text_diagnostic_renders() {
     let mut cache = SourceCache::default();
     let source = cache.load_text(include_str!("../simple/sample.tao"), "sample.tao");
-    let source_ref = SourceRef::new("oak", "sample.tao");
+    let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
 
     let mut registry = SourceRegistry::new();
     registry.register(&source_ref, source);
@@ -47,7 +47,7 @@ fn structured_member_diagnostic_falls_back_to_note() {
     )
     .with_primary(DiagnosticLabel::new(
         DiagnosticLocation::Member {
-            container: SourceRef::new("acorn", "docx.zip"),
+            container: SourceRef::new("acorn", "docx.zip").unwrap(),
             member: MemberPath::new(vec![MemberSegment::new("zip", "word/document.xml")]),
             range: None,
             precision: MappingPrecision::Container,

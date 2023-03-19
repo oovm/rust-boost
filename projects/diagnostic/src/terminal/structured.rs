@@ -121,7 +121,7 @@ fn render_message(message: &Message) -> String {
 fn primary_text_location(location: &DiagnosticLocation, registry: &SourceRegistry) -> Option<(SourceID, u32)> {
     let (source, range) = text_like_location(location)?;
     let file = *registry.resolve(source)?;
-    let start = u32::try_from(range.start).ok()?;
+    let start = u32::try_from(range.start()).ok()?;
     Some((file, start))
 }
 
@@ -129,7 +129,7 @@ fn try_text_label(label: &DiagnosticLabel, registry: &SourceRegistry) -> Result<
     if let Some((source, range)) = text_like_location(label.location()) {
         let file = registry
             .resolve(source)
-            .ok_or_else(|| StructuredRenderError::UnknownSource { wire_id: source.to_wire_id() })?;
+            .ok_or_else(|| StructuredRenderError::UnknownSource { wire_id: source.wire_id() })?;
         let span = byte_range_to_span(*file, range)?;
         return Ok(Some(Label::new(span).with_message(render_message(label.message()))));
     }
@@ -145,17 +145,17 @@ fn text_like_location(location: &DiagnosticLocation) -> Option<(&SourceRef, Byte
 }
 
 fn byte_range_to_span(file: SourceID, range: ByteRange) -> Result<SourceSpan, StructuredRenderError> {
-    let start = u32::try_from(range.start)
-        .map_err(|_| StructuredRenderError::RangeOutOfBounds { start: range.start, end: range.end })?;
-    let end = u32::try_from(range.end)
-        .map_err(|_| StructuredRenderError::RangeOutOfBounds { start: range.start, end: range.end })?;
+    let start = u32::try_from(range.start())
+        .map_err(|_| StructuredRenderError::RangeOutOfBounds { start: range.start(), end: range.end() })?;
+    let end = u32::try_from(range.end())
+        .map_err(|_| StructuredRenderError::RangeOutOfBounds { start: range.start(), end: range.end() })?;
     Ok(file.with_range(Range { start, end }))
 }
 
 fn location_summary(location: &DiagnosticLocation, message: &Message) -> String {
     let prefix = match location {
         DiagnosticLocation::Binary { source, address_space, range, .. } => {
-            format!("{}:{} [{}, {})", source.id(), address_space.id(), range.start, range.end)
+            format!("{}:{} [{}, {})", source.id(), address_space.id(), range.start(), range.end())
         }
         DiagnosticLocation::Member { container, member, range, precision, .. } => {
             let path = member
@@ -165,7 +165,7 @@ fn location_summary(location: &DiagnosticLocation, message: &Message) -> String 
                 .collect::<Vec<_>>()
                 .join(" -> ");
             let range = range
-                .map(|range| format!(" [{}, {})", range.start, range.end))
+                .map(|range| format!(" [{}, {})", range.start(), range.end()))
                 .unwrap_or_default();
             format!("{}::{path}{range} ({precision:?})", container.id())
         }
@@ -176,7 +176,7 @@ fn location_summary(location: &DiagnosticLocation, message: &Message) -> String 
             format!("{}:{}", document.id(), path.as_str())
         }
         DiagnosticLocation::Text { source, range } | DiagnosticLocation::Virtual { source, range } => {
-            format!("{} [{}, {})", source.id(), range.start, range.end)
+            format!("{} [{}, {})", source.id(), range.start(), range.end())
         }
     };
     format!("{prefix}: {}", render_message(message))

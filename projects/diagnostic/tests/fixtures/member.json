@@ -1,4 +1,5 @@
 {
+  "actions": [],
   "cause": null,
   "code": "acorn.container.need-range",
   "helps": [],
@@ -16,8 +17,10 @@
   "primary": {
     "location": {
       "container": {
-        "id": "docx.zip",
-        "namespace": "acorn",
+        "identity": {
+          "id": "docx.zip",
+          "namespace": "acorn"
+        },
         "revision": null
       },
       "kind": "member",
@@ -46,7 +49,6 @@
     },
     "role": "primary"
   },
-  "actions": [],
   "secondary": [],
   "severity": "warning"
 }

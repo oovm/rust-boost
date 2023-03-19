@@ -1,4 +1,5 @@
 {
+  "actions": [],
   "cause": null,
   "code": "notedown.semantic.unresolved-target",
   "helps": [],
@@ -29,7 +30,6 @@
     },
     "role": "primary"
   },
-  "actions": [],
   "secondary": [],
   "severity": "error"
 }
