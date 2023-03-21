@@ -2,7 +2,7 @@
 name = "source-cache"
 version.workspace = true
 authors.workspace = true
-description = "Source identity, provenance primitives, and optional text cache"
+description = "Deprecated transitional cache. Use the source crate and diagnostic::terminal::SourceCache instead"
 repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/source-cache"
 documentation = "https://docs.rs/source-cache"
 readme = "readme.md"
