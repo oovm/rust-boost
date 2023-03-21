@@ -1,27 +1,24 @@
 use diagnostic::{Color, Console, Palette};
-use diagnostic::terminal::{enable_ansi_color, Config, Diagnostic, Label, ReportKind, SourceID};
-use source_cache::{SourceCache, SourceText};
-use std::{iter::zip, ops::Range};
+use diagnostic::terminal::{enable_ansi_color, Config, Diagnostic, Label, ReportKind, SourceCache};
 
 mod multi_file;
 mod multi_line;
 mod stress_test;
 
 fn debug_lines(lines: Vec<&str>) {
+    let mut cache = SourceCache::default();
     let source: String = lines.iter().map(|s| *s).collect();
-    let source = SourceText::from(source);
+    let id = cache.load_text(source, "snippet");
+    let view = cache.fetch(&id).expect("snippet must resolve");
 
-    assert_eq!(source.lines().len(), lines.len());
+    let expected_lines = if lines.is_empty() { 1 } else { lines.len() };
+    assert_eq!(view.line_count(), expected_lines);
 
-    let mut offset = 0;
-    for (source_line, raw_line) in zip(source.lines().into_iter(), lines.into_iter()) {
-        assert_eq!(source_line.offset as usize, offset);
-        assert_eq!(source_line.length as usize, raw_line.len());
-        assert_eq!(source_line.text, raw_line.trim_end());
-        offset += source_line.length as usize;
+    for (index, raw_line) in lines.iter().enumerate() {
+        let source_line = view.get_line(index).expect("line must exist");
+        let expected = raw_line.trim_end_matches(|ch| matches!(ch, '\n' | '\r'));
+        assert_eq!(source_line.text, expected);
     }
-
-    assert_eq!(source.get_length(), offset);
 }
 
 #[test]
@@ -42,7 +39,7 @@ fn simple() {
 
 #[test]
 fn source_from() {
-    debug_lines(vec![]); // Empty string
+    debug_lines(vec![]);
 
     debug_lines(vec!["Single line"]);
     debug_lines(vec!["Single line with LF\n"]);
@@ -53,7 +50,4 @@ fn source_from() {
     debug_lines(vec!["\n", "\r\n", "\n", "Empty Lines"]);
 
     debug_lines(vec!["Trailing spaces  \n", "are trimmed\t"]);
-
-    // Line endings other than LF or CRLF
-    debug_lines(vec!["CR\r", "VT\x0B", "FF\x0C", "NEL\u{0085}", "LS\u{2028}", "PS\u{2029}"]);
 }

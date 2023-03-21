@@ -3,6 +3,7 @@
 mod characters;
 mod display;
 mod source_map;
+mod sources;
 mod structured;
 mod windows;
 mod write;
@@ -10,8 +11,8 @@ mod write;
 use characters::Draw;
 use console::Color;
 pub use characters::{BuiltinDrawer, DrawElements};
-pub use source_cache::{SourceCache, SourceID, SourceSpan};
 pub use source_map::SourceRegistry;
+pub use sources::{SourceCache, SourceID, SourceLine, SourcePath, SourceSpan};
 pub use structured::{eprint_structured_set, structured_to_terminal, StructuredRenderError};
 pub use windows::enable_ansi_color;
 

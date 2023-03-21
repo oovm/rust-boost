@@ -1,5 +1,4 @@
-use source_cache::SourceID;
-use source_cache::{SourceCache, SourceText};
+use super::sources::{SourceCache, SourceID, SourceLine, SourcePath, SourceView};
 use std::ops::Range;
 
 use std::io::Write;
@@ -35,7 +34,7 @@ struct SourceGroup<'a> {
 }
 
 impl Diagnostic {
-    fn get_source_groups(&self, cache: &SourceCache) -> Vec<SourceGroup> {
+    fn get_source_groups(&self, cache: &SourceCache) -> Vec<SourceGroup<'_>> {
         let mut groups = Vec::new();
         for label in self.labels.iter() {
             let src = match cache.fetch(&label.span.file) {
@@ -141,7 +140,7 @@ impl Diagnostic {
             };
 
             let line_range = src.get_line_range(&span);
-            let line_ref = self.get_line_column(src_id, &labels, src);
+            let line_ref = self.get_line_column(src_id, &labels, &src);
             // File name & reference
             writeln!(
                 w,
@@ -639,7 +638,7 @@ impl Diagnostic {
         Ok(())
     }
 
-    fn get_line_column(&self, src_id: &SourceID, labels: &[LabelInfo], src: &SourceText) -> String {
+    fn get_line_column(&self, src_id: &SourceID, labels: &[LabelInfo<'_>], src: &SourceView<'_>) -> String {
         let location = if src_id == &self.file {
             match self.location {
                 Some(s) => s,
