@@ -51,15 +51,24 @@ impl ByteAccess for MemorySnapshot {
 }
 
 /// Process-local store for immutable snapshots.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct MemoryStore {
     snapshots: Vec<Option<MemorySnapshot>>,
 }
 
+impl Default for MemoryStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryStore {
     /// Create an empty store.
+    ///
+    /// Index `0` is reserved for [`SnapshotHandle::INVALID`]; the first inserted snapshot
+    /// receives handle `1`.
     pub fn new() -> Self {
-        Self::default()
+        Self { snapshots: vec![None] }
     }
 
     /// Insert a snapshot and return a process-local handle.

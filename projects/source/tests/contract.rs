@@ -1,5 +1,5 @@
 use source::{
-    AccessError, ByteAccess, ByteRange, LineIndex, MemorySnapshot, MemoryStore, PartialByteAccess,
+    AccessError, ByteAccess, ByteRange, LineIndex, MemorySnapshot, MemoryStore, PartialByteAccess, SnapshotHandle,
     SnapshotRef, SourceRef, decode_source_ref, encode_source_ref,
 };
 
@@ -67,6 +67,12 @@ fn partial_access_reports_need_range() {
     let partial = PartialByteAccess::new(bytes, 4).unwrap();
     let err = partial.read(ByteRange::new(0, 6).unwrap()).unwrap_err();
     assert!(matches!(err, AccessError::NeedRange { .. }));
+}
+
+#[test]
+fn invalid_snapshot_handle_does_not_resolve() {
+    let store = MemoryStore::new();
+    assert!(matches!(store.get(SnapshotHandle::INVALID), Err(AccessError::SnapshotReleased)));
 }
 
 #[test]
