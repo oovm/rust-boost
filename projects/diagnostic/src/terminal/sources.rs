@@ -1,7 +1,9 @@
 //! Terminal source storage backed by `source::MemoryStore`.
 
 use std::collections::HashMap;
+use std::error::Error;
 use std::fmt::{self, Display, Formatter};
+use std::io;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 
@@ -93,6 +95,41 @@ impl SourceLine {
     }
 }
 
+/// Failure to resolve source content from a provider.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ProviderError {
+    message: String,
+}
+
+impl ProviderError {
+    fn new(message: impl Into<String>) -> Self {
+        Self { message: message.into() }
+    }
+}
+
+impl From<io::Error> for ProviderError {
+    fn from(value: io::Error) -> Self {
+        Self::new(value.to_string())
+    }
+}
+
+impl Display for ProviderError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl Error for ProviderError {}
+
+/// Resolves terminal source views for renderers and adapters.
+pub trait SourceProvider {
+    /// Fetch a source view for a cached handle.
+    fn fetch(&self, file: &SourceID) -> Result<SourceView<'_>, ProviderError>;
+
+    /// Returns the display path for a cached handle.
+    fn source_path(&self, file: &SourceID) -> Option<&SourcePath>;
+}
+
 /// In-memory source table for terminal diagnostics.
 #[derive(Clone, Debug, Default)]
 pub struct SourceCache {
@@ -127,17 +164,29 @@ impl SourceCache {
     }
 
     /// Resolve a source handle to a borrowed view.
-    pub fn fetch(&self, file: &SourceID) -> Result<SourceView<'_>, std::io::Error> {
+    pub fn fetch(&self, file: &SourceID) -> Result<SourceView<'_>, io::Error> {
         match self.store.get(file.0) {
             Ok(snapshot) => Ok(SourceView { snapshot }),
-            Err(AccessError::SnapshotReleased) => Err(std::io::Error::new(std::io::ErrorKind::NotFound, "source handle released")),
-            Err(error) => Err(std::io::Error::other(error.to_string())),
+            Err(AccessError::SnapshotReleased) => {
+                Err(io::Error::new(io::ErrorKind::NotFound, "source handle released"))
+            }
+            Err(error) => Err(io::Error::other(error.to_string())),
         }
     }
 
     /// Returns the display path for a source handle.
     pub fn source_path(&self, file: &SourceID) -> Option<&SourcePath> {
         self.paths.get(&file.0.index())
+    }
+}
+
+impl SourceProvider for SourceCache {
+    fn fetch(&self, file: &SourceID) -> Result<SourceView<'_>, ProviderError> {
+        SourceCache::fetch(self, file).map_err(ProviderError::from)
+    }
+
+    fn source_path(&self, file: &SourceID) -> Option<&SourcePath> {
+        SourceCache::source_path(self, file)
     }
 }
 
@@ -186,6 +235,11 @@ impl SourceView<'_> {
         let bytes = view.line_at(idx).ok()?;
         let text = std::str::from_utf8(bytes).map(|value| value.to_string()).ok()?;
         Some(SourceLine { offset: start, length: text.len() as u32, text })
+    }
+
+    /// Returns the byte offset where a line starts.
+    pub fn line_start(&self, idx: usize) -> Option<u64> {
+        self.snapshot.text_view().line_index().line_offset(idx)
     }
 
     /// Map a byte offset to line index and column.
