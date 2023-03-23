@@ -1,4 +1,4 @@
-use super::sources::{SourceCache, SourceID, SourceView};
+use super::sources::{SourceID, SourceProvider, SourceView};
 use std::ops::Range;
 
 use std::io::Write;
@@ -34,14 +34,14 @@ struct SourceGroup<'a> {
 }
 
 impl Diagnostic {
-    fn get_source_groups(&self, cache: &SourceCache) -> Vec<SourceGroup<'_>> {
+    fn get_source_groups<P: SourceProvider>(&self, provider: &P) -> Vec<SourceGroup<'_>> {
         let mut groups = Vec::new();
         for label in self.labels.iter() {
-            let src = match cache.fetch(&label.span.file) {
+            let src = match provider.fetch(&label.span.file) {
                 Ok(src) => src,
                 Err(e) => {
-                    let src_display = cache.source_path(&label.span.file);
-                    eprintln!("Unable to fetch identifier '{}': {:?}", Show(src_display), e);
+                    let src_display = provider.source_path(&label.span.file);
+                    eprintln!("Unable to fetch identifier '{}': {e}", Show(src_display));
                     continue;
                 }
             };
@@ -76,19 +76,19 @@ impl Diagnostic {
     /// `stderr`.  If you are printing to `stdout`, use the [`write_for_stdout`](Self::write_for_stdout) method instead.
     ///
     /// If you wish to write to `stderr` or `stdout`, you can do so via [`Diagnostic::eprint`] or [`Diagnostic::print`] respectively.
-    pub fn write<W: Write>(&self, cache: &SourceCache, w: W) -> std::io::Result<()> {
-        self.write_for_stream(cache, w, StreamType::Stderr)
+    pub fn write<P: SourceProvider, W: Write>(&self, provider: &P, w: W) -> std::io::Result<()> {
+        self.write_for_stream(provider, w, StreamType::Stderr)
     }
 
     /// Write this diagnostic to an implementor of [`Write`], assuming that the output is ultimately going to be printed
     /// to `stdout`.
-    pub fn write_for_stdout<W: Write>(&self, cache: &SourceCache, w: W) -> std::io::Result<()> {
-        self.write_for_stream(cache, w, StreamType::Stdout)
+    pub fn write_for_stdout<P: SourceProvider, W: Write>(&self, provider: &P, w: W) -> std::io::Result<()> {
+        self.write_for_stream(provider, w, StreamType::Stdout)
     }
 
     /// Write this diagnostic to an implementor of [`Write`], assuming that the output is ultimately going to be printed
     /// to the given output stream (`stdout` or `stderr`).
-    fn write_for_stream<W: Write>(&self, cache: &SourceCache, mut w: W, s: StreamType) -> std::io::Result<()> {
+    fn write_for_stream<P: SourceProvider, W: Write>(&self, provider: &P, mut w: W, s: StreamType) -> std::io::Result<()> {
         let draw = self.config.characters;
 
         // --- Header ---
@@ -104,15 +104,15 @@ impl Diagnostic {
         else {
             writeln!(w, " {}", self.message)?;
         }
-        let groups = self.get_source_groups(&cache);
+        let groups = self.get_source_groups(provider);
 
         // Line number maximum width
         let line_no_width = groups
             .iter()
             .filter_map(|SourceGroup { span, id: src_id, .. }| {
-                let src_name = cache.source_path(src_id).map(|d| d.to_string()).unwrap_or_else(|| "<unknown>".to_string());
+                let src_name = provider.source_path(src_id).map(|d| d.to_string()).unwrap_or_else(|| "<unknown>".to_string());
 
-                let src = match cache.fetch(src_id) {
+                let src = match provider.fetch(src_id) {
                     Ok(src) => src,
                     Err(e) => {
                         eprintln!("Unable to fetch identifier {}: {:?}", src_name, e);
@@ -129,9 +129,9 @@ impl Diagnostic {
         // --- Source sections ---
         let groups_len = groups.len();
         for (group_idx, SourceGroup { id: src_id, span, labels }) in groups.into_iter().enumerate() {
-            let src_name = cache.source_path(src_id).map(|d| d.to_string()).unwrap_or_else(|| "<unknown>".to_string());
+            let src_name = provider.source_path(src_id).map(|d| d.to_string()).unwrap_or_else(|| "<unknown>".to_string());
 
-            let src = match cache.fetch(src_id) {
+            let src = match provider.fetch(src_id) {
                 Ok(src) => src,
                 Err(e) => {
                     eprintln!("Unable to fetch identifier {}: {:?}", src_name, e);
