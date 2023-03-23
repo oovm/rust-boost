@@ -4,13 +4,13 @@ use diagnostic::{
 };
 use diagnostic_svg::structured_to_svg;
 use diagnostic::terminal::SourceRegistry;
-use source_cache::SourceCache;
+use diagnostic::terminal::SourceCache;
 
 #[test]
 fn structured_text_diagnostic_renders_svg() {
     let mut cache = SourceCache::default();
     let source = cache.load_text("fn main() {\n}\n", "main.rs");
-    let source_ref = SourceRef::new("svg", "main.rs");
+    let source_ref = SourceRef::new("svg", "main.rs").unwrap();
 
     let mut registry = SourceRegistry::new();
     registry.register(&source_ref, source);

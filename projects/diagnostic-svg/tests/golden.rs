@@ -2,9 +2,8 @@ use diagnostic::{
     ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity,
     LabelRole, Message, SourceRef,
 };
-use diagnostic::terminal::SourceRegistry;
+use diagnostic::terminal::{SourceCache, SourceRegistry};
 use diagnostic_svg::structured_to_svg;
-use source_cache::SourceCache;
 
 fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
     Diagnostic::new(
@@ -27,7 +26,7 @@ fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
 fn svg_text_diagnostic_matches_golden() {
     let mut cache = SourceCache::default();
     let source = cache.load_text("fn main() {\n}\n", "main.rs");
-    let source_ref = SourceRef::new("svg", "main.rs");
+    let source_ref = SourceRef::new("svg", "main.rs").unwrap();
 
     let mut registry = SourceRegistry::new();
     registry.register(&source_ref, source);
@@ -45,7 +44,7 @@ fn write_svg_golden_fixture() {
 
     let mut cache = SourceCache::default();
     let source = cache.load_text("fn main() {\n}\n", "main.rs");
-    let source_ref = SourceRef::new("svg", "main.rs");
+    let source_ref = SourceRef::new("svg", "main.rs").unwrap();
 
     let mut registry = SourceRegistry::new();
     registry.register(&source_ref, source);

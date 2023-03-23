@@ -2,7 +2,7 @@ use diagnostic::{
     terminal::{structured_to_terminal, Config, SourceRegistry, StructuredRenderError},
     Diagnostic, DiagnosticSet,
 };
-use source_cache::SourceCache;
+use diagnostic::terminal::SourceCache;
 
 /// Failure while rendering structured diagnostics to SVG.
 #[derive(Clone, Debug, PartialEq, Eq)]

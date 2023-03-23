@@ -5,7 +5,7 @@ use lsp_types::{
     Diagnostic as LspDiagnostic, DiagnosticRelatedInformation, DiagnosticSeverity as LspSeverity, Location, NumberOrString,
     Position, Range, Url,
 };
-use source_cache::{SourceID, SourceProvider};
+use diagnostic::terminal::{SourceID, SourceProvider};
 
 use crate::position::byte_range_to_lsp_range;
 use crate::DiagnosticError;
@@ -90,9 +90,9 @@ fn label_text_location(
         DiagnosticLocation::Text { source, range } | DiagnosticLocation::Virtual { source, range } => {
             let file = resolver
                 .resolve(source)
-                .ok_or_else(|| DiagnosticError::UnknownSource { wire_id: source.to_wire_id() })?;
+                .ok_or_else(|| DiagnosticError::UnknownSource { wire_id: source.wire_id() })?;
             let uri = uri_for(file).ok_or_else(|| DiagnosticError::Provider(format!("missing URI for source {}", source.id())))?;
-            let range = byte_range_to_lsp_range(provider, file, range.start, range.end)?;
+            let range = byte_range_to_lsp_range(provider, file, range.start(), range.end())?;
             Ok(Some(Location { uri, range }))
         }
         _ => Ok(None),
@@ -118,7 +118,7 @@ fn render_message(message: &Message) -> String {
 fn location_summary(location: &DiagnosticLocation, message: &Message) -> String {
     let prefix = match location {
         DiagnosticLocation::Binary { source, address_space, range, .. } => {
-            format!("{}:{} [{}, {})", source.id(), address_space.id(), range.start, range.end)
+            format!("{}:{} [{}, {})", source.id(), address_space.id(), range.start(), range.end())
         }
         DiagnosticLocation::Member { container, member, range, precision, .. } => {
             let path = member
@@ -128,7 +128,7 @@ fn location_summary(location: &DiagnosticLocation, message: &Message) -> String 
                 .collect::<Vec<_>>()
                 .join(" -> ");
             let range = range
-                .map(|range: ByteRange| format!(" [{}, {})", range.start, range.end))
+                .map(|range: ByteRange| format!(" [{}, {})", range.start(), range.end()))
                 .unwrap_or_default();
             format!("{}::{path}{range} ({precision:?})", container.id())
         }
@@ -139,7 +139,7 @@ fn location_summary(location: &DiagnosticLocation, message: &Message) -> String 
             format!("{}:{}", document.id(), path.as_str())
         }
         DiagnosticLocation::Text { source, range } | DiagnosticLocation::Virtual { source, range } => {
-            format!("{} [{}, {})", source.id(), range.start, range.end)
+            format!("{} [{}, {})", source.id(), range.start(), range.end())
         }
     };
     format!("{prefix}: {}", render_message(message))
