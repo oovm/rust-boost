@@ -23,3 +23,26 @@ jobs:
         run: cargo build --release
       - name: Tests
         run: cargo test --release --all-features
+
+  features:
+    runs-on: ubuntu-latest
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+      - name: Source default features
+        run: cargo test -p source
+      - name: Source serde
+        run: cargo test -p source --features serde
+      - name: Logger
+        run: cargo test -p logger
+      - name: Console
+        run: cargo test -p console
+      - name: Diagnostic core
+        run: cargo test -p diagnostic --no-default-features
+      - name: Diagnostic serde
+        run: cargo test -p diagnostic --features serde
+      - name: Diagnostic logger
+        run: cargo test -p diagnostic --features logger
