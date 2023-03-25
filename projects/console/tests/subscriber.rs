@@ -1,15 +1,14 @@
 use std::sync::{Arc, Mutex};
 
+use logger::{LogEvent, LogSink, VecSink, clear_global_sink, event, set_global_sink};
 use serial_test::serial;
-use console::{
-    ConsoleEvent, ConsoleSink, VecSink, clear_global_sink, event, install_global_subscriber,
-    set_global_sink,
-};
+
+use console::install_global_subscriber;
 
 struct SharedSink(Arc<Mutex<VecSink>>);
 
-impl ConsoleSink for SharedSink {
-    fn emit(&mut self, event: &ConsoleEvent) {
+impl LogSink for SharedSink {
+    fn emit(&mut self, event: &LogEvent) {
         self.0.lock().expect("vec sink mutex poisoned").emit(event);
     }
 }

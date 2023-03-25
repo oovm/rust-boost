@@ -2,6 +2,6 @@
 
 Human-visible console subscriber and generic terminal styling.
 
-`console` re-exports the shared `logger` facade under transitional `Console*` names and adds color, paint, and layout helpers. It depends on `logger` and `terminal`, not on `diagnostic`.
+`console` depends on `logger` and `terminal`, not on `diagnostic`. It provides color, paint, layout helpers, and `install_global_subscriber` to attach the default stderr subscriber to the global `logger` facade.
 
-Call `install_global_subscriber` to attach the default stderr subscriber to the global logger facade. Domain crates should prefer `logger` for new code. `diagnostic` may still project structured diagnostics into `ConsoleEvent` / `LogEvent` with `EventKind::Diagnostic`.
+Domain crates should use `logger` for structured events, spans, and sinks. Use `console` only for terminal styling or when installing the default human-visible subscriber.
