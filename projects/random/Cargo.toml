@@ -2,7 +2,7 @@
 name = "random"
 version.workspace = true
 authors.workspace = true
-description = "Deterministic random streams with a frozen output profile and unbiased sampling"
+description = "Deterministic random streams with a frozen output profile, unbiased sampling, and owned host entropy backends"
 repository = "https://github.com/oovm/rust-boost/tree/dev/projects/random"
 readme = "readme.md"
 license.workspace = true
@@ -10,9 +10,13 @@ edition.workspace = true
 
 [dependencies]
 
+[target.'cfg(unix)'.dependencies]
+libc = { version = "0.2.155", optional = true }
+
 [features]
 default = []
 std = []
+system = ["dep:libc"]
 
 [package.metadata.docs.rs]
 all-features = true

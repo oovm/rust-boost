@@ -19,20 +19,35 @@ pub enum ErrorKind {
     StreamExhausted,
 }
 
-/// Failure returned by stream and source operations.
+/// Failure returned by stream, source, and entropy operations.
+///
+/// The [`ErrorKind`] classification is stable. A raw platform code may be carried next to it for
+/// reporting, but no platform message string is part of the contract.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Error {
     kind: ErrorKind,
+    platform_code: Option<i32>,
 }
 
 impl Error {
-    pub(crate) fn new(kind: ErrorKind) -> Self {
-        Self { kind }
+    /// Creates an error from a stable classification.
+    pub const fn new(kind: ErrorKind) -> Self {
+        Self { kind, platform_code: None }
+    }
+
+    /// Creates an error that also preserves the raw code reported by a platform backend.
+    pub const fn with_platform_code(kind: ErrorKind, platform_code: i32) -> Self {
+        Self { kind, platform_code: Some(platform_code) }
     }
 
     /// Returns the stable failure classification.
-    pub fn kind(self) -> ErrorKind {
+    pub const fn kind(self) -> ErrorKind {
         self.kind
+    }
+
+    /// Returns the raw platform code when the failure came from a platform backend.
+    pub const fn platform_code(self) -> Option<i32> {
+        self.platform_code
     }
 }
 

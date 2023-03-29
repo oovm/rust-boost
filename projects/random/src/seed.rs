@@ -1,5 +1,7 @@
 use core::fmt::{self, Debug, Formatter};
 
+use crate::{entropy::EntropySource, error::Error, secure::Secure};
+
 /// 32-byte key of the deterministic stream profile.
 ///
 /// A seed carries no entropy guarantee of its own. `Seed::from_u64` only spans 64 bits, so it must
@@ -26,6 +28,16 @@ impl Seed {
             index += 1;
         }
         Self(bytes)
+    }
+
+    /// Generates a seed from a host entropy source.
+    ///
+    /// Only the passed [`Secure`] handle is read. Nothing opens a system source implicitly, and a
+    /// failure is returned instead of a deterministic fallback seed.
+    pub fn generate<E: EntropySource>(secure: &mut Secure<E>) -> Result<Self, Error> {
+        let mut bytes = [0u8; 32];
+        secure.fill(&mut bytes)?;
+        Ok(Self(bytes))
     }
 
     /// Returns the 32-byte encoding for caller-owned replay records.
