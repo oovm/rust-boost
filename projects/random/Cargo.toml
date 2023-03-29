@@ -1,0 +1,18 @@
+[package]
+name = "random"
+version.workspace = true
+authors.workspace = true
+description = "Deterministic random streams with a frozen output profile and unbiased sampling"
+repository = "https://github.com/oovm/rust-boost/tree/dev/projects/random"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+
+[features]
+default = []
+std = []
+
+[package.metadata.docs.rs]
+all-features = true
