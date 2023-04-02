@@ -1,5 +1,7 @@
 //! Domain provenance references used by diagnostic locations.
 
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::fmt::{self, Display, Formatter};
 
 /// Address space reference for binary locations.

@@ -1,3 +1,4 @@
+use alloc::string::String;
 use core::fmt::{self, Display, Formatter};
 
 /// A versioned, namespaced diagnostic code.
