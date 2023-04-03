@@ -1,10 +1,14 @@
 //! Shared unbiased integer sampling of the `boost-chacha12-v1` profile.
+//!
+//! The kernel is written against [`RandomSource`], not against one concrete stream type, so every
+//! source of the crate consumes bytes through the same mapping, rejection loop, and consumption
+//! order. Bytes are read as whole little-endian words of the unsigned width of the endpoint.
 
 use core::ops::{Add, Rem, Sub};
 
 use crate::{
     error::{Error, ErrorKind},
-    stream::Stream,
+    source::RandomSource,
 };
 
 /// Unsigned word width consumed by the profile for integer sampling.
@@ -15,8 +19,8 @@ pub(crate) trait Word: Copy + Ord + Add<Output = Self> + Sub<Output = Self> + Re
     /// One of this width.
     const ONE: Self;
 
-    /// Consumes one word of this width from the stream.
-    fn next_word(stream: &mut Stream) -> Result<Self, Error>;
+    /// Consumes one word of this width from an arbitrary source.
+    fn next_word<S: RandomSource + ?Sized>(source: &mut S) -> Result<Self, Error>;
 
     /// Returns the two's complement negation of this value in this width.
     fn wrapping_neg(self) -> Self;
@@ -32,8 +36,10 @@ impl Word for u32 {
     const ZERO: Self = 0;
     const ONE: Self = 1;
 
-    fn next_word(stream: &mut Stream) -> Result<Self, Error> {
-        stream.u32()
+    fn next_word<S: RandomSource + ?Sized>(source: &mut S) -> Result<Self, Error> {
+        let mut bytes = [0u8; 4];
+        source.try_fill_bytes(&mut bytes)?;
+        Ok(u32::from_le_bytes(bytes))
     }
 
     fn wrapping_neg(self) -> Self {
@@ -49,8 +55,10 @@ impl Word for u64 {
     const ZERO: Self = 0;
     const ONE: Self = 1;
 
-    fn next_word(stream: &mut Stream) -> Result<Self, Error> {
-        stream.u64()
+    fn next_word<S: RandomSource + ?Sized>(source: &mut S) -> Result<Self, Error> {
+        let mut bytes = [0u8; 8];
+        source.try_fill_bytes(&mut bytes)?;
+        Ok(u64::from_le_bytes(bytes))
     }
 
     fn wrapping_neg(self) -> Self {
@@ -68,7 +76,11 @@ impl Word for u64 {
 /// interval accepts every word, so it consumes exactly one word. Otherwise the value is obtained
 /// by rejection sampling: the profile discards words below `2^w mod n` and then reduces modulo `n`,
 /// which keeps every value equally likely.
-pub(crate) fn sample_inclusive<W: Word>(stream: &mut Stream, start: W, end: W) -> Result<W, Error> {
+pub(crate) fn sample_inclusive<W: Word, S: RandomSource + ?Sized>(
+    source: &mut S,
+    start: W,
+    end: W,
+) -> Result<W, Error> {
     if end < start {
         return Err(Error::new(ErrorKind::InvalidRange));
     }
@@ -79,12 +91,12 @@ pub(crate) fn sample_inclusive<W: Word>(stream: &mut Stream, start: W, end: W) -
     let span = end - start;
     let interval = span.wrapping_add(W::ONE);
     if interval == W::ZERO {
-        return W::next_word(stream);
+        return W::next_word(source);
     }
 
     let threshold = interval.wrapping_neg() % interval;
     loop {
-        let word = W::next_word(stream)?;
+        let word = W::next_word(source)?;
         if word >= threshold {
             return Ok(start + (word % interval));
         }

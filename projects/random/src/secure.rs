@@ -1,4 +1,4 @@
-use crate::{entropy::EntropySource, error::Error, system::SystemEntropy};
+use crate::{entropy::EntropySource, error::Error, source::RandomSource, system::SystemEntropy};
 
 /// Handle to a host entropy source.
 ///
@@ -41,5 +41,18 @@ impl<E: EntropySource> Secure<E> {
                 Err(error)
             }
         }
+    }
+}
+
+/// A handle to host entropy is also a random source, so the shared sampling kernel can be driven
+/// by it.
+///
+/// The implementation delegates to [`Secure::fill`], which clears the whole target before
+/// reporting a failure. This direction is the only conversion between the two interfaces: an
+/// arbitrary [`RandomSource`] never becomes an [`EntropySource`], because identical method shapes
+/// carry no security guarantee.
+impl<E: EntropySource> RandomSource for Secure<E> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+        self.fill(dst)
     }
 }
