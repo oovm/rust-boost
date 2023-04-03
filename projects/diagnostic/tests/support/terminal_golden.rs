@@ -23,6 +23,16 @@ fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
     ))
 }
 
+/// Source text of the golden fixture, with line endings normalized to LF.
+///
+/// The repository stores the fixture with LF, while a Windows checkout may materialize CRLF. The
+/// label range is an absolute byte range, so the checkout's line endings would otherwise change the
+/// reported column and the rendered golden on different machines. The recorded golden is compared
+/// through the same normalization for the same reason.
+fn fixture_text() -> String {
+    include_str!("../simple/sample.tao").replace("\r\n", "\n")
+}
+
 fn render_terminal_golden(diagnostic: &Diagnostic, cache: &SourceCache, registry: &SourceRegistry) -> String {
     let terminal = structured_to_terminal(diagnostic, registry, Config::default().with_color(false)).unwrap();
     let mut buffer = Vec::new();
@@ -33,14 +43,15 @@ fn render_terminal_golden(diagnostic: &Diagnostic, cache: &SourceCache, registry
 #[test]
 fn terminal_text_diagnostic_matches_golden() {
     let mut cache = SourceCache::default();
-    let source = cache.load_text(include_str!("../simple/sample.tao"), "sample.tao");
+    let text = fixture_text();
+    let source = cache.load_text(text.as_str(), "sample.tao");
     let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
 
     let mut registry = SourceRegistry::new();
     registry.register(&source_ref, source);
 
     let actual = render_terminal_golden(&sample_text_diagnostic(source_ref), &cache, &registry);
-    let expected = include_str!("../golden/terminal-text.golden");
+    let expected = include_str!("../golden/terminal-text.golden").replace("\r\n", "\n");
     assert_eq!(actual, expected);
 }
 
@@ -51,7 +62,8 @@ fn write_terminal_golden_fixture() {
     use std::path::PathBuf;
 
     let mut cache = SourceCache::default();
-    let source = cache.load_text(include_str!("../simple/sample.tao"), "sample.tao");
+    let text = fixture_text();
+    let source = cache.load_text(text.as_str(), "sample.tao");
     let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
 
     let mut registry = SourceRegistry::new();
