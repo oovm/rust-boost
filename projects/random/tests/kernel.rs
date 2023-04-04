@@ -151,18 +151,9 @@ fn stream_range_and_the_shared_kernel_agree() {
     let mut through_range = Stream::new(Seed::from_u64(42), 0);
     let mut through_kernel = Stream::new(Seed::from_u64(42), 0);
     for _ in 0..64 {
-        assert_eq!(
-            through_range.range(1u32..=6).unwrap(),
-            u32::sample_bounded(&mut through_kernel, 1, 6).unwrap()
-        );
-        assert_eq!(
-            through_range.range(-4i32..=4).unwrap(),
-            i32::sample_bounded(&mut through_kernel, -4, 4).unwrap()
-        );
-        assert_eq!(
-            through_range.range(10u64..40).unwrap(),
-            u64::sample_bounded(&mut through_kernel, 10, 39).unwrap()
-        );
+        assert_eq!(through_range.range(1u32..=6).unwrap(), u32::sample_bounded(&mut through_kernel, 1, 6).unwrap());
+        assert_eq!(through_range.range(-4i32..=4).unwrap(), i32::sample_bounded(&mut through_kernel, -4, 4).unwrap());
+        assert_eq!(through_range.range(10u64..40).unwrap(), u64::sample_bounded(&mut through_kernel, 10, 39).unwrap());
         assert_eq!(
             through_range.range(i64::MIN..=-1).unwrap(),
             i64::sample_bounded(&mut through_kernel, i64::MIN, -1).unwrap()

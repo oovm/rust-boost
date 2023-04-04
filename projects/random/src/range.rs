@@ -28,11 +28,7 @@ pub trait RangeEndpoint: sealed::Sealed + Copy {
     /// kernel is not tied to one concrete source type, and it is hidden because callers normally
     /// sample through [`Stream::range`](crate::Stream::range) or a distribution object.
     #[doc(hidden)]
-    fn sample_bounded<S: RandomSource + ?Sized>(
-        source: &mut S,
-        start: Self,
-        end: Self,
-    ) -> Result<Self, Error>;
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error>;
 }
 
 /// Integer range accepted by [`Stream::range`](crate::Stream::range).
@@ -57,11 +53,7 @@ impl RangeEndpoint for u32 {
         self.checked_sub(1)
     }
 
-    fn sample_bounded<S: RandomSource + ?Sized>(
-        source: &mut S,
-        start: Self,
-        end: Self,
-    ) -> Result<Self, Error> {
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error> {
         sampling::sample_inclusive(source, start, end)
     }
 }
@@ -71,11 +63,7 @@ impl RangeEndpoint for u64 {
         self.checked_sub(1)
     }
 
-    fn sample_bounded<S: RandomSource + ?Sized>(
-        source: &mut S,
-        start: Self,
-        end: Self,
-    ) -> Result<Self, Error> {
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error> {
         sampling::sample_inclusive(source, start, end)
     }
 }
@@ -85,11 +73,7 @@ impl RangeEndpoint for i32 {
         self.checked_sub(1)
     }
 
-    fn sample_bounded<S: RandomSource + ?Sized>(
-        source: &mut S,
-        start: Self,
-        end: Self,
-    ) -> Result<Self, Error> {
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error> {
         sampling::sample_inclusive(source, order_i32(start), order_i32(end)).map(unorder_i32)
     }
 }
@@ -99,11 +83,7 @@ impl RangeEndpoint for i64 {
         self.checked_sub(1)
     }
 
-    fn sample_bounded<S: RandomSource + ?Sized>(
-        source: &mut S,
-        start: Self,
-        end: Self,
-    ) -> Result<Self, Error> {
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error> {
         sampling::sample_inclusive(source, order_i64(start), order_i64(end)).map(unorder_i64)
     }
 }

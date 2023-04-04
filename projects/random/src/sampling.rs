@@ -76,11 +76,7 @@ impl Word for u64 {
 /// interval accepts every word, so it consumes exactly one word. Otherwise the value is obtained
 /// by rejection sampling: the profile discards words below `2^w mod n` and then reduces modulo `n`,
 /// which keeps every value equally likely.
-pub(crate) fn sample_inclusive<W: Word, S: RandomSource + ?Sized>(
-    source: &mut S,
-    start: W,
-    end: W,
-) -> Result<W, Error> {
+pub(crate) fn sample_inclusive<W: Word, S: RandomSource + ?Sized>(source: &mut S, start: W, end: W) -> Result<W, Error> {
     if end < start {
         return Err(Error::new(ErrorKind::InvalidRange));
     }
