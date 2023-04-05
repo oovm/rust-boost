@@ -1,9 +1,21 @@
-use crate::{entropy::EntropySource, error::Error, source::RandomSource, system::SystemEntropy};
+use crate::{
+    entropy::EntropySource,
+    error::Error,
+    range::{RangeEndpoint, SampleRange},
+    sampling,
+    source::RandomSource,
+    system::SystemEntropy,
+};
 
 /// Handle to a host entropy source.
 ///
 /// `Secure` owns no random state. It has no seed, no seek, no cloneable state, and no
 /// deterministic fallback, so a failure is reported instead of being replaced by weaker bytes.
+///
+/// The sampling entries below are shared with [`Stream`](crate::Stream): both types delegate to the
+/// same functions, so one mapping and one consumption order serve both. The difference stays in the
+/// bytes: `Secure` reads host entropy, so the same call sequence does not produce the same values,
+/// and every non-empty request can fail.
 pub struct Secure<E = SystemEntropy> {
     provider: E,
 }
@@ -41,6 +53,70 @@ impl<E: EntropySource> Secure<E> {
                 Err(error)
             }
         }
+    }
+
+    /// Reads the next 4 bytes of host entropy as a little-endian `u32`.
+    pub fn u32(&mut self) -> Result<u32, Error> {
+        sampling::read_u32(self)
+    }
+
+    /// Reads the next 8 bytes of host entropy as a little-endian `u64`.
+    pub fn u64(&mut self) -> Result<u64, Error> {
+        sampling::read_u64(self)
+    }
+
+    /// Samples an unbiased value from an integer range over host entropy.
+    ///
+    /// Bounds are validated before any byte is requested, and the interval is sampled with the same
+    /// rejection mapping as [`Stream::range`](crate::Stream::range). A single-value interval
+    /// requests no entropy.
+    pub fn range<R, B>(&mut self, bounds: B) -> Result<R, Error>
+    where
+        R: RangeEndpoint,
+        B: SampleRange<R>,
+    {
+        sampling::range(self, bounds)
+    }
+
+    /// Samples a uniform `f32` in `[0, 1)` from the top 24 bits of one word.
+    pub fn unit_f32(&mut self) -> Result<f32, Error> {
+        sampling::unit_f32(self)
+    }
+
+    /// Samples a uniform `f64` in `[0, 1)` from the top 53 bits of one word.
+    pub fn unit_f64(&mut self) -> Result<f64, Error> {
+        sampling::unit_f64(self)
+    }
+
+    /// Decides the rational probability `numerator / denominator` from host entropy.
+    ///
+    /// A zero or full probability returns without requesting entropy, and an out-of-range rational
+    /// probability fails before any byte is requested.
+    pub fn chance(&mut self, numerator: u64, denominator: u64) -> Result<bool, Error> {
+        sampling::chance(self, numerator, denominator)
+    }
+
+    /// Samples a uniform index in `0..len`.
+    ///
+    /// An empty collection returns `None` without requesting entropy, and the index is always
+    /// sampled as a `u64` interval so the same collection length uses the same mapping on every
+    /// target.
+    pub fn index(&mut self, len: usize) -> Result<Option<usize>, Error> {
+        sampling::index(self, len)
+    }
+
+    /// Samples a reference to one element, or `None` for an empty slice.
+    pub fn choose<'a, T>(&mut self, items: &'a [T]) -> Result<Option<&'a T>, Error> {
+        sampling::choose(self, items)
+    }
+
+    /// Shuffles `items` with descending Fisher-Yates over host entropy.
+    ///
+    /// A slice of length 0 or 1 is left untouched without requesting entropy. If the provider fails
+    /// mid-way, the swaps already performed are kept and the failure is returned, so a caller must
+    /// treat a failure as a possibly partial rearrangement.
+    pub fn shuffle<T>(&mut self, items: &mut [T]) -> Result<(), Error> {
+        sampling::shuffle(self, items)
     }
 }
 

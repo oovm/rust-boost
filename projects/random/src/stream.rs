@@ -1,7 +1,8 @@
 use crate::{
     chacha::ChaChaCore,
-    error::{Error, ErrorKind},
+    error::Error,
     range::{RangeEndpoint, SampleRange},
+    sampling,
     seed::Seed,
     source::RandomSource,
 };
@@ -11,6 +12,9 @@ use crate::{
 /// A stream is defined by a [`Seed`] and a logical stream identifier. It never reads host entropy,
 /// never depends on thread scheduling or target word size, and consumes its state through
 /// `&mut self` only.
+///
+/// The sampling entries below are shared with [`Secure`](crate::Secure): both types delegate to the
+/// same functions, so one profile mapping and one consumption order serve both.
 pub struct Stream {
     core: ChaChaCore,
 }
@@ -40,16 +44,12 @@ impl Stream {
 
     /// Reads the next 4 bytes as a little-endian `u32`.
     pub fn u32(&mut self) -> Result<u32, Error> {
-        let mut bytes = [0u8; 4];
-        self.core.fill(&mut bytes)?;
-        Ok(u32::from_le_bytes(bytes))
+        sampling::read_u32(self)
     }
 
     /// Reads the next 8 bytes as a little-endian `u64`.
     pub fn u64(&mut self) -> Result<u64, Error> {
-        let mut bytes = [0u8; 8];
-        self.core.fill(&mut bytes)?;
-        Ok(u64::from_le_bytes(bytes))
+        sampling::read_u64(self)
     }
 
     /// Samples an unbiased value from an integer range.
@@ -62,18 +62,17 @@ impl Stream {
         R: RangeEndpoint,
         B: SampleRange<R>,
     {
-        let (start, end) = bounds.bounds()?;
-        R::sample_bounded(self, start, end)
+        sampling::range(self, bounds)
     }
 
     /// Samples a uniform `f32` in `[0, 1)` from the top 24 bits of one word.
     pub fn unit_f32(&mut self) -> Result<f32, Error> {
-        Ok((self.u32()? >> 8) as f32 * (1.0 / 16_777_216.0))
+        sampling::unit_f32(self)
     }
 
     /// Samples a uniform `f64` in `[0, 1)` from the top 53 bits of one word.
     pub fn unit_f64(&mut self) -> Result<f64, Error> {
-        Ok((self.u64()? >> 11) as f64 * (1.0 / 9_007_199_254_740_992.0))
+        sampling::unit_f64(self)
     }
 
     /// Decides the rational probability `numerator / denominator`.
@@ -81,16 +80,7 @@ impl Stream {
     /// A zero or full probability returns without consuming bytes. Otherwise the stream samples an
     /// integer in `[0, denominator)` and compares it with `numerator`.
     pub fn chance(&mut self, numerator: u64, denominator: u64) -> Result<bool, Error> {
-        if denominator == 0 || numerator > denominator {
-            return Err(Error::new(ErrorKind::InvalidProbability));
-        }
-        if numerator == 0 {
-            return Ok(false);
-        }
-        if numerator == denominator {
-            return Ok(true);
-        }
-        Ok(self.range(0u64..denominator)? < numerator)
+        sampling::chance(self, numerator, denominator)
     }
 
     /// Samples a uniform index in `0..len`.
@@ -98,21 +88,12 @@ impl Stream {
     /// An empty collection returns `None` without consuming bytes. The index is always sampled as a
     /// `u64` interval, so the same collection length yields the same index on every target.
     pub fn index(&mut self, len: usize) -> Result<Option<usize>, Error> {
-        if len == 0 {
-            return Ok(None);
-        }
-        let bound = u64::try_from(len).map_err(|_| Error::new(ErrorKind::LengthOverflow))?;
-        let sampled = self.range(0u64..bound)?;
-        let index = usize::try_from(sampled).map_err(|_| Error::new(ErrorKind::LengthOverflow))?;
-        Ok(Some(index))
+        sampling::index(self, len)
     }
 
     /// Samples a reference to one element, or `None` for an empty slice.
     pub fn choose<'a, T>(&mut self, items: &'a [T]) -> Result<Option<&'a T>, Error> {
-        match self.index(items.len())? {
-            Some(index) => Ok(Some(&items[index])),
-            None => Ok(None),
-        }
+        sampling::choose(self, items)
     }
 
     /// Shuffles `items` with descending Fisher-Yates.
@@ -121,14 +102,7 @@ impl Stream {
     /// or 1 is left untouched without consuming bytes. If the stream fails mid-way, the swaps
     /// already performed are kept and the error is returned.
     pub fn shuffle<T>(&mut self, items: &mut [T]) -> Result<(), Error> {
-        for i in (1..items.len()).rev() {
-            let Some(target) = self.index(i + 1)?
-            else {
-                return Err(Error::new(ErrorKind::InvalidRange));
-            };
-            items.swap(i, target);
-        }
-        Ok(())
+        sampling::shuffle(self, items)
     }
 }
 
