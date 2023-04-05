@@ -9,6 +9,8 @@ Deterministic random streams with a frozen output profile, unbiased sampling, an
 
 `range` accepts `u32`, `u64`, `i32`, and `i64` over `Range` and `RangeInclusive` only, samples with rejection instead of modulo scaling, and rejects invalid bounds without consuming bytes.
 
+`random::distribution` holds the parameter models of the first discrete batch: `UniformU32`, `UniformU64`, `UniformI32`, `UniformI64`, `Bernoulli`, and `Categorical`. A distribution is an immutable parameter object that owns no random state, validates its parameters during construction, and samples through the same kernel as `range` and `chance`, so a stream and an entropy handle cannot drift apart. `Secure` implements `RandomSource` for that reason, and the reverse conversion does not exist. Reported masses are float approximations of the exact integer law they model.
+
 Every sampling entry returns `Result`: the profile has a finite capacity, range or probability arguments can be invalid, and a host entropy request can fail. `Secure::system()` only constructs a handle. The first non-empty request probes the platform, an empty request never touches it, and a failed request clears the whole buffer so unmarked partial entropy is never delivered. The handle caches no random bytes, so there is no user-space state for a fork to duplicate and no global registry to keep in sync.
 
 The default build is `no_std` and requires no `alloc`. `std` only adds standard error integration, and `system` adds the platform entropy backends of this crate.

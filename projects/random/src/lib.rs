@@ -3,6 +3,7 @@
 #![no_std]
 
 mod chacha;
+pub mod distribution;
 mod entropy;
 mod error;
 mod range;

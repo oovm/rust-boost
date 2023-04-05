@@ -13,6 +13,8 @@ pub enum ErrorKind {
     InvalidRange,
     /// A rational probability has a zero denominator or an out-of-range numerator.
     InvalidProbability,
+    /// A distribution parameter model is internally inconsistent or unusable.
+    InvalidParameter,
     /// A length or position cannot be represented by the profile.
     LengthOverflow,
     /// The stream reached the end of the `boost-chacha12-v1` capacity.
@@ -59,6 +61,7 @@ impl Display for Error {
             ErrorKind::BackendFailure => f.write_str("the host entropy backend failed"),
             ErrorKind::InvalidRange => f.write_str("the range bounds are empty or reversed"),
             ErrorKind::InvalidProbability => f.write_str("the rational probability is invalid"),
+            ErrorKind::InvalidParameter => f.write_str("the distribution parameters are invalid"),
             ErrorKind::LengthOverflow => f.write_str("the length or position is outside the profile"),
             ErrorKind::StreamExhausted => f.write_str("the stream reached the end of its capacity"),
         }
