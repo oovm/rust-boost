@@ -50,3 +50,29 @@ jobs:
         run: cargo test -p diagnostic --features serde
       - name: Diagnostic logger
         run: cargo test -p diagnostic --features logger
+
+  word-size:
+    runs-on: windows-latest
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          targets: i686-pc-windows-msvc
+      - name: Random core on a 32-bit host word
+        run: cargo test -p random --no-default-features --target i686-pc-windows-msvc
+      - name: Random host entropy on a 32-bit host word
+        run: cargo test -p random --all-features --target i686-pc-windows-msvc
+
+  byte-order:
+    runs-on: ubuntu-latest
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          targets: s390x-unknown-linux-gnu
+      - name: Compile-only check on a big-endian target
+        run: cargo check -p random --all-features --target s390x-unknown-linux-gnu
