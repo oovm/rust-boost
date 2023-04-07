@@ -76,3 +76,22 @@ jobs:
           targets: s390x-unknown-linux-gnu
       - name: Compile-only check on a big-endian target
         run: cargo check -p random --all-features --target s390x-unknown-linux-gnu
+
+  wasi:
+    runs-on: ubuntu-latest
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          targets: wasm32-wasip1, wasm32-wasip2
+      - uses: bytecodealliance/actions/wasmtime/setup@v1
+      - name: WASI preview 1 host entropy
+        run: cargo test -p random --all-features --target wasm32-wasip1
+        env:
+          CARGO_TARGET_WASM32_WASIP1_RUNNER: wasmtime
+      - name: WASI preview 2 host entropy
+        run: cargo test -p random --all-features --target wasm32-wasip2
+        env:
+          CARGO_TARGET_WASM32_WASIP2_RUNNER: wasmtime

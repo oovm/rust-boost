@@ -117,7 +117,7 @@ fn seed_generation_reports_a_failing_provider() {
 /// Platform backends compiled by this crate, which the test host must exercise directly.
 ///
 /// The `system` feature is not a default, so this module only compiles when a backend exists.
-#[cfg(all(feature = "system", any(windows, target_os = "linux", target_vendor = "apple")))]
+#[cfg(all(feature = "system", any(windows, target_os = "linux", target_os = "wasi", target_vendor = "apple")))]
 mod host {
     use random::{Secure, Seed};
 

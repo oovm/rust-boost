@@ -14,6 +14,8 @@ use crate::{
 mod apple;
 #[cfg(all(feature = "system", target_os = "linux"))]
 mod linux;
+#[cfg(all(feature = "system", target_os = "wasi"))]
+mod wasi;
 #[cfg(all(feature = "system", windows))]
 mod windows;
 
@@ -21,6 +23,8 @@ mod windows;
 use apple::fill as host_fill;
 #[cfg(all(feature = "system", target_os = "linux"))]
 use linux::fill as host_fill;
+#[cfg(all(feature = "system", target_os = "wasi"))]
+use wasi::fill as host_fill;
 #[cfg(all(feature = "system", windows))]
 use windows::fill as host_fill;
 
@@ -73,13 +77,13 @@ impl EntropySource for SystemEntropy {
 }
 
 /// Requests entropy from the compiled platform backend.
-#[cfg(all(feature = "system", any(windows, target_os = "linux", target_vendor = "apple")))]
+#[cfg(all(feature = "system", any(windows, target_os = "linux", target_os = "wasi", target_vendor = "apple")))]
 fn dispatch(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Error> {
     host_fill(entropy, dst)
 }
 
 /// Reports that this target has no implemented and tested backend.
-#[cfg(not(all(feature = "system", any(windows, target_os = "linux", target_vendor = "apple"))))]
+#[cfg(not(all(feature = "system", any(windows, target_os = "linux", target_os = "wasi", target_vendor = "apple"))))]
 fn dispatch(entropy: &mut SystemEntropy, _dst: &mut [u8]) -> Result<(), Error> {
     entropy.mark_unsupported();
     Err(Error::new(ErrorKind::Unsupported))
