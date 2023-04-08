@@ -95,3 +95,27 @@ jobs:
         run: cargo test -p random --all-features --target wasm32-wasip2
         env:
           CARGO_TARGET_WASM32_WASIP2_RUNNER: wasmtime
+
+  web-host:
+    runs-on: ubuntu-latest
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          targets: wasm32-unknown-unknown
+      - name: Compile-only check of the Web Crypto bridge
+        run: cargo check -p random --features web --target wasm32-unknown-unknown
+      - name: The default build must not pull `wasm-bindgen`
+        run: |
+          if cargo tree -p random --target wasm32-unknown-unknown | grep -q wasm-bindgen; then
+            echo "the default build must not depend on wasm-bindgen" >&2
+            exit 1
+          fi
+      - name: A native build must not pull `wasm-bindgen` either
+        run: |
+          if cargo tree -p random --all-features | grep -q wasm-bindgen; then
+            echo "a native all-features build must not depend on wasm-bindgen" >&2
+            exit 1
+          fi
