@@ -12,10 +12,12 @@
 
 mod bernoulli;
 mod categorical;
+mod continuous;
 mod uniform;
 mod uniform_float;
 
 pub use bernoulli::Bernoulli;
 pub use categorical::Categorical;
+pub use continuous::{Exponential, Normal};
 pub use uniform::{UniformI32, UniformI64, UniformU32, UniformU64};
 pub use uniform_float::{UniformF32, UniformF64};

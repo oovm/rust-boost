@@ -6,6 +6,7 @@ mod chacha;
 pub mod distribution;
 mod entropy;
 mod error;
+mod math;
 mod range;
 mod sampling;
 mod secure;

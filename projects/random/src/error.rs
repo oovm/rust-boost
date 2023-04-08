@@ -15,6 +15,8 @@ pub enum ErrorKind {
     InvalidProbability,
     /// A distribution parameter model is internally inconsistent or unusable.
     InvalidParameter,
+    /// A sampled value cannot be expressed by the numerical contract of its distribution.
+    NumericalFailure,
     /// A length or position cannot be represented by the profile.
     LengthOverflow,
     /// The stream reached the end of the `boost-chacha12-v1` capacity.
@@ -62,6 +64,7 @@ impl Display for Error {
             ErrorKind::InvalidRange => f.write_str("the range bounds are empty or reversed"),
             ErrorKind::InvalidProbability => f.write_str("the rational probability is invalid"),
             ErrorKind::InvalidParameter => f.write_str("the distribution parameters are invalid"),
+            ErrorKind::NumericalFailure => f.write_str("the sampled value is outside the numerical contract"),
             ErrorKind::LengthOverflow => f.write_str("the length or position is outside the profile"),
             ErrorKind::StreamExhausted => f.write_str("the stream reached the end of its capacity"),
         }
