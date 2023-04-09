@@ -56,3 +56,43 @@ fn configure_folder_creates_missing_root() {
     assert_eq!(fs_tools::temp::folder_path().unwrap(), custom);
     fs_tools::temp::set_folder(std::env::temp_dir());
 }
+
+/// The candidate name carries host entropy, so two candidates for the same label differ in the suffix
+/// instead of only in a counter or a timestamp.
+#[test]
+fn candidate_names_are_not_predictable_from_a_counter() {
+    let base = create_folder().unwrap();
+    let names: Vec<String> = (0..32)
+        .map(|_| {
+            let file = create_named_in(base.path()).unwrap();
+            file.path().file_name().unwrap().to_string_lossy().into_owned()
+        })
+        .collect();
+
+    let unique: std::collections::HashSet<&String> = names.iter().collect();
+    assert_eq!(unique.len(), names.len(), "candidate names repeated: {names:?}");
+
+    for name in &names {
+        let suffix = name.rsplit('-').next().unwrap();
+        assert_eq!(suffix.len(), 32, "the suffix is not 16 entropy bytes in hex: {name}");
+        assert!(suffix.chars().all(|digit| digit.is_ascii_hexdigit()), "the suffix is not hex: {name}");
+    }
+
+    // A counter-style suffix would differ only in its last digits, so the leading byte of the suffix
+    // must differ too.
+    let leading: std::collections::HashSet<&str> = names.iter().map(|name| &name[name.len() - 32..][..2]).collect();
+    assert!(leading.len() > 1, "every candidate started with the same entropy byte: {names:?}");
+}
+
+/// Randomness names a candidate, but it does not reserve the path: creation still has to be atomic.
+#[test]
+fn candidate_names_still_rely_on_atomic_creation() {
+    let base = create_folder().unwrap();
+    let file = create_named_in(base.path()).unwrap();
+    let path = file.path().to_path_buf();
+
+    // The candidate name is already taken by this very file, so a second atomic creation of the same
+    // path must fail instead of overwriting the file that is there.
+    let again = std::fs::OpenOptions::new().read(true).write(true).create_new(true).open(&path);
+    assert!(matches!(again, Err(ref err) if err.kind() == std::io::ErrorKind::AlreadyExists));
+}

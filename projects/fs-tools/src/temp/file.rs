@@ -72,7 +72,7 @@ pub fn create_file() -> io::Result<File> {
 pub fn create_file_in(folder: impl AsRef<Path>) -> io::Result<File> {
     let folder = folder.as_ref();
     for _ in 0..128 {
-        let path = folder.join(unique::prefix("f"));
+        let path = folder.join(unique::prefix("f")?);
         match open_anonymous(&path) {
             Ok(file) => return Ok(file),
             Err(err) if err.kind() == io::ErrorKind::AlreadyExists => continue,
@@ -91,7 +91,8 @@ pub fn create_named() -> io::Result<NamedFile> {
 pub fn create_named_in(folder: impl AsRef<Path>) -> io::Result<NamedFile> {
     let folder = folder.as_ref();
     for _ in 0..128 {
-        let path = folder.join(unique::prefix("n"));        match OpenOptions::new().read(true).write(true).create_new(true).open(&path) {
+        let path = folder.join(unique::prefix("n")?);
+        match OpenOptions::new().read(true).write(true).create_new(true).open(&path) {
             Ok(file) => return Ok(NamedFile { file: Some(file), path, keep: false }),
             Err(err) if err.kind() == io::ErrorKind::AlreadyExists => continue,
             Err(err) => return Err(err),

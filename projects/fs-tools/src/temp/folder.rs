@@ -48,7 +48,7 @@ pub fn create_folder() -> io::Result<TempFolder> {
 pub fn create_folder_in(base: impl AsRef<Path>) -> io::Result<TempFolder> {
     let base = base.as_ref();
     for _ in 0..128 {
-        let path = base.join(format!("{}-folder", unique::prefix("d")));
+        let path = base.join(format!("{}-folder", unique::prefix("d")?));
         match crate::create_folder(&path) {
             Ok(()) => return Ok(TempFolder { path, keep: false }),
             Err(err) if err.kind() == io::ErrorKind::AlreadyExists => continue,

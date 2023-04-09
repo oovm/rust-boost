@@ -21,4 +21,6 @@ Extended `std::fs` for the rust-boost workspace.
 
 Crate-root re-exports mirror `std::fs` with folder-oriented names where applicable. Extensions live under `temp`, `walk`, and `async_walk`.
 
+Temporary paths take their candidate name from the host entropy source of `random`, so a candidate is not predictable from a timestamp or a counter. Randomness only names a candidate: every temporary file is still created with `create_new` and every temporary folder with an atomic create, and a collision is retried. When the host has no usable entropy source, the candidate fails instead of falling back to a predictable name.
+
 On WASI, call `temp::configure_folder` or `temp::create_folder_in` with a preopened writable folder before creating temporary paths.
