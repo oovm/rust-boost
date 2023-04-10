@@ -22,5 +22,10 @@ std = []
 system = ["dep:libc"]
 web = ["dep:wasm-bindgen"]
 
+# Comparison crates used only by the benchmarks, so the shipped graph stays free of them.
+[dev-dependencies]
+rand = "0.8"
+fastrand = "2"
+
 [package.metadata.docs.rs]
 all-features = true

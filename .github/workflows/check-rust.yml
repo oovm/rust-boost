@@ -107,15 +107,15 @@ jobs:
           targets: wasm32-unknown-unknown
       - name: Compile-only check of the Web Crypto bridge
         run: cargo check -p random --features web --target wasm32-unknown-unknown
-      - name: The default build must not pull `wasm-bindgen`
+      - name: The shipped graph must stay free of bridge and comparison crates
         run: |
-          if cargo tree -p random --target wasm32-unknown-unknown | grep -q wasm-bindgen; then
-            echo "the default build must not depend on wasm-bindgen" >&2
+          if cargo tree -p random --all-features --edges normal | grep -qE '([^a-z]|^)(rand|rand_chacha|rand_core|getrandom|fastrand|wasm-bindgen) v'; then
+            echo "the shipped graph must not contain a comparison crate or wasm-bindgen" >&2
             exit 1
           fi
-      - name: A native build must not pull `wasm-bindgen` either
+      - name: The browser target must stay free of `wasm-bindgen` by default
         run: |
-          if cargo tree -p random --all-features | grep -q wasm-bindgen; then
-            echo "a native all-features build must not depend on wasm-bindgen" >&2
+          if cargo tree -p random --target wasm32-unknown-unknown --edges normal | grep -q wasm-bindgen; then
+            echo "the default build must not depend on wasm-bindgen" >&2
             exit 1
           fi
