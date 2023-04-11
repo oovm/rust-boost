@@ -8,14 +8,14 @@
 use core::{cmp, ffi::c_void};
 
 use super::SystemEntropy;
-use crate::error::{Error, ErrorKind};
+use crate::error::{RandomError, RandomErrorKind};
 
 /// One request never asks for more than this many bytes, so the loop does not rely on a kernel
 /// returning a large request in a single call.
 const REQUEST_LIMIT: usize = 256;
 
 /// Fills `dst` with host entropy, or fails without delivering partial output.
-pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Error> {
+pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
     let mut written = 0;
     while written < dst.len() {
         let piece = cmp::min(dst.len() - written, REQUEST_LIMIT);
@@ -24,18 +24,18 @@ pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Er
             // A short read is expected, so the same request continues with the rest.
             returned if returned > 0 => written += returned as usize,
             // No progress was made, so continuing would loop forever.
-            0 => return Err(Error::new(ErrorKind::BackendFailure)),
+            0 => return Err(RandomError::new(RandomErrorKind::BackendFailure)),
             _ => match current_errno() {
                 // The call was interrupted, so the same request is retried instead of failing.
                 libc::EINTR => continue,
                 // The pool is not ready yet, which does not make the platform permanently unusable.
-                libc::EAGAIN => return Err(Error::with_platform_code(ErrorKind::EntropyUnavailable, libc::EAGAIN)),
+                libc::EAGAIN => return Err(RandomError::with_platform_code(RandomErrorKind::EntropyUnavailable, libc::EAGAIN)),
                 // The kernel has no such call, which is a permanent platform fact.
                 libc::ENOSYS => {
                     entropy.mark_unsupported();
-                    return Err(Error::with_platform_code(ErrorKind::Unsupported, libc::ENOSYS));
+                    return Err(RandomError::with_platform_code(RandomErrorKind::Unsupported, libc::ENOSYS));
                 }
-                code => return Err(Error::with_platform_code(ErrorKind::BackendFailure, code)),
+                code => return Err(RandomError::with_platform_code(RandomErrorKind::BackendFailure, code)),
             },
         }
     }

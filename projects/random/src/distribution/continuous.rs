@@ -11,7 +11,7 @@
 //! needs an error function, which this crate does not implement, so `Normal` has no `cdf`.
 
 use crate::{
-    error::{Error, ErrorKind},
+    error::{RandomError, RandomErrorKind},
     math, sampling,
     source::RandomSource,
 };
@@ -35,12 +35,12 @@ impl Normal {
     /// Creates the distribution from a finite `mean` and a finite, strictly positive `std_dev`.
     ///
     /// A non-finite parameter or a non-positive deviation fails with
-    /// [`ErrorKind::InvalidParameter`](crate::ErrorKind::InvalidParameter) during construction.
-    pub fn new(mean: f64, std_dev: f64) -> Result<Self, Error> {
+    /// [`ErrorKind::InvalidParameter`](crate::RandomErrorKind::InvalidParameter) during construction.
+    pub fn new(mean: f64, std_dev: f64) -> Result<Self, RandomError> {
         if mean.is_finite() && std_dev.is_finite() && std_dev > 0.0 {
             return Ok(Self { mean, std_dev });
         }
-        Err(Error::new(ErrorKind::InvalidParameter))
+        Err(RandomError::new(RandomErrorKind::InvalidParameter))
     }
 
     /// Returns the mean of the distribution.
@@ -65,9 +65,9 @@ impl Normal {
     ///
     /// The rejection loop repeats while the pair is at the origin or outside the unit circle. A
     /// source failure is reported as it happens, and a drawn value whose position and scale cannot be
-    /// represented fails with [`ErrorKind::NumericalFailure`](crate::ErrorKind::NumericalFailure)
+    /// represented fails with [`ErrorKind::NumericalFailure`](crate::RandomErrorKind::NumericalFailure)
     /// instead of returning a non-finite sample.
-    pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<f64, Error> {
+    pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<f64, RandomError> {
         loop {
             let first = symmetric(source)?;
             let second = symmetric(source)?;
@@ -78,7 +78,7 @@ impl Normal {
             let standard = first * math::sqrt(-2.0 * math::ln(squared) / squared);
             let value = self.mean + self.std_dev * standard;
             if !value.is_finite() {
-                return Err(Error::new(ErrorKind::NumericalFailure));
+                return Err(RandomError::new(RandomErrorKind::NumericalFailure));
             }
             return Ok(value);
         }
@@ -102,11 +102,11 @@ pub struct Exponential {
 
 impl Exponential {
     /// Creates the distribution from a finite, strictly positive `rate`.
-    pub fn new(rate: f64) -> Result<Self, Error> {
+    pub fn new(rate: f64) -> Result<Self, RandomError> {
         if rate.is_finite() && rate > 0.0 {
             return Ok(Self { rate });
         }
-        Err(Error::new(ErrorKind::InvalidParameter))
+        Err(RandomError::new(RandomErrorKind::InvalidParameter))
     }
 
     /// Returns the rate of the distribution.
@@ -128,16 +128,16 @@ impl Exponential {
     /// Samples one value from the support.
     ///
     /// A source failure is reported as it happens, and a value whose quotient cannot be represented
-    /// fails with [`ErrorKind::NumericalFailure`](crate::ErrorKind::NumericalFailure) instead of
+    /// fails with [`ErrorKind::NumericalFailure`](crate::RandomErrorKind::NumericalFailure) instead of
     /// returning a non-finite sample.
-    pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<f64, Error> {
+    pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<f64, RandomError> {
         let word = sampling::read_u64(source)?;
         // The top 53 bits are stepped to the largest value strictly below one and scaled by `2^-53`,
         // which keeps `u` inside `(0, 1]` with the resolution of the format.
         let unit = (((word >> 11) + 1) as f64) * (1.0 / 9_007_199_254_740_992.0);
         let value = -math::ln(unit) / self.rate;
         if !value.is_finite() {
-            return Err(Error::new(ErrorKind::NumericalFailure));
+            return Err(RandomError::new(RandomErrorKind::NumericalFailure));
         }
         Ok(value)
     }
@@ -169,7 +169,7 @@ impl Exponential {
 ///
 /// The grid holds every odd multiple of `2^-52` in that range, so it is symmetric about zero and
 /// every value has the same probability.
-fn symmetric<S: RandomSource + ?Sized>(source: &mut S) -> Result<f64, Error> {
+fn symmetric<S: RandomSource + ?Sized>(source: &mut S) -> Result<f64, RandomError> {
     let word = sampling::read_u64(source)?;
     let step = (word >> 12) as f64;
     Ok((2.0 * step + 1.0) * (1.0 / 4_503_599_627_370_496.0) - 1.0)

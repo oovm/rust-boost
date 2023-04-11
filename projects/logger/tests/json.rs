@@ -1,13 +1,11 @@
 use logger::{
-    ByteRangePayload, DiagnosticPayload, FieldValue, JsonLinesSink, LabelPayload, Level, LocationPayload,
-    LogEvent, LogSink, MessagePayload, SourceRefPayload, event_to_json,
+    ByteRangePayload, DiagnosticPayload, FieldValue, JsonLinesSink, LabelPayload, Level, LocationPayload, LogEvent, LogSink,
+    MessagePayload, SourceRefPayload, event_to_json,
 };
 
 #[test]
 fn event_to_json_serializes_log_event() {
-    let event = LogEvent::log(Level::Info, "worker")
-        .field("message", FieldValue::str("ready"))
-        .build();
+    let event = LogEvent::log(Level::Info, "worker").field("message", FieldValue::str("ready")).build();
     let json = event_to_json(&event);
     assert!(json.contains("\"kind\":\"log\""));
     assert!(json.contains("\"target\":\"worker\""));
@@ -31,20 +29,15 @@ fn event_to_json_serializes_diagnostic_payload() {
 
 #[test]
 fn event_to_json_serializes_text_span_revision() {
-    let payload = DiagnosticPayload::new(
-        "oak.syntax.unexpected-token",
-        "error",
-        MessagePayload::new("oak.syntax.unexpected-token"),
-    )
-        .with_primary(
-            LabelPayload::new(
+    let payload =
+        DiagnosticPayload::new("oak.syntax.unexpected-token", "error", MessagePayload::new("oak.syntax.unexpected-token"))
+            .with_primary(LabelPayload::new(
                 LocationPayload::TextSpan {
                     source: SourceRefPayload::new("oak", "sample.xml").with_revision("1"),
                     range: ByteRangePayload { start: 12, end: 13 },
                 },
                 "primary",
-            ),
-        );
+            ));
     let json = event_to_json(&LogEvent::diagnostic(payload));
     assert!(json.contains("\"revision\":\"1\""));
 }
@@ -53,11 +46,7 @@ fn event_to_json_serializes_text_span_revision() {
 fn json_lines_sink_writes_one_line_per_event() {
     let mut buffer = Vec::new();
     let mut sink = JsonLinesSink::new(&mut buffer);
-    sink.emit(
-        &LogEvent::log(Level::Warn, "cli")
-            .field("message", FieldValue::str("retry"))
-            .build(),
-    );
+    sink.emit(&LogEvent::log(Level::Warn, "cli").field("message", FieldValue::str("retry")).build());
     let text = String::from_utf8(buffer).expect("utf-8 output");
     assert_eq!(text.matches('\n').count(), 1);
     assert!(text.contains("\"kind\":\"log\""));
@@ -65,9 +54,7 @@ fn json_lines_sink_writes_one_line_per_event() {
 
 #[test]
 fn json_string_escapes_quotes() {
-    let event = LogEvent::log(Level::Error, "test")
-        .field("message", FieldValue::str("say \"hi\""))
-        .build();
+    let event = LogEvent::log(Level::Error, "test").field("message", FieldValue::str("say \"hi\"")).build();
     let json = event_to_json(&event);
     assert!(json.contains(r#"say \"hi\""#));
 }

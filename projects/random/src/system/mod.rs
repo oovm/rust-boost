@@ -3,11 +3,11 @@
 //! The crate owns backend selection, capability facts, chunking, short-read handling, and error
 //! classification. System SDKs and ABI bindings are used only as platform bindings: no random
 //! source crate is linked, and a target without an implemented and tested backend reports
-//! [`ErrorKind::Unsupported`](crate::ErrorKind::Unsupported) instead of guessing.
+//! [`ErrorKind::Unsupported`](crate::RandomErrorKind::Unsupported) instead of guessing.
 
 use crate::{
     entropy::EntropySource,
-    error::{Error, ErrorKind},
+    error::{RandomError, RandomErrorKind},
 };
 
 #[cfg(all(feature = "system", target_vendor = "apple"))]
@@ -38,7 +38,7 @@ use windows::fill as host_fill;
 /// successful request does not prove that the next one succeeds, and an uninitialized pool or a
 /// changed permission must never be stored as a permanent failure. A request therefore always goes
 /// to the host while nothing permanent is known, and only a reported
-/// [`ErrorKind::Unsupported`] stops later requests.
+/// [`RandomErrorKind::Unsupported`] stops later requests.
 enum Capability {
     /// Nothing permanent is known yet, so requests go to the host.
     Unknown,
@@ -72,9 +72,9 @@ impl SystemEntropy {
 }
 
 impl EntropySource for SystemEntropy {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         if self.unsupported() {
-            return Err(Error::new(ErrorKind::Unsupported));
+            return Err(RandomError::new(RandomErrorKind::Unsupported));
         }
         dispatch(self, dst)
     }
@@ -88,7 +88,7 @@ impl EntropySource for SystemEntropy {
     all(feature = "system", target_vendor = "apple"),
     all(feature = "web", target_arch = "wasm32", target_os = "unknown"),
 ))]
-fn dispatch(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Error> {
+fn dispatch(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
     host_fill(entropy, dst)
 }
 
@@ -100,7 +100,7 @@ fn dispatch(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Error> {
     all(feature = "system", target_vendor = "apple"),
     all(feature = "web", target_arch = "wasm32", target_os = "unknown"),
 )))]
-fn dispatch(entropy: &mut SystemEntropy, _dst: &mut [u8]) -> Result<(), Error> {
+fn dispatch(entropy: &mut SystemEntropy, _dst: &mut [u8]) -> Result<(), RandomError> {
     entropy.mark_unsupported();
-    Err(Error::new(ErrorKind::Unsupported))
+    Err(RandomError::new(RandomErrorKind::Unsupported))
 }

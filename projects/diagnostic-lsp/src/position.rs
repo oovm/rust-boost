@@ -10,12 +10,7 @@ fn line_text(source: &SourceView<'_>, line_index: usize) -> Result<String, Diagn
         .ok_or_else(|| DiagnosticError::IndexTooLarge { given: line_index, max: source.line_count().saturating_sub(1) })
 }
 
-fn location_to_position(
-    line_str: &str,
-    line: usize,
-    column: usize,
-    byte_index: usize,
-) -> Result<Position, DiagnosticError> {
+fn location_to_position(line_str: &str, line: usize, column: usize, byte_index: usize) -> Result<Position, DiagnosticError> {
     if column > line_str.len() {
         Err(DiagnosticError::ColumnTooLarge { given: column, max: line_str.len() })
     }
@@ -35,10 +30,8 @@ pub fn byte_index_to_position(
     byte_index: usize,
 ) -> Result<Position, DiagnosticError> {
     let source = provider.fetch(file_id).map_err(|error| DiagnosticError::Provider(error.to_string()))?;
-    let byte_index = u32::try_from(byte_index).map_err(|_| DiagnosticError::IndexTooLarge {
-        given: byte_index,
-        max: source.get_length().saturating_sub(1),
-    })?;
+    let byte_index = u32::try_from(byte_index)
+        .map_err(|_| DiagnosticError::IndexTooLarge { given: byte_index, max: source.get_length().saturating_sub(1) })?;
 
     let (_, line_index, column) = source.get_offset_line(byte_index).ok_or_else(|| DiagnosticError::IndexTooLarge {
         given: byte_index as usize,

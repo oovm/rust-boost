@@ -77,10 +77,8 @@ pub struct PartialByteAccess<'a> {
 impl<'a> PartialByteAccess<'a> {
     /// Create a partial view over `bytes` with `available_end` bytes readable.
     pub fn new(bytes: &'a [u8], available_end: u64) -> Result<Self, AccessError> {
-        let len = u64::try_from(bytes.len()).map_err(|_| AccessError::OutOfRange {
-            len: 0,
-            range: ByteRange::new(0, 1).expect("constant range"),
-        })?;
+        let len = u64::try_from(bytes.len())
+            .map_err(|_| AccessError::OutOfRange { len: 0, range: ByteRange::new(0, 1).expect("constant range") })?;
         if available_end > len {
             return Err(AccessError::OutOfRange {
                 len,
@@ -103,10 +101,7 @@ impl ByteAccess for PartialByteAccess<'_> {
                 requested: range,
             });
         }
-        let (start, end) = range.to_usize().map_err(|_| AccessError::OutOfRange {
-            len: self.available_end,
-            range,
-        })?;
+        let (start, end) = range.to_usize().map_err(|_| AccessError::OutOfRange { len: self.available_end, range })?;
         Ok(&self.bytes[start..end])
     }
 }

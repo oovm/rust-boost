@@ -93,10 +93,7 @@ impl From<Error> for io::Error {
             ErrorKind::Io(err) => err,
             ErrorKind::Loop { ancestor } => {
                 let path = value.path.map(|p| p.display().to_string()).unwrap_or_default();
-                io::Error::new(
-                    io::ErrorKind::Other,
-                    format!("loop detected at {} via ancestor {}", path, ancestor.display()),
-                )
+                io::Error::new(io::ErrorKind::Other, format!("loop detected at {} via ancestor {}", path, ancestor.display()))
             }
         }
     }

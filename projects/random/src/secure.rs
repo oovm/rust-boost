@@ -1,6 +1,6 @@
 use crate::{
     entropy::EntropySource,
-    error::Error,
+    error::RandomError,
     range::{RangeEndpoint, SampleRange},
     sampling,
     source::RandomSource,
@@ -25,7 +25,7 @@ impl Secure<SystemEntropy> {
     ///
     /// Construction neither probes nor promises the platform: the first non-empty request does.
     /// A target without a compiled backend reports
-    /// [`ErrorKind::Unsupported`](crate::ErrorKind::Unsupported) for every non-empty request.
+    /// [`ErrorKind::Unsupported`](crate::RandomErrorKind::Unsupported) for every non-empty request.
     pub fn system() -> Self {
         Self { provider: SystemEntropy::new() }
     }
@@ -42,7 +42,7 @@ impl<E: EntropySource> Secure<E> {
     /// An empty request succeeds without touching the host. When the provider fails, the entire
     /// `dst` is cleared before the failure is returned, so a caller never receives unmarked partial
     /// entropy as success.
-    pub fn fill(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    pub fn fill(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         if dst.is_empty() {
             return Ok(());
         }
@@ -56,12 +56,12 @@ impl<E: EntropySource> Secure<E> {
     }
 
     /// Reads the next 4 bytes of host entropy as a little-endian `u32`.
-    pub fn u32(&mut self) -> Result<u32, Error> {
+    pub fn u32(&mut self) -> Result<u32, RandomError> {
         sampling::read_u32(self)
     }
 
     /// Reads the next 8 bytes of host entropy as a little-endian `u64`.
-    pub fn u64(&mut self) -> Result<u64, Error> {
+    pub fn u64(&mut self) -> Result<u64, RandomError> {
         sampling::read_u64(self)
     }
 
@@ -70,7 +70,7 @@ impl<E: EntropySource> Secure<E> {
     /// Bounds are validated before any byte is requested, and the interval is sampled with the same
     /// rejection mapping as [`Stream::range`](crate::Stream::range). A single-value interval
     /// requests no entropy.
-    pub fn range<R, B>(&mut self, bounds: B) -> Result<R, Error>
+    pub fn range<R, B>(&mut self, bounds: B) -> Result<R, RandomError>
     where
         R: RangeEndpoint,
         B: SampleRange<R>,
@@ -79,12 +79,12 @@ impl<E: EntropySource> Secure<E> {
     }
 
     /// Samples a uniform `f32` in `[0, 1)` from the top 24 bits of one word.
-    pub fn unit_f32(&mut self) -> Result<f32, Error> {
+    pub fn unit_f32(&mut self) -> Result<f32, RandomError> {
         sampling::unit_f32(self)
     }
 
     /// Samples a uniform `f64` in `[0, 1)` from the top 53 bits of one word.
-    pub fn unit_f64(&mut self) -> Result<f64, Error> {
+    pub fn unit_f64(&mut self) -> Result<f64, RandomError> {
         sampling::unit_f64(self)
     }
 
@@ -92,7 +92,7 @@ impl<E: EntropySource> Secure<E> {
     ///
     /// A zero or full probability returns without requesting entropy, and an out-of-range rational
     /// probability fails before any byte is requested.
-    pub fn chance(&mut self, numerator: u64, denominator: u64) -> Result<bool, Error> {
+    pub fn chance(&mut self, numerator: u64, denominator: u64) -> Result<bool, RandomError> {
         sampling::chance(self, numerator, denominator)
     }
 
@@ -101,12 +101,12 @@ impl<E: EntropySource> Secure<E> {
     /// An empty collection returns `None` without requesting entropy, and the index is always
     /// sampled as a `u64` interval so the same collection length uses the same mapping on every
     /// target.
-    pub fn index(&mut self, len: usize) -> Result<Option<usize>, Error> {
+    pub fn index(&mut self, len: usize) -> Result<Option<usize>, RandomError> {
         sampling::index(self, len)
     }
 
     /// Samples a reference to one element, or `None` for an empty slice.
-    pub fn choose<'a, T>(&mut self, items: &'a [T]) -> Result<Option<&'a T>, Error> {
+    pub fn choose<'a, T>(&mut self, items: &'a [T]) -> Result<Option<&'a T>, RandomError> {
         sampling::choose(self, items)
     }
 
@@ -115,7 +115,7 @@ impl<E: EntropySource> Secure<E> {
     /// A slice of length 0 or 1 is left untouched without requesting entropy. If the provider fails
     /// mid-way, the swaps already performed are kept and the failure is returned, so a caller must
     /// treat a failure as a possibly partial rearrangement.
-    pub fn shuffle<T>(&mut self, items: &mut [T]) -> Result<(), Error> {
+    pub fn shuffle<T>(&mut self, items: &mut [T]) -> Result<(), RandomError> {
         sampling::shuffle(self, items)
     }
 }
@@ -128,7 +128,7 @@ impl<E: EntropySource> Secure<E> {
 /// arbitrary [`RandomSource`] never becomes an [`EntropySource`], because identical method shapes
 /// carry no security guarantee.
 impl<E: EntropySource> RandomSource for Secure<E> {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         self.fill(dst)
     }
 }

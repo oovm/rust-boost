@@ -1,4 +1,4 @@
-use logger::{event_to_json, EventKind, LocationPayload};
+use logger::{EventKind, LocationPayload, event_to_json};
 
 use super::fixtures::text_diagnostic;
 use diagnostic::{diagnostic_to_log_event, diagnostic_to_payload};

@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use super::{Error, Entry, Iter};
+use super::{Entry, Error, Iter};
 
 /// Configuration for a recursive folder walk.
 #[derive(Debug, Clone)]
@@ -14,12 +14,7 @@ pub struct Walker {
 impl Walker {
     /// Create a walker rooted at `root`.
     pub fn new(root: impl AsRef<Path>) -> Self {
-        Self {
-            root: root.as_ref().to_path_buf(),
-            min_depth: 0,
-            max_depth: usize::MAX,
-            follow_links: false,
-        }
+        Self { root: root.as_ref().to_path_buf(), min_depth: 0, max_depth: usize::MAX, follow_links: false }
     }
 
     /// Returns the configured root path.

@@ -1,5 +1,7 @@
-use diagnostic::wire::{DiagnosticEnvelope, SCHEMA_VERSION};
-use diagnostic::Diagnostic;
+use diagnostic::{
+    Diagnostic,
+    wire::{DiagnosticEnvelope, SCHEMA_VERSION},
+};
 
 #[test]
 fn text_fixture_roundtrip() {

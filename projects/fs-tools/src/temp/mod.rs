@@ -6,5 +6,5 @@ mod folder;
 mod unique;
 
 pub use env::{configure_folder, folder_path, set_folder};
-pub use file::{create_file, create_file_in, create_named, create_named_in, NamedFile};
-pub use folder::{create_folder, create_folder_in, TempFolder};
+pub use file::{NamedFile, create_file, create_file_in, create_named, create_named_in};
+pub use folder::{TempFolder, create_folder, create_folder_in};

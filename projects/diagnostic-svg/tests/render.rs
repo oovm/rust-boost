@@ -1,10 +1,9 @@
 use diagnostic::{
     ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity,
     LabelRole, Message, SourceRef,
+    terminal::{SourceCache, SourceRegistry},
 };
 use diagnostic_svg::structured_to_svg;
-use diagnostic::terminal::SourceRegistry;
-use diagnostic::terminal::SourceCache;
 
 #[test]
 fn structured_text_diagnostic_renders_svg() {
@@ -22,10 +21,7 @@ fn structured_text_diagnostic_renders_svg() {
         Message::new("svg.preview.sample").with_fallback("sample diagnostic"),
     )
     .with_primary(DiagnosticLabel::new(
-        DiagnosticLocation::Text {
-            source: source_ref,
-            range: ByteRange::new(0, 2).unwrap(),
-        },
+        DiagnosticLocation::Text { source: source_ref, range: ByteRange::new(0, 2).unwrap() },
         Message::new("svg.preview.label").with_fallback("fn"),
         LabelRole::Primary,
     ));

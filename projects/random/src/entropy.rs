@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::RandomError;
 
 /// Contract of a host entropy source.
 ///
@@ -9,12 +9,12 @@ use crate::error::Error;
 /// nothing about security quality.
 pub trait EntropySource {
     /// Fills `dst` with host entropy, or fails.
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error>;
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError>;
 }
 
 /// A borrowed source is usable wherever an owned source is expected.
 impl<T: EntropySource + ?Sized> EntropySource for &mut T {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         (**self).try_fill_bytes(dst)
     }
 }

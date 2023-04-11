@@ -5,7 +5,7 @@
 //! produce the same value and consume the same bytes.
 
 use crate::{
-    error::{Error, ErrorKind},
+    error::{RandomError, RandomErrorKind},
     range::{RangeEndpoint, SampleRange},
     source::RandomSource,
 };
@@ -28,12 +28,12 @@ macro_rules! uniform_distribution {
             ///
             /// The bounds come from the same range types accepted by
             /// [`Stream::range`](crate::Stream::range). An empty or reversed interval fails with
-            /// [`ErrorKind::InvalidRange`](crate::ErrorKind::InvalidRange) during construction, so
+            /// [`ErrorKind::InvalidRange`](crate::RandomErrorKind::InvalidRange) during construction, so
             /// a sampling call never has to re-validate its parameters.
-            pub fn new<B: SampleRange<$value>>(bounds: B) -> Result<Self, Error> {
+            pub fn new<B: SampleRange<$value>>(bounds: B) -> Result<Self, RandomError> {
                 let (start, end) = bounds.bounds()?;
                 if end < start {
-                    return Err(Error::new(ErrorKind::InvalidRange));
+                    return Err(RandomError::new(RandomErrorKind::InvalidRange));
                 }
                 Ok(Self { start, end })
             }
@@ -47,7 +47,7 @@ macro_rules! uniform_distribution {
             ///
             /// A single-value interval consumes no byte, and a full-domain interval consumes
             /// exactly one word of the endpoint width.
-            pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<$value, Error> {
+            pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<$value, RandomError> {
                 <$value>::sample_bounded(source, self.start, self.end)
             }
 

@@ -8,7 +8,7 @@
 use core::ops::{Add, Rem, Sub};
 
 use crate::{
-    error::{Error, ErrorKind},
+    error::{RandomError, RandomErrorKind},
     range::{RangeEndpoint, SampleRange},
     source::RandomSource,
 };
@@ -22,7 +22,7 @@ pub(crate) trait Word: Copy + Ord + Add<Output = Self> + Sub<Output = Self> + Re
     const ONE: Self;
 
     /// Consumes one word of this width from an arbitrary source.
-    fn next_word<S: RandomSource + ?Sized>(source: &mut S) -> Result<Self, Error>;
+    fn next_word<S: RandomSource + ?Sized>(source: &mut S) -> Result<Self, RandomError>;
 
     /// Returns the two's complement negation of this value in this width.
     fn wrapping_neg(self) -> Self;
@@ -38,7 +38,7 @@ impl Word for u32 {
     const ZERO: Self = 0;
     const ONE: Self = 1;
 
-    fn next_word<S: RandomSource + ?Sized>(source: &mut S) -> Result<Self, Error> {
+    fn next_word<S: RandomSource + ?Sized>(source: &mut S) -> Result<Self, RandomError> {
         read_u32(source)
     }
 
@@ -55,7 +55,7 @@ impl Word for u64 {
     const ZERO: Self = 0;
     const ONE: Self = 1;
 
-    fn next_word<S: RandomSource + ?Sized>(source: &mut S) -> Result<Self, Error> {
+    fn next_word<S: RandomSource + ?Sized>(source: &mut S) -> Result<Self, RandomError> {
         read_u64(source)
     }
 
@@ -74,9 +74,9 @@ impl Word for u64 {
 /// interval accepts every word, so it consumes exactly one word. Otherwise the value is obtained
 /// by rejection sampling: the profile discards words below `2^w mod n` and then reduces modulo `n`,
 /// which keeps every value equally likely.
-pub(crate) fn sample_inclusive<W: Word, S: RandomSource + ?Sized>(source: &mut S, start: W, end: W) -> Result<W, Error> {
+pub(crate) fn sample_inclusive<W: Word, S: RandomSource + ?Sized>(source: &mut S, start: W, end: W) -> Result<W, RandomError> {
     if end < start {
-        return Err(Error::new(ErrorKind::InvalidRange));
+        return Err(RandomError::new(RandomErrorKind::InvalidRange));
     }
     if start == end {
         return Ok(start);
@@ -98,14 +98,14 @@ pub(crate) fn sample_inclusive<W: Word, S: RandomSource + ?Sized>(source: &mut S
 }
 
 /// Reads the next 4 bytes as a little-endian `u32`.
-pub(crate) fn read_u32<S: RandomSource + ?Sized>(source: &mut S) -> Result<u32, Error> {
+pub(crate) fn read_u32<S: RandomSource + ?Sized>(source: &mut S) -> Result<u32, RandomError> {
     let mut bytes = [0u8; 4];
     source.try_fill_bytes(&mut bytes)?;
     Ok(u32::from_le_bytes(bytes))
 }
 
 /// Reads the next 8 bytes as a little-endian `u64`.
-pub(crate) fn read_u64<S: RandomSource + ?Sized>(source: &mut S) -> Result<u64, Error> {
+pub(crate) fn read_u64<S: RandomSource + ?Sized>(source: &mut S) -> Result<u64, RandomError> {
     let mut bytes = [0u8; 8];
     source.try_fill_bytes(&mut bytes)?;
     Ok(u64::from_le_bytes(bytes))
@@ -115,7 +115,7 @@ pub(crate) fn read_u64<S: RandomSource + ?Sized>(source: &mut S) -> Result<u64, 
 ///
 /// Bounds are validated before any byte is consumed, and the interval is sampled with rejection
 /// sampling. The sampled value only depends on the interval, never on the target word size.
-pub(crate) fn range<R, B, S>(source: &mut S, bounds: B) -> Result<R, Error>
+pub(crate) fn range<R, B, S>(source: &mut S, bounds: B) -> Result<R, RandomError>
 where
     R: RangeEndpoint,
     B: SampleRange<R>,
@@ -126,12 +126,12 @@ where
 }
 
 /// Samples a uniform `f32` in `[0, 1)` from the top 24 bits of one word.
-pub(crate) fn unit_f32<S: RandomSource + ?Sized>(source: &mut S) -> Result<f32, Error> {
+pub(crate) fn unit_f32<S: RandomSource + ?Sized>(source: &mut S) -> Result<f32, RandomError> {
     Ok((read_u32(source)? >> 8) as f32 * (1.0 / 16_777_216.0))
 }
 
 /// Samples a uniform `f64` in `[0, 1)` from the top 53 bits of one word.
-pub(crate) fn unit_f64<S: RandomSource + ?Sized>(source: &mut S) -> Result<f64, Error> {
+pub(crate) fn unit_f64<S: RandomSource + ?Sized>(source: &mut S) -> Result<f64, RandomError> {
     Ok((read_u64(source)? >> 11) as f64 * (1.0 / 9_007_199_254_740_992.0))
 }
 
@@ -139,9 +139,9 @@ pub(crate) fn unit_f64<S: RandomSource + ?Sized>(source: &mut S) -> Result<f64, 
 ///
 /// A zero or full probability returns without consuming bytes. Otherwise the source samples an
 /// integer in `[0, denominator)` and compares it with `numerator`.
-pub(crate) fn chance<S: RandomSource + ?Sized>(source: &mut S, numerator: u64, denominator: u64) -> Result<bool, Error> {
+pub(crate) fn chance<S: RandomSource + ?Sized>(source: &mut S, numerator: u64, denominator: u64) -> Result<bool, RandomError> {
     if denominator == 0 || numerator > denominator {
-        return Err(Error::new(ErrorKind::InvalidProbability));
+        return Err(RandomError::new(RandomErrorKind::InvalidProbability));
     }
     if numerator == 0 {
         return Ok(false);
@@ -156,18 +156,18 @@ pub(crate) fn chance<S: RandomSource + ?Sized>(source: &mut S, numerator: u64, d
 ///
 /// An empty collection returns `None` without consuming bytes. The index is always sampled as a
 /// `u64` interval, so the same collection length yields the same index on every target.
-pub(crate) fn index<S: RandomSource + ?Sized>(source: &mut S, len: usize) -> Result<Option<usize>, Error> {
+pub(crate) fn index<S: RandomSource + ?Sized>(source: &mut S, len: usize) -> Result<Option<usize>, RandomError> {
     if len == 0 {
         return Ok(None);
     }
-    let bound = u64::try_from(len).map_err(|_| Error::new(ErrorKind::LengthOverflow))?;
+    let bound = u64::try_from(len).map_err(|_| RandomError::new(RandomErrorKind::LengthOverflow))?;
     let sampled = range(source, 0u64..bound)?;
-    let index = usize::try_from(sampled).map_err(|_| Error::new(ErrorKind::LengthOverflow))?;
+    let index = usize::try_from(sampled).map_err(|_| RandomError::new(RandomErrorKind::LengthOverflow))?;
     Ok(Some(index))
 }
 
 /// Samples a reference to one element, or `None` for an empty slice.
-pub(crate) fn choose<'a, T, S: RandomSource + ?Sized>(source: &mut S, items: &'a [T]) -> Result<Option<&'a T>, Error> {
+pub(crate) fn choose<'a, T, S: RandomSource + ?Sized>(source: &mut S, items: &'a [T]) -> Result<Option<&'a T>, RandomError> {
     match index(source, items.len())? {
         Some(index) => Ok(Some(&items[index])),
         None => Ok(None),
@@ -179,11 +179,11 @@ pub(crate) fn choose<'a, T, S: RandomSource + ?Sized>(source: &mut S, items: &'a
 /// Each step samples an index in `0..i + 1` through the `u64` index path. A slice of length 0 or 1
 /// is left untouched without consuming bytes. If the source fails mid-way, the swaps already
 /// performed are kept and the error is returned.
-pub(crate) fn shuffle<T, S: RandomSource + ?Sized>(source: &mut S, items: &mut [T]) -> Result<(), Error> {
+pub(crate) fn shuffle<T, S: RandomSource + ?Sized>(source: &mut S, items: &mut [T]) -> Result<(), RandomError> {
     for i in (1..items.len()).rev() {
         let Some(target) = index(source, i + 1)?
         else {
-            return Err(Error::new(ErrorKind::InvalidRange));
+            return Err(RandomError::new(RandomErrorKind::InvalidRange));
         };
         items.swap(i, target);
     }

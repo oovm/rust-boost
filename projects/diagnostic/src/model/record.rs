@@ -1,9 +1,8 @@
 use alloc::vec::Vec;
 
 use super::{
-    DiagnosticAction, DiagnosticCode, DiagnosticLabel, DiagnosticOrigin, DiagnosticSeverity, Message,
+    DiagnosticAction, DiagnosticCode, DiagnosticLabel, DiagnosticOrigin, DiagnosticSeverity, Message, action::DiagnosticCause,
 };
-use super::action::DiagnosticCause;
 
 /// Structured diagnostic record.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -23,12 +22,7 @@ pub struct Diagnostic {
 
 impl Diagnostic {
     /// Create a diagnostic record.
-    pub fn new(
-        code: DiagnosticCode,
-        severity: DiagnosticSeverity,
-        origin: DiagnosticOrigin,
-        message: Message,
-    ) -> Self {
+    pub fn new(code: DiagnosticCode, severity: DiagnosticSeverity, origin: DiagnosticOrigin, message: Message) -> Self {
         Self {
             code,
             severity,

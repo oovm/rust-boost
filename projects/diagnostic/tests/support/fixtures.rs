@@ -1,8 +1,8 @@
 use diagnostic::{
     AddressSpaceRef, ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin,
-    DocumentRef, LabelRole, MappingPrecision, MemberPath, MemberSegment, Message, ObjectRef, SemanticPath, SourceRef,
+    DiagnosticSet, DiagnosticSeverity, DocumentRef, LabelRole, MappingPrecision, MemberPath, MemberSegment, Message, ObjectRef,
+    SemanticPath, SourceRef,
 };
-use diagnostic::{DiagnosticSeverity, DiagnosticSet};
 
 pub fn text_diagnostic() -> Diagnostic {
     Diagnostic::new(
@@ -49,10 +49,7 @@ pub fn member_diagnostic() -> Diagnostic {
     .with_primary(DiagnosticLabel::new(
         DiagnosticLocation::Member {
             container: SourceRef::new("acorn", "docx.zip").unwrap(),
-            member: MemberPath::new(vec![
-                MemberSegment::new("zip", "word/document.xml"),
-                MemberSegment::new("view", "utf8"),
-            ]),
+            member: MemberPath::new(vec![MemberSegment::new("zip", "word/document.xml"), MemberSegment::new("view", "utf8")]),
             range: Some(ByteRange::new(128, 140).unwrap()),
             precision: MappingPrecision::Container,
         },

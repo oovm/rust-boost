@@ -20,12 +20,11 @@ pub use file::{FileSink, install_global_file_sink};
 pub use json::{JsonLinesSink, event_to_json};
 pub use level::Level;
 pub use payload::{
-    ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, LabelPayload, LocationPayload,
-    MessagePayload, SourceRefPayload,
+    ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, LabelPayload, LocationPayload, MessagePayload,
+    SourceRefPayload,
 };
 pub use runtime::{
-    clear_global_sink, dropped_events, emit, reset_dropped_events, set_global_filter, set_global_sink,
-    with_scope,
+    clear_global_sink, dropped_events, emit, reset_dropped_events, set_global_filter, set_global_sink, with_scope,
 };
 pub use sink::{Filter, FilteredSink, LogSink, VecSink};
 pub use span::{LogSpan, SpanGuard, SpanId, current_span_id};

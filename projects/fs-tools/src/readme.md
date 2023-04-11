@@ -16,7 +16,7 @@ Extended `std::fs` for the rust-boost workspace.
 | `publish`     | `AtomicPublisher`, `publish_bytes`, overwrite policy, staging cleanup |
 | `permissions` | `set_permissions`, `Permissions`                                      |
 | `temp`        | `create_folder`, `create_file`, `NamedFile`, `configure_folder`       |
-| `walk`        | `Walker`, `Entry`, `Error`, `Iter`                                    |
+| `walk`        | `Walker`, `Entry`, `RandomError`, `Iter`                                    |
 | `async_walk`  | `Walker`, `Filter` (`async` feature)                                  |
 
 Crate-root re-exports mirror `std::fs` with folder-oriented names where applicable. Extensions live under `temp`, `walk`, and `async_walk`.

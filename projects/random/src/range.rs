@@ -1,7 +1,7 @@
 use core::ops::{Range, RangeInclusive};
 
 use crate::{
-    error::{Error, ErrorKind},
+    error::{RandomError, RandomErrorKind},
     sampling,
     source::RandomSource,
 };
@@ -28,7 +28,7 @@ pub trait RangeEndpoint: sealed::Sealed + Copy {
     /// kernel is not tied to one concrete source type, and it is hidden because callers normally
     /// sample through [`Stream::range`](crate::Stream::range) or a distribution object.
     #[doc(hidden)]
-    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error>;
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, RandomError>;
 }
 
 /// Integer range accepted by [`Stream::range`](crate::Stream::range).
@@ -38,7 +38,7 @@ pub trait SampleRange<R: RangeEndpoint>: sealed::Sealed {
     /// Returns the inclusive bounds of this range.
     ///
     /// A `Range` that contains no representable value, such as `0..0`, fails here.
-    fn bounds(self) -> Result<(R, R), Error>;
+    fn bounds(self) -> Result<(R, R), RandomError>;
 }
 
 impl sealed::Sealed for u32 {}
@@ -53,7 +53,7 @@ impl RangeEndpoint for u32 {
         self.checked_sub(1)
     }
 
-    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error> {
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, RandomError> {
         sampling::sample_inclusive(source, start, end)
     }
 }
@@ -63,7 +63,7 @@ impl RangeEndpoint for u64 {
         self.checked_sub(1)
     }
 
-    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error> {
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, RandomError> {
         sampling::sample_inclusive(source, start, end)
     }
 }
@@ -73,7 +73,7 @@ impl RangeEndpoint for i32 {
         self.checked_sub(1)
     }
 
-    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error> {
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, RandomError> {
         sampling::sample_inclusive(source, order_i32(start), order_i32(end)).map(unorder_i32)
     }
 }
@@ -83,22 +83,22 @@ impl RangeEndpoint for i64 {
         self.checked_sub(1)
     }
 
-    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, Error> {
+    fn sample_bounded<S: RandomSource + ?Sized>(source: &mut S, start: Self, end: Self) -> Result<Self, RandomError> {
         sampling::sample_inclusive(source, order_i64(start), order_i64(end)).map(unorder_i64)
     }
 }
 
 impl<R: RangeEndpoint> SampleRange<R> for Range<R> {
-    fn bounds(self) -> Result<(R, R), Error> {
+    fn bounds(self) -> Result<(R, R), RandomError> {
         match self.end.predecessor() {
             Some(end) => Ok((self.start, end)),
-            None => Err(Error::new(ErrorKind::InvalidRange)),
+            None => Err(RandomError::new(RandomErrorKind::InvalidRange)),
         }
     }
 }
 
 impl<R: RangeEndpoint> SampleRange<R> for RangeInclusive<R> {
-    fn bounds(self) -> Result<(R, R), Error> {
+    fn bounds(self) -> Result<(R, R), RandomError> {
         Ok(self.into_inner())
     }
 }

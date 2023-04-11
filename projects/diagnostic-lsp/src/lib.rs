@@ -4,9 +4,11 @@ mod convert;
 mod error;
 mod position;
 
-pub use convert::{structured_set_to_lsp, structured_to_lsp, SourceResolver};
-pub use diagnostic;
-pub use diagnostic::terminal::{SourceCache, SourceID, SourcePath, SourceProvider, SourceSpan};
+pub use convert::{SourceResolver, structured_set_to_lsp, structured_to_lsp};
+pub use diagnostic::{
+    self,
+    terminal::{SourceCache, SourceID, SourcePath, SourceProvider, SourceSpan},
+};
 pub use error::DiagnosticError;
 pub use lsp_types;
 pub use position::{

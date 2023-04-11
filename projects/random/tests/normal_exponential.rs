@@ -10,7 +10,7 @@
 //! distribution changed, not that one run happened to differ.
 
 use random::{
-    Error, ErrorKind, RandomSource, Seed, Stream,
+    RandomError, RandomErrorKind, RandomSource, Seed, Stream,
     distribution::{Exponential, Normal},
 };
 
@@ -34,10 +34,10 @@ impl WordQueue {
 }
 
 impl RandomSource for WordQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(Error::new(ErrorKind::StreamExhausted));
+            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -70,15 +70,15 @@ fn ulp_distance(value: f64, reference: f64) -> f64 {
 
 #[test]
 fn invalid_parameters_are_rejected() {
-    assert_eq!(Normal::new(f64::NAN, 1.0).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(Normal::new(0.0, f64::INFINITY).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(Normal::new(0.0, 0.0).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(Normal::new(0.0, -1.0).unwrap_err().kind(), ErrorKind::InvalidParameter);
+    assert_eq!(Normal::new(f64::NAN, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Normal::new(0.0, f64::INFINITY).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Normal::new(0.0, 0.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Normal::new(0.0, -1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
 
-    assert_eq!(Exponential::new(f64::NAN).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(Exponential::new(f64::INFINITY).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(Exponential::new(0.0).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(Exponential::new(-0.5).unwrap_err().kind(), ErrorKind::InvalidParameter);
+    assert_eq!(Exponential::new(f64::NAN).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Exponential::new(f64::INFINITY).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Exponential::new(0.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Exponential::new(-0.5).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
 
     let normal = Normal::new(3.0, 2.0).unwrap();
     assert_eq!(normal.mean(), 3.0);
@@ -243,7 +243,7 @@ fn unrepresentable_samples_are_reported() {
         match distribution.sample(&mut stream) {
             Ok(value) => assert!(value.is_finite(), "an overflowed sample was returned as {value}"),
             Err(error) => {
-                assert_eq!(error.kind(), ErrorKind::NumericalFailure);
+                assert_eq!(error.kind(), RandomErrorKind::NumericalFailure);
                 reported = true;
                 break;
             }
@@ -259,7 +259,7 @@ fn unrepresentable_samples_are_reported() {
         match distribution.sample(&mut stream) {
             Ok(value) => assert!(value.is_finite(), "an overflowed sample was returned as {value}"),
             Err(error) => {
-                assert_eq!(error.kind(), ErrorKind::NumericalFailure);
+                assert_eq!(error.kind(), RandomErrorKind::NumericalFailure);
                 reported = true;
                 break;
             }

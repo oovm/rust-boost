@@ -7,7 +7,7 @@
 //! excluded upper bound is checked exactly instead of statistically.
 
 use random::{
-    Error, ErrorKind, RandomSource, Seed, Stream,
+    RandomError, RandomErrorKind, RandomSource, Seed, Stream,
     distribution::{UniformF32, UniformF64},
 };
 
@@ -29,9 +29,9 @@ impl WordQueue {
 }
 
 impl RandomSource for WordQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         if dst.len() > self.word.len() {
-            return Err(Error::new(ErrorKind::StreamExhausted));
+            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
         }
         dst.copy_from_slice(&self.word[..dst.len()]);
         Ok(())
@@ -53,10 +53,10 @@ impl SequenceQueue {
 }
 
 impl RandomSource for SequenceQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(Error::new(ErrorKind::StreamExhausted));
+            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -68,8 +68,8 @@ impl RandomSource for SequenceQueue {
 struct FailingSource;
 
 impl RandomSource for FailingSource {
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), Error> {
-        Err(Error::new(ErrorKind::BackendFailure))
+    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), RandomError> {
+        Err(RandomError::new(RandomErrorKind::BackendFailure))
     }
 }
 
@@ -80,12 +80,12 @@ fn fresh() -> Stream {
 
 #[test]
 fn invalid_parameters_are_rejected() {
-    assert_eq!(UniformF64::new(f64::NAN, 1.0).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(0.0, f64::NAN).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(f64::NEG_INFINITY, 1.0).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(0.0, f64::INFINITY).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(1.0, 1.0).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(2.0, 1.0).unwrap_err().kind(), ErrorKind::InvalidParameter);
+    assert_eq!(UniformF64::new(f64::NAN, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(UniformF64::new(0.0, f64::NAN).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(UniformF64::new(f64::NEG_INFINITY, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(UniformF64::new(0.0, f64::INFINITY).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(UniformF64::new(1.0, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(UniformF64::new(2.0, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
 
     let interval = UniformF64::new(-1.0, 2.5).unwrap();
     assert_eq!(interval.low(), -1.0);
@@ -224,10 +224,10 @@ struct Replay {
 }
 
 impl RandomSource for Replay {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(Error::new(ErrorKind::StreamExhausted));
+            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -238,10 +238,10 @@ impl RandomSource for Replay {
 #[test]
 fn source_failures_are_reported() {
     let interval = UniformF64::new(0.0, 1.0).unwrap();
-    assert_eq!(interval.sample(&mut FailingSource).unwrap_err().kind(), ErrorKind::BackendFailure);
+    assert_eq!(interval.sample(&mut FailingSource).unwrap_err().kind(), RandomErrorKind::BackendFailure);
 
     let interval = UniformF32::new(0.0, 1.0).unwrap();
-    assert_eq!(interval.sample(&mut FailingSource).unwrap_err().kind(), ErrorKind::BackendFailure);
+    assert_eq!(interval.sample(&mut FailingSource).unwrap_err().kind(), RandomErrorKind::BackendFailure);
 }
 
 #[test]

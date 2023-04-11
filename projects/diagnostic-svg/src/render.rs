@@ -1,8 +1,7 @@
 use diagnostic::{
-    terminal::{structured_to_terminal, Config, SourceRegistry, StructuredRenderError},
     Diagnostic, DiagnosticSet,
+    terminal::{Config, SourceCache, SourceRegistry, StructuredRenderError, structured_to_terminal},
 };
-use diagnostic::terminal::SourceCache;
 
 /// Failure while rendering structured diagnostics to SVG.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -21,13 +20,11 @@ pub fn structured_to_svg(
     cache: &SourceCache,
     registry: &SourceRegistry,
 ) -> Result<String, RenderError> {
-    let terminal = structured_to_terminal(diagnostic, registry, Config::default().with_color(false))
-        .map_err(RenderError::Structured)?;
+    let terminal =
+        structured_to_terminal(diagnostic, registry, Config::default().with_color(false)).map_err(RenderError::Structured)?;
 
     let mut buffer = Vec::new();
-    terminal
-        .write(cache, &mut buffer)
-        .map_err(|error| RenderError::Io(error.to_string()))?;
+    terminal.write(cache, &mut buffer).map_err(|error| RenderError::Io(error.to_string()))?;
 
     let text = String::from_utf8(buffer).map_err(|_| RenderError::Utf8)?;
     Ok(wrap_preview(text))

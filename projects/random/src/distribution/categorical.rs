@@ -1,7 +1,7 @@
 //! Categorical distribution over borrowed integer weights.
 
 use crate::{
-    error::{Error, ErrorKind},
+    error::{RandomError, RandomErrorKind},
     range::RangeEndpoint,
     source::RandomSource,
 };
@@ -23,17 +23,17 @@ impl<'a> Categorical<'a> {
     /// Creates the distribution from a non-empty weight slice with a positive, representable sum.
     ///
     /// An empty slice, an all-zero slice, or a sum that does not fit in `u64` fails with
-    /// [`ErrorKind::InvalidParameter`](crate::ErrorKind::InvalidParameter).
-    pub fn new(weights: &'a [u64]) -> Result<Self, Error> {
+    /// [`ErrorKind::InvalidParameter`](crate::RandomErrorKind::InvalidParameter).
+    pub fn new(weights: &'a [u64]) -> Result<Self, RandomError> {
         if weights.is_empty() {
-            return Err(Error::new(ErrorKind::InvalidParameter));
+            return Err(RandomError::new(RandomErrorKind::InvalidParameter));
         }
         let mut total = 0u64;
         for weight in weights {
-            total = total.checked_add(*weight).ok_or(Error::new(ErrorKind::InvalidParameter))?;
+            total = total.checked_add(*weight).ok_or(RandomError::new(RandomErrorKind::InvalidParameter))?;
         }
         if total == 0 {
-            return Err(Error::new(ErrorKind::InvalidParameter));
+            return Err(RandomError::new(RandomErrorKind::InvalidParameter));
         }
         Ok(Self { weights, total })
     }
@@ -54,7 +54,7 @@ impl<'a> Categorical<'a> {
     /// A source failure is reported without inventing a category. If the recorded sum ever
     /// disagreed with the scanned weights, the call fails instead of returning a value that the
     /// weights do not justify.
-    pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<u64, Error> {
+    pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<u64, RandomError> {
         let ticket = u64::sample_bounded(source, 0, self.total - 1)?;
         let mut cumulative = 0u64;
         for (index, weight) in self.weights.iter().enumerate() {
@@ -63,7 +63,7 @@ impl<'a> Categorical<'a> {
                 return Ok(index as u64);
             }
         }
-        Err(Error::new(ErrorKind::InvalidParameter))
+        Err(RandomError::new(RandomErrorKind::InvalidParameter))
     }
 
     /// Returns the probability mass of one category index as a float approximation.

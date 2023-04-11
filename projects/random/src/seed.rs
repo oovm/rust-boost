@@ -1,6 +1,6 @@
 use core::fmt::{self, Debug, Formatter};
 
-use crate::{entropy::EntropySource, error::Error, secure::Secure};
+use crate::{entropy::EntropySource, error::RandomError, secure::Secure};
 
 /// 32-byte key of the deterministic stream profile.
 ///
@@ -34,7 +34,7 @@ impl Seed {
     ///
     /// Only the passed [`Secure`] handle is read. Nothing opens a system source implicitly, and a
     /// failure is returned instead of a deterministic fallback seed.
-    pub fn generate<E: EntropySource>(secure: &mut Secure<E>) -> Result<Self, Error> {
+    pub fn generate<E: EntropySource>(secure: &mut Secure<E>) -> Result<Self, RandomError> {
         let mut bytes = [0u8; 32];
         secure.fill(&mut bytes)?;
         Ok(Self(bytes))

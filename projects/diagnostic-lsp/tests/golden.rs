@@ -1,12 +1,10 @@
 use std::collections::BTreeMap;
 
 use diagnostic::{
-    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSet, LabelRole,
-    Message, SourceRef,
+    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSet,
+    DiagnosticSeverity, LabelRole, Message, SourceRef, terminal::SourceID,
 };
-use diagnostic::terminal::SourceID;
-use diagnostic::DiagnosticSeverity;
-use diagnostic_lsp::{structured_set_to_lsp, structured_to_lsp, SourceCache, SourceResolver};
+use diagnostic_lsp::{SourceCache, SourceResolver, structured_set_to_lsp, structured_to_lsp};
 use lsp_types::Url;
 
 struct TestResolver(BTreeMap<String, SourceID>);
@@ -33,10 +31,7 @@ fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
         Message::new("oak.syntax.unexpected-token").with_fallback("unexpected token"),
     )
     .with_primary(DiagnosticLabel::new(
-        DiagnosticLocation::Text {
-            source: source_ref,
-            range: ByteRange::new(4, 9).unwrap(),
-        },
+        DiagnosticLocation::Text { source: source_ref, range: ByteRange::new(4, 9).unwrap() },
         Message::new("label.token").with_fallback("token"),
         LabelRole::Primary,
     ))
@@ -49,12 +44,9 @@ fn lsp_text_diagnostic_matches_golden_json() {
     let file_id = cache.load_text("let value = 1", "sample.tao");
     let resolver = TestResolver::new(&source_ref, file_id);
 
-    let lsp = structured_to_lsp(
-        &sample_text_diagnostic(source_ref),
-        &cache,
-        &resolver,
-        &|_| Some(Url::parse("file:///sample.tao").unwrap()),
-    )
+    let lsp = structured_to_lsp(&sample_text_diagnostic(source_ref), &cache, &resolver, &|_| {
+        Some(Url::parse("file:///sample.tao").unwrap())
+    })
     .unwrap();
 
     let actual = serde_json::to_string_pretty(&lsp).expect("serialize lsp diagnostic");
@@ -73,8 +65,7 @@ fn lsp_set_conversion_preserves_order() {
     set.push(sample_text_diagnostic(source_ref.clone()));
     set.push(sample_text_diagnostic(source_ref));
 
-    let items = structured_set_to_lsp(&set, &cache, &resolver, &|_| Some(Url::parse("file:///sample.tao").unwrap()))
-        .unwrap();
+    let items = structured_set_to_lsp(&set, &cache, &resolver, &|_| Some(Url::parse("file:///sample.tao").unwrap())).unwrap();
     assert_eq!(items.len(), 2);
     assert_eq!(items[0].message, items[1].message);
 }
@@ -82,24 +73,19 @@ fn lsp_set_conversion_preserves_order() {
 #[test]
 #[ignore = "run manually to refresh LSP golden fixtures"]
 fn write_lsp_golden_fixture() {
-    use std::fs;
-    use std::path::PathBuf;
+    use std::{fs, path::PathBuf};
 
     let mut cache = SourceCache::default();
     let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
     let file_id = cache.load_text("let value = 1", "sample.tao");
     let resolver = TestResolver::new(&source_ref, file_id);
 
-    let lsp = structured_to_lsp(
-        &sample_text_diagnostic(source_ref),
-        &cache,
-        &resolver,
-        &|_| Some(Url::parse("file:///sample.tao").unwrap()),
-    )
+    let lsp = structured_to_lsp(&sample_text_diagnostic(source_ref), &cache, &resolver, &|_| {
+        Some(Url::parse("file:///sample.tao").unwrap())
+    })
     .unwrap();
 
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/golden/lsp-text.json");
     fs::create_dir_all(path.parent().unwrap()).expect("create golden dir");
-    fs::write(path, serde_json::to_string_pretty(&lsp).expect("serialize lsp diagnostic") + "\n")
-        .expect("write lsp golden");
+    fs::write(path, serde_json::to_string_pretty(&lsp).expect("serialize lsp diagnostic") + "\n").expect("write lsp golden");
 }

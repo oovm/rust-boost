@@ -1,5 +1,4 @@
-use fs_tools::temp::create_folder;
-use fs_tools::walk::Walker;
+use fs_tools::{temp::create_folder, walk::Walker};
 
 #[cfg(feature = "async")]
 use fs_tools::async_walk::Walker as AsyncWalker;

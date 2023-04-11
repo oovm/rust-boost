@@ -1,3 +1,3 @@
 //! File metadata and type information.
 
-pub use std::fs::{metadata, symlink_metadata, FileType, Metadata};
+pub use std::fs::{FileType, Metadata, metadata, symlink_metadata};

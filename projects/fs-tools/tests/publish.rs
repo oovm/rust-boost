@@ -1,9 +1,6 @@
 use std::io::ErrorKind;
 
-use fs_tools::{
-    publish_bytes, publish_bytes_with_options, read_to_string, AtomicPublisher, OverwritePolicy,
-    PublishOptions,
-};
+use fs_tools::{AtomicPublisher, OverwritePolicy, PublishOptions, publish_bytes, publish_bytes_with_options, read_to_string};
 
 #[test]
 fn publish_bytes_creates_destination_atomically() {
@@ -13,12 +10,8 @@ fn publish_bytes_creates_destination_atomically() {
     publish_bytes(&target, br#"{"ok":true}"#).expect("publish");
 
     assert_eq!(read_to_string(&target).expect("read"), r#"{"ok":true}"#);
-    let entries: Vec<_> = base
-        .path()
-        .read_dir()
-        .expect("read dir")
-        .map(|entry| entry.expect("dir entry").file_name())
-        .collect();
+    let entries: Vec<_> =
+        base.path().read_dir().expect("read dir").map(|entry| entry.expect("dir entry").file_name()).collect();
     assert_eq!(entries, vec![std::ffi::OsString::from("report.json")]);
 }
 
@@ -42,11 +35,7 @@ fn publish_replace_overwrites_destination() {
     publish_bytes_with_options(
         &target,
         b"v2",
-        PublishOptions {
-            overwrite: OverwritePolicy::Replace,
-            fsync_file: false,
-            fsync_parent: false,
-        },
+        PublishOptions { overwrite: OverwritePolicy::Replace, fsync_file: false, fsync_parent: false },
     )
     .expect("replace publish");
 
@@ -60,11 +49,7 @@ fn atomic_publisher_drops_staging_file_on_abort() {
 
     let publisher = AtomicPublisher::create(
         &target,
-        PublishOptions {
-            overwrite: OverwritePolicy::RefuseExisting,
-            fsync_file: false,
-            fsync_parent: false,
-        },
+        PublishOptions { overwrite: OverwritePolicy::RefuseExisting, fsync_file: false, fsync_parent: false },
     )
     .expect("create publisher");
     let staging_path = publisher.staging_path().to_path_buf();

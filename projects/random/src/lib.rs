@@ -16,7 +16,7 @@ mod stream;
 mod system;
 
 pub use entropy::EntropySource;
-pub use error::{Error, ErrorKind};
+pub use error::{RandomError, RandomErrorKind};
 pub use range::{RangeEndpoint, SampleRange};
 pub use secure::Secure;
 pub use seed::Seed;

@@ -1,5 +1,8 @@
-use fs_tools::temp::{create_file, create_folder, create_folder_in, create_named, create_named_in, NamedFile};
-use fs_tools::{read_to_string, write};
+use fs_tools::{
+    read_to_string,
+    temp::{NamedFile, create_file, create_folder, create_folder_in, create_named, create_named_in},
+    write,
+};
 
 #[test]
 fn temp_folder_is_writable() {

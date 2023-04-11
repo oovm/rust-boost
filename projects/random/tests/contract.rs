@@ -6,7 +6,7 @@
 //! whether every residue of an interval is reached the same number of times inside a complete set
 //! of cycles. A frequency check alone would not distinguish an exact mapping from a biased one.
 
-use random::{Error, ErrorKind, RandomSource, RangeEndpoint, Seed, Stream};
+use random::{RandomError, RandomErrorKind, RandomSource, RangeEndpoint, Seed, Stream};
 
 /// Deterministic source that plays a programmed sequence of whole words.
 struct WordQueue {
@@ -35,10 +35,10 @@ impl WordQueue {
 }
 
 impl RandomSource for WordQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(Error::new(ErrorKind::StreamExhausted));
+            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;

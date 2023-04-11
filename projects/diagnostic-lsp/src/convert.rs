@@ -1,14 +1,13 @@
 use diagnostic::{
     ByteRange, Diagnostic, DiagnosticLabel, DiagnosticLocation, DiagnosticSet, DiagnosticSeverity, Message, SourceRef,
+    terminal::{SourceID, SourceProvider},
 };
 use lsp_types::{
     Diagnostic as LspDiagnostic, DiagnosticRelatedInformation, DiagnosticSeverity as LspSeverity, Location, NumberOrString,
     Position, Range, Url,
 };
-use diagnostic::terminal::{SourceID, SourceProvider};
 
-use crate::position::byte_range_to_lsp_range;
-use crate::DiagnosticError;
+use crate::{DiagnosticError, position::byte_range_to_lsp_range};
 
 /// Resolve a structured [`SourceRef`] to a cached [`SourceID`].
 pub trait SourceResolver {
@@ -23,11 +22,7 @@ pub fn structured_set_to_lsp(
     resolver: &impl SourceResolver,
     uri_for: &impl Fn(&SourceID) -> Option<Url>,
 ) -> Result<Vec<LspDiagnostic>, DiagnosticError> {
-    set
-        .diagnostics()
-        .iter()
-        .map(|diagnostic| structured_to_lsp(diagnostic, provider, resolver, uri_for))
-        .collect()
+    set.diagnostics().iter().map(|diagnostic| structured_to_lsp(diagnostic, provider, resolver, uri_for)).collect()
 }
 
 /// Convert a structured diagnostic into an LSP diagnostic.
@@ -53,10 +48,8 @@ pub fn structured_to_lsp(
 
     for secondary in diagnostic.secondary() {
         match label_text_location(provider, resolver, uri_for, secondary)? {
-            Some(location) => related_information.push(DiagnosticRelatedInformation {
-                location,
-                message: render_message(secondary.message()),
-            }),
+            Some(location) => related_information
+                .push(DiagnosticRelatedInformation { location, message: render_message(secondary.message()) }),
             None => related_information.push(message_only_related(location_summary(secondary.location(), secondary.message()))),
         }
     }
@@ -88,10 +81,9 @@ fn label_text_location(
 ) -> Result<Option<Location>, DiagnosticError> {
     match label.location() {
         DiagnosticLocation::Text { source, range } | DiagnosticLocation::Virtual { source, range } => {
-            let file = resolver
-                .resolve(source)
-                .ok_or_else(|| DiagnosticError::UnknownSource { wire_id: source.wire_id() })?;
-            let uri = uri_for(file).ok_or_else(|| DiagnosticError::Provider(format!("missing URI for source {}", source.id())))?;
+            let file = resolver.resolve(source).ok_or_else(|| DiagnosticError::UnknownSource { wire_id: source.wire_id() })?;
+            let uri =
+                uri_for(file).ok_or_else(|| DiagnosticError::Provider(format!("missing URI for source {}", source.id())))?;
             let range = byte_range_to_lsp_range(provider, file, range.start(), range.end())?;
             Ok(Some(Location { uri, range }))
         }
@@ -109,10 +101,7 @@ fn severity_to_lsp(severity: DiagnosticSeverity) -> LspSeverity {
 }
 
 fn render_message(message: &Message) -> String {
-    message
-        .fallback()
-        .map(str::to_string)
-        .unwrap_or_else(|| message.key().to_string())
+    message.fallback().map(str::to_string).unwrap_or_else(|| message.key().to_string())
 }
 
 fn location_summary(location: &DiagnosticLocation, message: &Message) -> String {
@@ -127,9 +116,7 @@ fn location_summary(location: &DiagnosticLocation, message: &Message) -> String 
                 .map(|segment| format!("{}/{}", segment.kind(), segment.name()))
                 .collect::<Vec<_>>()
                 .join(" -> ");
-            let range = range
-                .map(|range: ByteRange| format!(" [{}, {})", range.start(), range.end()))
-                .unwrap_or_default();
+            let range = range.map(|range: ByteRange| format!(" [{}, {})", range.start(), range.end())).unwrap_or_default();
             format!("{}::{path}{range} ({precision:?})", container.id())
         }
         DiagnosticLocation::Object { source, object, .. } => {
@@ -151,10 +138,7 @@ fn empty_range() -> Range {
 
 fn message_only_related(message: String) -> DiagnosticRelatedInformation {
     DiagnosticRelatedInformation {
-        location: Location {
-            uri: Url::parse("file:///unknown").expect("static unknown URI"),
-            range: empty_range(),
-        },
+        location: Location { uri: Url::parse("file:///unknown").expect("static unknown URI"), range: empty_range() },
         message,
     }
 }

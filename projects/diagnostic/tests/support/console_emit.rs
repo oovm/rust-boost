@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
-use logger::{clear_global_sink, EventKind, Filter, Level, LogEvent, LogSink, VecSink, set_global_filter, set_global_sink};
-use diagnostic::{emit_diagnostic, emit_diagnostic_set, DiagnosticSet};
+use diagnostic::{DiagnosticSet, emit_diagnostic, emit_diagnostic_set};
+use logger::{EventKind, Filter, Level, LogEvent, LogSink, VecSink, clear_global_sink, set_global_filter, set_global_sink};
 use serial_test::serial;
 
 use super::fixtures::text_diagnostic;

@@ -4,7 +4,7 @@
 //! only: a stream that must not consume compares its next `u32` with the next `u32` of an
 //! identical fresh stream.
 
-use random::{ErrorKind, Seed, Stream};
+use random::{RandomErrorKind, Seed, Stream};
 
 /// Stream used by tests that only need a stable identity.
 fn fresh() -> Stream {
@@ -21,12 +21,12 @@ fn probe(stream: &mut Stream) -> u32 {
 #[allow(clippy::reversed_empty_ranges)]
 fn reversed_and_empty_bounds_fail_without_consuming_bytes() {
     let mut stream = fresh();
-    assert_eq!(stream.range(9u32..3).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(stream.range(3u32..=2).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(stream.range(0u32..0).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(stream.range(4i32..=-4).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(stream.range(6u64..=5).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(stream.range(0i64..0).unwrap_err().kind(), ErrorKind::InvalidRange);
+    assert_eq!(stream.range(9u32..3).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(stream.range(3u32..=2).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(stream.range(0u32..0).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(stream.range(4i32..=-4).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(stream.range(6u64..=5).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(stream.range(0i64..0).unwrap_err().kind(), RandomErrorKind::InvalidRange);
     assert_eq!(probe(&mut stream), probe(&mut fresh()));
 }
 
@@ -100,8 +100,8 @@ fn chance_boundaries_consume_nothing() {
 #[test]
 fn chance_rejects_invalid_probabilities() {
     let mut stream = fresh();
-    assert_eq!(stream.chance(1, 0).unwrap_err().kind(), ErrorKind::InvalidProbability);
-    assert_eq!(stream.chance(6, 5).unwrap_err().kind(), ErrorKind::InvalidProbability);
+    assert_eq!(stream.chance(1, 0).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
+    assert_eq!(stream.chance(6, 5).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
     assert_eq!(probe(&mut stream), probe(&mut fresh()));
 }
 

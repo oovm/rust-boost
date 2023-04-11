@@ -21,9 +21,7 @@ pub mod console_projection;
 
 pub use collect::{DiagnosticSet, DiagnosticSink, SinkStatus};
 pub use model::*;
-pub use provenance::{
-    AddressSpaceRef, DocumentRef, MappingPrecision, MemberPath, MemberSegment, ObjectRef, SemanticPath,
-};
+pub use provenance::{AddressSpaceRef, DocumentRef, MappingPrecision, MemberPath, MemberSegment, ObjectRef, SemanticPath};
 pub use render::{diagnostic_message, message_fallback};
 pub use source::SourceLookup;
 
@@ -40,9 +38,9 @@ pub use wire::{DiagnosticEnvelope, SCHEMA_VERSION};
 pub use console::{Color, Console, Paint, Palette, Style};
 #[cfg(feature = "terminal")]
 pub use terminal::{
-    enable_ansi_color, eprint_structured_set, structured_to_terminal, BuiltinDrawer, Config,
-    Diagnostic as TerminalDiagnostic, DiagnosticBuilder as TerminalDiagnosticBuilder, DrawElements, Label,
-    LabelAttach, ReportKind, ReportLevel, SourceRegistry, StructuredRenderError,
+    BuiltinDrawer, Config, Diagnostic as TerminalDiagnostic, DiagnosticBuilder as TerminalDiagnosticBuilder, DrawElements,
+    Label, LabelAttach, ReportKind, ReportLevel, SourceRegistry, StructuredRenderError, enable_ansi_color,
+    eprint_structured_set, structured_to_terminal,
 };
 #[cfg(feature = "terminal")]
 pub use terminal::{SourceCache, SourceID, SourceSpan};

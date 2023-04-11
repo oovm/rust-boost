@@ -2,11 +2,13 @@
 //!
 //! Writes go to a same-directory temporary file first, then rename into place.
 
-use std::fs::File;
-use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::{
+    fs::File,
+    io::{self, Write},
+    path::{Path, PathBuf},
+};
 
-use crate::temp::{create_named_in, NamedFile};
+use crate::temp::{NamedFile, create_named_in};
 
 /// Whether an existing destination may be replaced.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,11 +32,7 @@ pub struct PublishOptions {
 
 impl Default for PublishOptions {
     fn default() -> Self {
-        Self {
-            overwrite: OverwritePolicy::RefuseExisting,
-            fsync_file: true,
-            fsync_parent: true,
-        }
+        Self { overwrite: OverwritePolicy::RefuseExisting, fsync_file: true, fsync_parent: true }
     }
 }
 
@@ -55,25 +53,14 @@ impl AtomicPublisher {
             .filter(|path| !path.as_os_str().is_empty())
             .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "destination has no parent directory"))?;
         if !parent.is_dir() {
-            return Err(io::Error::new(
-                io::ErrorKind::NotFound,
-                "destination parent directory does not exist",
-            ));
+            return Err(io::Error::new(io::ErrorKind::NotFound, "destination parent directory does not exist"));
         }
         if target.exists() && options.overwrite == OverwritePolicy::RefuseExisting {
-            return Err(io::Error::new(
-                io::ErrorKind::AlreadyExists,
-                "destination already exists",
-            ));
+            return Err(io::Error::new(io::ErrorKind::AlreadyExists, "destination already exists"));
         }
 
         let temp = create_named_in(parent)?;
-        Ok(Self {
-            target: target.to_path_buf(),
-            temp: Some(temp),
-            options,
-            committed: false,
-        })
+        Ok(Self { target: target.to_path_buf(), temp: Some(temp), options, committed: false })
     }
 
     /// Final destination path.
@@ -94,10 +81,7 @@ impl AtomicPublisher {
     /// Rename the staging file into place.
     pub fn commit(mut self) -> io::Result<PathBuf> {
         if self.target.exists() && self.options.overwrite == OverwritePolicy::RefuseExisting {
-            return Err(io::Error::new(
-                io::ErrorKind::AlreadyExists,
-                "destination already exists",
-            ));
+            return Err(io::Error::new(io::ErrorKind::AlreadyExists, "destination already exists"));
         }
 
         let temp = self.temp.take().expect("staging file");
@@ -151,11 +135,7 @@ pub fn publish_bytes(target: impl AsRef<Path>, bytes: &[u8]) -> io::Result<()> {
 }
 
 /// Write `bytes` to `target` atomically.
-pub fn publish_bytes_with_options(
-    target: impl AsRef<Path>,
-    bytes: &[u8],
-    options: PublishOptions,
-) -> io::Result<()> {
+pub fn publish_bytes_with_options(target: impl AsRef<Path>, bytes: &[u8], options: PublishOptions) -> io::Result<()> {
     let mut publisher = AtomicPublisher::create(target, options)?;
     publisher.write_all(bytes)?;
     publisher.commit()?;

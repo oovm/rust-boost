@@ -1,6 +1,6 @@
 //! Private ChaCha12 core of the `boost-chacha12-v1` profile.
 
-use crate::error::{Error, ErrorKind};
+use crate::error::{RandomError, RandomErrorKind};
 
 /// ChaCha constants for a 256-bit key: the bytes of `expand 32-byte k` in little-endian words.
 const CONSTANTS: [u32; 4] = [0x6170_7865, 0x3320_646e, 0x7962_2d32, 0x6b20_6574];
@@ -46,13 +46,13 @@ impl ChaChaCore {
     ///
     /// A request that would cross the profile capacity fails without advancing the position and
     /// clears `dst`, so a caller never observes bytes from a refused request.
-    pub(crate) fn fill(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    pub(crate) fn fill(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         if dst.is_empty() {
             return Ok(());
         }
         if dst.len() as u128 > MAX_OUTPUT - self.position {
             dst.fill(0);
-            return Err(Error::new(ErrorKind::StreamExhausted));
+            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
         }
 
         let block_bytes = BLOCK_BYTES as u128;

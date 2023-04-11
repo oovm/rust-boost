@@ -12,7 +12,7 @@
 use wasm_bindgen::{JsValue, prelude::wasm_bindgen};
 
 use super::SystemEntropy;
-use crate::error::{Error, ErrorKind};
+use crate::error::{RandomError, RandomErrorKind};
 
 /// Largest buffer `getRandomValues` accepts in one call.
 const REQUEST_LIMIT: usize = 65_536;
@@ -44,10 +44,10 @@ fn host_crypto() -> Option<JsValue> {
 }
 
 /// Fills `dst` with host entropy, or fails without delivering partial output.
-pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Error> {
+pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
     if host_crypto().is_none() {
         entropy.mark_unsupported();
-        return Err(Error::new(ErrorKind::Unsupported));
+        return Err(RandomError::new(RandomErrorKind::Unsupported));
     }
 
     let mut written = 0;
@@ -59,7 +59,7 @@ pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Er
             // The host refused the request. The thrown value is a JavaScript error object whose shape
             // is not part of this crate's contract, so the classification stays generic and no
             // platform code is invented for it.
-            Err(_) => return Err(Error::new(ErrorKind::BackendFailure)),
+            Err(_) => return Err(RandomError::new(RandomErrorKind::BackendFailure)),
         }
     }
     Ok(())

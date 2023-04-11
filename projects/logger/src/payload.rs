@@ -1,5 +1,4 @@
-use std::string::String;
-use std::vec::Vec;
+use std::{string::String, vec::Vec};
 
 use crate::field::FieldValue;
 

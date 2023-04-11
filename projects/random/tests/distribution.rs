@@ -6,7 +6,7 @@
 //! approximates.
 
 use random::{
-    Error, ErrorKind, RandomSource, Seed, Stream,
+    RandomError, RandomErrorKind, RandomSource, Seed, Stream,
     distribution::{Bernoulli, Categorical, UniformI32, UniformI64, UniformU32, UniformU64},
 };
 
@@ -25,10 +25,10 @@ impl ByteQueue {
 }
 
 impl RandomSource for ByteQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(Error::new(ErrorKind::StreamExhausted));
+            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -40,8 +40,8 @@ impl RandomSource for ByteQueue {
 struct FailingSource;
 
 impl RandomSource for FailingSource {
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), Error> {
-        Err(Error::new(ErrorKind::BackendFailure))
+    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), RandomError> {
+        Err(RandomError::new(RandomErrorKind::BackendFailure))
     }
 }
 
@@ -59,11 +59,11 @@ fn probe(stream: &mut Stream) -> u32 {
 // The reversed bounds are the subject of this test, not a mistake in an iteration.
 #[allow(clippy::reversed_empty_ranges)]
 fn uniform_rejects_invalid_bounds() {
-    assert_eq!(UniformU32::new(9u32..3).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(UniformU32::new(3u32..=2).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(UniformU64::new(0u64..0).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(UniformI32::new(4i32..=-4).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(UniformI64::new(6i64..=5).unwrap_err().kind(), ErrorKind::InvalidRange);
+    assert_eq!(UniformU32::new(9u32..3).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(UniformU32::new(3u32..=2).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(UniformU64::new(0u64..0).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(UniformI32::new(4i32..=-4).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(UniformI64::new(6i64..=5).unwrap_err().kind(), RandomErrorKind::InvalidRange);
 }
 
 #[test]
@@ -164,7 +164,7 @@ fn uniform_full_domain_mass_is_exact() {
 #[test]
 fn uniform_reports_source_failures() {
     let dice = UniformU32::new(1u32..=6).unwrap();
-    assert_eq!(dice.sample(&mut FailingSource).unwrap_err().kind(), ErrorKind::BackendFailure);
+    assert_eq!(dice.sample(&mut FailingSource).unwrap_err().kind(), RandomErrorKind::BackendFailure);
 
     let single = UniformU32::new(3u32..=3).unwrap();
     assert_eq!(single.sample(&mut FailingSource).unwrap(), 3);
@@ -172,8 +172,8 @@ fn uniform_reports_source_failures() {
 
 #[test]
 fn bernoulli_rejects_invalid_probabilities() {
-    assert_eq!(Bernoulli::new(1, 0).unwrap_err().kind(), ErrorKind::InvalidProbability);
-    assert_eq!(Bernoulli::new(6, 5).unwrap_err().kind(), ErrorKind::InvalidProbability);
+    assert_eq!(Bernoulli::new(1, 0).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
+    assert_eq!(Bernoulli::new(6, 5).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
 }
 
 #[test]
@@ -250,9 +250,9 @@ fn categorical_masses_follow_the_weight_ratios() {
 
 #[test]
 fn categorical_rejects_unusable_weights() {
-    assert_eq!(Categorical::new(&[]).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(Categorical::new(&[0u64, 0]).unwrap_err().kind(), ErrorKind::InvalidParameter);
-    assert_eq!(Categorical::new(&[u64::MAX, 1]).unwrap_err().kind(), ErrorKind::InvalidParameter);
+    assert_eq!(Categorical::new(&[]).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Categorical::new(&[0u64, 0]).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Categorical::new(&[u64::MAX, 1]).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
     assert_eq!(Categorical::new(&[u64::MAX]).unwrap().total(), u64::MAX);
 }
 
@@ -297,5 +297,5 @@ fn categorical_with_a_single_unit_ticket_consumes_nothing() {
 fn categorical_reports_source_failures() {
     let weights = [1u64, 1];
     let category = Categorical::new(&weights).unwrap();
-    assert_eq!(category.sample(&mut FailingSource).unwrap_err().kind(), ErrorKind::BackendFailure);
+    assert_eq!(category.sample(&mut FailingSource).unwrap_err().kind(), RandomErrorKind::BackendFailure);
 }

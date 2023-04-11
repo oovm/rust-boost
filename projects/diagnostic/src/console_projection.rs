@@ -1,14 +1,16 @@
 //! Project structured diagnostics into `logger` events without reversing the dependency edge.
 
 use logger::{
-    ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, FieldValue, LabelPayload, LocationPayload,
-    LogEvent, MessagePayload, SourceRefPayload,
+    ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, FieldValue, LabelPayload, LocationPayload, LogEvent,
+    MessagePayload, SourceRefPayload,
 };
 
-use crate::collect::DiagnosticSet;
-use crate::model::{
-    Diagnostic, DiagnosticAction, DiagnosticCause, DiagnosticLabel, DiagnosticLocation, DiagnosticSeverity, Message,
-    MessageArg, SourceRef,
+use crate::{
+    collect::DiagnosticSet,
+    model::{
+        Diagnostic, DiagnosticAction, DiagnosticCause, DiagnosticLabel, DiagnosticLocation, DiagnosticSeverity, Message,
+        MessageArg, SourceRef,
+    },
 };
 
 /// Project a diagnostic record into a log event with `EventKind::Diagnostic`.
@@ -132,10 +134,7 @@ fn location_to_payload(location: &DiagnosticLocation) -> LocationPayload {
             source: source_ref_to_payload(source),
             range: ByteRangePayload { start: range.start(), end: range.end() },
         },
-        other => LocationPayload::Opaque {
-            kind: other.kind_str().to_string(),
-            fields: location_opaque_fields(other),
-        },
+        other => LocationPayload::Opaque { kind: other.kind_str().to_string(), fields: location_opaque_fields(other) },
     }
 }
 

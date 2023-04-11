@@ -5,7 +5,7 @@
 //! and the same entry points are driven by `Stream`, by a custom `RandomSource`, and by `Secure`,
 //! which is the architectural point of the shared kernel.
 
-use random::{EntropySource, Error, ErrorKind, RandomSource, RangeEndpoint, Secure, Seed, Stream};
+use random::{EntropySource, RandomError, RandomErrorKind, RandomSource, RangeEndpoint, Secure, Seed, Stream};
 
 /// Deterministic source that plays a fixed byte sequence and reports exhaustion at the end.
 struct ByteQueue {
@@ -28,10 +28,10 @@ impl ByteQueue {
 }
 
 impl RandomSource for ByteQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(Error::new(ErrorKind::StreamExhausted));
+            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -43,8 +43,8 @@ impl RandomSource for ByteQueue {
 struct FailingSource;
 
 impl RandomSource for FailingSource {
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), Error> {
-        Err(Error::new(ErrorKind::BackendFailure))
+    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), RandomError> {
+        Err(RandomError::new(RandomErrorKind::BackendFailure))
     }
 }
 
@@ -113,7 +113,7 @@ fn single_value_interval_consumes_nothing() {
 fn invalid_bounds_fail_before_reading_any_byte() {
     let mut queue = ByteQueue::of_u32(&[0]);
     let error = u32::sample_bounded(&mut queue, 9, 3).unwrap_err();
-    assert_eq!(error.kind(), ErrorKind::InvalidRange);
+    assert_eq!(error.kind(), RandomErrorKind::InvalidRange);
     assert_eq!(queue.position, 0);
 }
 
@@ -141,7 +141,7 @@ fn signed_endpoints_use_the_order_preserving_transform() {
 #[test]
 fn source_failure_propagates_without_inventing_a_sample() {
     let error = u32::sample_bounded(&mut FailingSource, 1, 6).unwrap_err();
-    assert_eq!(error.kind(), ErrorKind::BackendFailure);
+    assert_eq!(error.kind(), RandomErrorKind::BackendFailure);
     assert_eq!(error.platform_code(), None);
 }
 
@@ -166,7 +166,7 @@ fn stream_range_and_the_shared_kernel_agree() {
 struct PatternProvider(u8);
 
 impl EntropySource for PatternProvider {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         dst.fill(self.0);
         Ok(())
     }
@@ -176,8 +176,8 @@ impl EntropySource for PatternProvider {
 struct FailingProvider;
 
 impl EntropySource for FailingProvider {
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), Error> {
-        Err(Error::new(ErrorKind::EntropyUnavailable))
+    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), RandomError> {
+        Err(RandomError::new(RandomErrorKind::EntropyUnavailable))
     }
 }
 
@@ -196,5 +196,5 @@ fn secure_handle_drives_the_shared_kernel() {
 fn secure_sampling_reports_the_provider_failure() {
     let mut secure = Secure::with_entropy(FailingProvider);
     let error = u32::sample_bounded(&mut secure, 1, 6).unwrap_err();
-    assert_eq!(error.kind(), ErrorKind::EntropyUnavailable);
+    assert_eq!(error.kind(), RandomErrorKind::EntropyUnavailable);
 }

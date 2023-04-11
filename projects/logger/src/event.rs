@@ -1,11 +1,11 @@
-use std::string::String;
-use std::time::SystemTime;
-use std::vec::Vec;
+use std::{string::String, time::SystemTime, vec::Vec};
 
-use crate::field::{Field, FieldValue, Fields};
-use crate::level::Level;
-use crate::payload::DiagnosticPayload;
-use crate::span::SpanId;
+use crate::{
+    field::{Field, FieldValue, Fields},
+    level::Level,
+    payload::DiagnosticPayload,
+    span::SpanId,
+};
 
 /// High-level event category.
 #[derive(Clone, Debug, PartialEq)]

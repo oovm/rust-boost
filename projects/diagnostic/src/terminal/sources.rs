@@ -1,15 +1,15 @@
 //! Terminal source storage backed by `source::MemoryStore`.
 
-use std::collections::HashMap;
-use std::error::Error;
-use std::fmt::{self, Display, Formatter};
-use std::io;
-use std::ops::Range;
-use std::path::{Path, PathBuf};
-
-use source::{
-    AccessError, ByteAccess, IdentityError, MemorySnapshot, MemoryStore, SnapshotHandle, SnapshotRef, SourceRef,
+use std::{
+    collections::HashMap,
+    error::Error,
+    fmt::{self, Display, Formatter},
+    io,
+    ops::Range,
+    path::{Path, PathBuf},
 };
+
+use source::{AccessError, ByteAccess, IdentityError, MemorySnapshot, MemoryStore, SnapshotHandle, SnapshotRef, SourceRef};
 
 /// Process-local source handle for terminal rendering.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -167,9 +167,7 @@ impl SourceCache {
     pub fn fetch(&self, file: &SourceID) -> Result<SourceView<'_>, io::Error> {
         match self.store.get(file.0) {
             Ok(snapshot) => Ok(SourceView { snapshot }),
-            Err(AccessError::SnapshotReleased) => {
-                Err(io::Error::new(io::ErrorKind::NotFound, "source handle released"))
-            }
+            Err(AccessError::SnapshotReleased) => Err(io::Error::new(io::ErrorKind::NotFound, "source handle released")),
             Err(error) => Err(io::Error::other(error.to_string())),
         }
     }
@@ -255,9 +253,8 @@ impl SourceView<'_> {
     /// Returns the line range spanned by a byte range.
     pub fn get_line_range(&self, span: &Range<u32>) -> Range<usize> {
         let start = self.get_offset_line(span.start).map_or(0, |(_, line, _)| line);
-        let end = self
-            .get_offset_line(span.end.saturating_sub(1).max(span.start))
-            .map_or(self.line_count(), |(_, line, _)| line + 1);
+        let end =
+            self.get_offset_line(span.end.saturating_sub(1).max(span.start)).map_or(self.line_count(), |(_, line, _)| line + 1);
         start..end
     }
 }

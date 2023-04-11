@@ -1,8 +1,8 @@
 use diagnostic::{
     ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity,
     LabelRole, Message, SourceRef,
+    terminal::{SourceCache, SourceRegistry},
 };
-use diagnostic::terminal::{SourceCache, SourceRegistry};
 use diagnostic_svg::structured_to_svg;
 
 fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
@@ -13,10 +13,7 @@ fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
         Message::new("svg.preview.sample").with_fallback("sample diagnostic"),
     )
     .with_primary(DiagnosticLabel::new(
-        DiagnosticLocation::Text {
-            source: source_ref,
-            range: ByteRange::new(0, 2).unwrap(),
-        },
+        DiagnosticLocation::Text { source: source_ref, range: ByteRange::new(0, 2).unwrap() },
         Message::new("svg.preview.label").with_fallback("fn"),
         LabelRole::Primary,
     ))
@@ -39,8 +36,7 @@ fn svg_text_diagnostic_matches_golden() {
 #[test]
 #[ignore = "run manually to refresh SVG golden fixtures"]
 fn write_svg_golden_fixture() {
-    use std::fs;
-    use std::path::PathBuf;
+    use std::{fs, path::PathBuf};
 
     let mut cache = SourceCache::default();
     let source = cache.load_text("fn main() {\n}\n", "main.rs");

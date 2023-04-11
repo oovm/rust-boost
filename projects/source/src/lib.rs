@@ -19,4 +19,4 @@ pub use text::{LineIndex, TextCoords, TextView};
 
 #[cfg(feature = "std")]
 pub use memory::{MemorySnapshot, MemoryStore};
-pub use wire::{decode_source_ref, encode_source_ref, WireError};
+pub use wire::{WireError, decode_source_ref, encode_source_ref};

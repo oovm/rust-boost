@@ -1,5 +1,7 @@
-use diagnostic::{Color, Console, Palette};
-use diagnostic::terminal::{enable_ansi_color, Config, Diagnostic, Label, ReportKind, SourceCache};
+use diagnostic::{
+    Color, Console, Palette,
+    terminal::{Config, Diagnostic, Label, ReportKind, SourceCache, enable_ansi_color},
+};
 
 mod multi_file;
 mod multi_line;

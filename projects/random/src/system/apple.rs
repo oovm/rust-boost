@@ -7,13 +7,13 @@
 use core::{cmp, ffi::c_void};
 
 use super::SystemEntropy;
-use crate::error::{Error, ErrorKind};
+use crate::error::{RandomError, RandomErrorKind};
 
 /// The documented maximum request size of `getentropy`.
 const REQUEST_LIMIT: usize = 256;
 
 /// Fills `dst` with host entropy, or fails without delivering partial output.
-pub(super) fn fill(_entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Error> {
+pub(super) fn fill(_entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
     let mut written = 0;
     while written < dst.len() {
         let piece = cmp::min(dst.len() - written, REQUEST_LIMIT);
@@ -22,7 +22,7 @@ pub(super) fn fill(_entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), E
             written += piece;
             continue;
         }
-        return Err(Error::with_platform_code(ErrorKind::BackendFailure, current_errno()));
+        return Err(RandomError::with_platform_code(RandomErrorKind::BackendFailure, current_errno()));
     }
     Ok(())
 }

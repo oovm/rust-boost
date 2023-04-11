@@ -1,10 +1,10 @@
-use std::fs::{self, File, OpenOptions};
-use std::io;
-use std::path::Path;
+use std::{
+    fs::{self, File, OpenOptions},
+    io,
+    path::Path,
+};
 
-use crate::event::LogEvent;
-use crate::json::JsonLinesSink;
-use crate::sink::LogSink;
+use crate::{event::LogEvent, json::JsonLinesSink, sink::LogSink};
 
 /// Appends structured log events to a file as JSON lines.
 pub struct FileSink {

@@ -1,6 +1,6 @@
 use source::{
-    AccessError, ByteAccess, ByteRange, LineIndex, MemorySnapshot, MemoryStore, PartialByteAccess, SnapshotHandle,
-    SnapshotRef, SourceRef, decode_source_ref, encode_source_ref,
+    AccessError, ByteAccess, ByteRange, LineIndex, MemorySnapshot, MemoryStore, PartialByteAccess, SnapshotHandle, SnapshotRef,
+    SourceRef, decode_source_ref, encode_source_ref,
 };
 
 #[test]
@@ -28,10 +28,7 @@ fn empty_input_has_single_line_at_zero() {
 #[test]
 fn trailing_whitespace_is_preserved() {
     let bytes = b"hello   \nworld";
-    let snapshot = MemorySnapshot::from_bytes(
-        SnapshotRef::new(SourceRef::new("oak", "sample.nd").unwrap()),
-        bytes.to_vec(),
-    );
+    let snapshot = MemorySnapshot::from_bytes(SnapshotRef::new(SourceRef::new("oak", "sample.nd").unwrap()), bytes.to_vec());
     assert_eq!(snapshot.text_view().line_at(0).unwrap(), b"hello   ");
 }
 
@@ -40,10 +37,7 @@ fn crlf_and_lone_cr_split_lines() {
     let bytes = b"a\r\nb\rc\n";
     let lines = LineIndex::from_bytes(bytes);
     assert_eq!(lines.line_count(), 3);
-    let snapshot = MemorySnapshot::from_bytes(
-        SnapshotRef::new(SourceRef::new("oak", "sample.nd").unwrap()),
-        bytes.to_vec(),
-    );
+    let snapshot = MemorySnapshot::from_bytes(SnapshotRef::new(SourceRef::new("oak", "sample.nd").unwrap()), bytes.to_vec());
     assert_eq!(snapshot.text_view().line_at(0).unwrap(), b"a");
     assert_eq!(snapshot.text_view().line_at(1).unwrap(), b"b");
     assert_eq!(snapshot.text_view().line_at(2).unwrap(), b"c");
@@ -52,10 +46,7 @@ fn crlf_and_lone_cr_split_lines() {
 #[test]
 fn unicode_column_counts_utf8_bytes() {
     let bytes = "αβ\n".as_bytes();
-    let snapshot = MemorySnapshot::from_bytes(
-        SnapshotRef::new(SourceRef::new("oak", "unicode.nd").unwrap()),
-        bytes.to_vec(),
-    );
+    let snapshot = MemorySnapshot::from_bytes(SnapshotRef::new(SourceRef::new("oak", "unicode.nd").unwrap()), bytes.to_vec());
     let coords = snapshot.text_view().coords_at_offset(3).unwrap();
     assert_eq!(coords.line, 0);
     assert_eq!(coords.column, 3);
@@ -78,10 +69,7 @@ fn invalid_snapshot_handle_does_not_resolve() {
 #[test]
 fn released_snapshot_handle_fails() {
     let mut store = MemoryStore::new();
-    let snapshot = MemorySnapshot::from_bytes(
-        SnapshotRef::with_revision("oak", "sample.nd", "1").unwrap(),
-        Vec::new(),
-    );
+    let snapshot = MemorySnapshot::from_bytes(SnapshotRef::with_revision("oak", "sample.nd", "1").unwrap(), Vec::new());
     let handle = store.insert(snapshot);
     store.release(handle);
     assert!(matches!(store.get(handle), Err(AccessError::SnapshotReleased)));
@@ -115,10 +103,8 @@ fn serde_round_trip_validates_byte_range() {
 
 #[test]
 fn text_view_reads_utf8_range() {
-    let snapshot = MemorySnapshot::from_bytes(
-        SnapshotRef::new(SourceRef::new("oak", "sample.nd").unwrap()),
-        "αβ".as_bytes().to_vec(),
-    );
+    let snapshot =
+        MemorySnapshot::from_bytes(SnapshotRef::new(SourceRef::new("oak", "sample.nd").unwrap()), "αβ".as_bytes().to_vec());
     let view = snapshot.text_view();
     assert_eq!(view.utf8_range(ByteRange::new(0, 4).unwrap()).unwrap(), "αβ");
 }

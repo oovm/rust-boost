@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::RandomError;
 
 /// Minimal object-safe contract for a byte producer.
 ///
@@ -6,5 +6,5 @@ use crate::error::Error;
 /// whole slice or return an error, and it must not deliver unmarked partial output as success.
 pub trait RandomSource {
     /// Fills `dst` with produced bytes, or fails.
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error>;
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError>;
 }

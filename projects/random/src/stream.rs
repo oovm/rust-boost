@@ -1,6 +1,6 @@
 use crate::{
     chacha::ChaChaCore,
-    error::Error,
+    error::RandomError,
     range::{RangeEndpoint, SampleRange},
     sampling,
     seed::Seed,
@@ -38,17 +38,17 @@ impl Stream {
     ///
     /// A request longer than the remaining profile capacity fails without advancing the stream and
     /// clears `dst`.
-    pub fn fill(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    pub fn fill(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         self.core.fill(dst)
     }
 
     /// Reads the next 4 bytes as a little-endian `u32`.
-    pub fn u32(&mut self) -> Result<u32, Error> {
+    pub fn u32(&mut self) -> Result<u32, RandomError> {
         sampling::read_u32(self)
     }
 
     /// Reads the next 8 bytes as a little-endian `u64`.
-    pub fn u64(&mut self) -> Result<u64, Error> {
+    pub fn u64(&mut self) -> Result<u64, RandomError> {
         sampling::read_u64(self)
     }
 
@@ -57,7 +57,7 @@ impl Stream {
     /// Bounds are validated before any byte is consumed, and the interval is sampled with
     /// rejection sampling. The sampled value only depends on the interval, never on the target
     /// word size.
-    pub fn range<R, B>(&mut self, bounds: B) -> Result<R, Error>
+    pub fn range<R, B>(&mut self, bounds: B) -> Result<R, RandomError>
     where
         R: RangeEndpoint,
         B: SampleRange<R>,
@@ -66,12 +66,12 @@ impl Stream {
     }
 
     /// Samples a uniform `f32` in `[0, 1)` from the top 24 bits of one word.
-    pub fn unit_f32(&mut self) -> Result<f32, Error> {
+    pub fn unit_f32(&mut self) -> Result<f32, RandomError> {
         sampling::unit_f32(self)
     }
 
     /// Samples a uniform `f64` in `[0, 1)` from the top 53 bits of one word.
-    pub fn unit_f64(&mut self) -> Result<f64, Error> {
+    pub fn unit_f64(&mut self) -> Result<f64, RandomError> {
         sampling::unit_f64(self)
     }
 
@@ -79,7 +79,7 @@ impl Stream {
     ///
     /// A zero or full probability returns without consuming bytes. Otherwise the stream samples an
     /// integer in `[0, denominator)` and compares it with `numerator`.
-    pub fn chance(&mut self, numerator: u64, denominator: u64) -> Result<bool, Error> {
+    pub fn chance(&mut self, numerator: u64, denominator: u64) -> Result<bool, RandomError> {
         sampling::chance(self, numerator, denominator)
     }
 
@@ -87,12 +87,12 @@ impl Stream {
     ///
     /// An empty collection returns `None` without consuming bytes. The index is always sampled as a
     /// `u64` interval, so the same collection length yields the same index on every target.
-    pub fn index(&mut self, len: usize) -> Result<Option<usize>, Error> {
+    pub fn index(&mut self, len: usize) -> Result<Option<usize>, RandomError> {
         sampling::index(self, len)
     }
 
     /// Samples a reference to one element, or `None` for an empty slice.
-    pub fn choose<'a, T>(&mut self, items: &'a [T]) -> Result<Option<&'a T>, Error> {
+    pub fn choose<'a, T>(&mut self, items: &'a [T]) -> Result<Option<&'a T>, RandomError> {
         sampling::choose(self, items)
     }
 
@@ -101,13 +101,13 @@ impl Stream {
     /// Each step samples an index in `0..i + 1` through the `u64` index path. A slice of length 0
     /// or 1 is left untouched without consuming bytes. If the stream fails mid-way, the swaps
     /// already performed are kept and the error is returned.
-    pub fn shuffle<T>(&mut self, items: &mut [T]) -> Result<(), Error> {
+    pub fn shuffle<T>(&mut self, items: &mut [T]) -> Result<(), RandomError> {
         sampling::shuffle(self, items)
     }
 }
 
 impl RandomSource for Stream {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         self.fill(dst)
     }
 }

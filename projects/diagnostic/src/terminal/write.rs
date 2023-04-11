@@ -3,10 +3,7 @@ use std::ops::Range;
 
 use std::io::Write;
 
-use super::{
-    display::Show,
-    Diagnostic, Label, LabelAttach,
-};
+use super::{Diagnostic, Label, LabelAttach, display::Show};
 use console::{StreamAwareFmt, StreamType};
 
 // A WARNING, FOR ALL YE WHO VENTURE IN HERE
@@ -565,7 +562,7 @@ impl Diagnostic {
                             ]
                         }
                         else if let Some(vbar_ll) =
-                            get_vbar(col, row).filter(|_| (col != line_label.column || line_label.label.msg.is_some()))
+                            get_vbar(col, row).filter(|_| col != line_label.column || line_label.label.msg.is_some())
                         {
                             if !self.config.cross_gap && is_hbar {
                                 [draw.xbar.fg(line_label.label.color, s), ' '.fg(line_label.label.color, s)]

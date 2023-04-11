@@ -1,8 +1,10 @@
-use crate::access::{AccessError, ByteAccess};
-use crate::identity::IdentityError;
-use crate::range::ByteRange;
-use crate::snapshot::{SnapshotHandle, SnapshotRef};
-use crate::text::{LineIndex, TextView};
+use crate::{
+    access::{AccessError, ByteAccess},
+    identity::IdentityError,
+    range::ByteRange,
+    snapshot::{SnapshotHandle, SnapshotRef},
+    text::{LineIndex, TextView},
+};
 
 /// Immutable in-memory snapshot.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -80,10 +82,7 @@ impl MemoryStore {
 
     /// Resolve a handle to a snapshot.
     pub fn get(&self, handle: SnapshotHandle) -> Result<&MemorySnapshot, AccessError> {
-        self.snapshots
-            .get(handle.index() as usize)
-            .and_then(|entry| entry.as_ref())
-            .ok_or(AccessError::SnapshotReleased)
+        self.snapshots.get(handle.index() as usize).and_then(|entry| entry.as_ref()).ok_or(AccessError::SnapshotReleased)
     }
 
     /// Release a snapshot handle.

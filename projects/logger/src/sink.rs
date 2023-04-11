@@ -1,7 +1,6 @@
 use std::vec::Vec;
 
-use crate::event::LogEvent;
-use crate::level::Level;
+use crate::{event::LogEvent, level::Level};
 
 /// Receives structured log events.
 pub trait LogSink: Send {
@@ -9,8 +8,7 @@ pub trait LogSink: Send {
     fn emit(&mut self, event: &LogEvent);
 
     /// Flush buffered output when supported.
-    fn flush(&mut self) {
-    }
+    fn flush(&mut self) {}
 }
 
 /// Level-based event filter.

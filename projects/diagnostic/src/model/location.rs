@@ -1,6 +1,4 @@
-use crate::provenance::{
-    AddressSpaceRef, DocumentRef, MappingPrecision, MemberPath, ObjectRef, SemanticPath,
-};
+use crate::provenance::{AddressSpaceRef, DocumentRef, MappingPrecision, MemberPath, ObjectRef, SemanticPath};
 use source::{ByteRange, SourceRef};
 
 /// Tagged diagnostic location across text, binary, container, object, and semantic domains.

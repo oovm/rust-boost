@@ -1,6 +1,8 @@
-use std::fmt::{self, Display, Formatter};
-use std::string::String;
-use std::vec::Vec;
+use std::{
+    fmt::{self, Display, Formatter},
+    string::String,
+    vec::Vec,
+};
 
 /// Typed field value attached to console events and diagnostic projections.
 #[derive(Clone, Debug, PartialEq)]

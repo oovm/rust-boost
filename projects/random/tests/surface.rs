@@ -10,7 +10,7 @@
 
 use core::cell::Cell;
 
-use random::{EntropySource, Error, ErrorKind, Secure, Seed, Stream};
+use random::{EntropySource, RandomError, RandomErrorKind, Secure, Seed, Stream};
 
 /// Provider that replays a fixed byte sequence and reports exhaustion at the end.
 struct ReplayProvider {
@@ -19,10 +19,10 @@ struct ReplayProvider {
 }
 
 impl EntropySource for ReplayProvider {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(Error::new(ErrorKind::StreamExhausted));
+            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -36,7 +36,7 @@ struct CountingProvider<'a> {
 }
 
 impl EntropySource for CountingProvider<'_> {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         self.calls.set(self.calls.get() + 1);
         dst.fill(0x42);
         Ok(())
@@ -47,8 +47,8 @@ impl EntropySource for CountingProvider<'_> {
 struct FailingProvider;
 
 impl EntropySource for FailingProvider {
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), Error> {
-        Err(Error::new(ErrorKind::EntropyUnavailable))
+    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), RandomError> {
+        Err(RandomError::new(RandomErrorKind::EntropyUnavailable))
     }
 }
 
@@ -59,9 +59,9 @@ struct OneWordThenFail {
 }
 
 impl EntropySource for OneWordThenFail {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         if self.used || dst.len() != 8 {
-            return Err(Error::new(ErrorKind::EntropyUnavailable));
+            return Err(RandomError::new(RandomErrorKind::EntropyUnavailable));
         }
         self.used = true;
         dst.copy_from_slice(&self.word.to_le_bytes());
@@ -135,9 +135,9 @@ fn invalid_arguments_fail_before_touching_the_host() {
     let calls = Cell::new(0);
     let mut secure = Secure::with_entropy(CountingProvider { calls: &calls });
 
-    assert_eq!(secure.range(9u32..3).unwrap_err().kind(), ErrorKind::InvalidRange);
-    assert_eq!(secure.chance(6, 5).unwrap_err().kind(), ErrorKind::InvalidProbability);
-    assert_eq!(secure.chance(1, 0).unwrap_err().kind(), ErrorKind::InvalidProbability);
+    assert_eq!(secure.range(9u32..3).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(secure.chance(6, 5).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
+    assert_eq!(secure.chance(1, 0).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
     assert_eq!(calls.get(), 0);
 }
 
@@ -145,16 +145,16 @@ fn invalid_arguments_fail_before_touching_the_host() {
 fn a_failing_provider_is_reported_by_every_populated_entry() {
     let mut secure = Secure::with_entropy(FailingProvider);
 
-    assert_eq!(secure.u32().unwrap_err().kind(), ErrorKind::EntropyUnavailable);
-    assert_eq!(secure.u64().unwrap_err().kind(), ErrorKind::EntropyUnavailable);
-    assert_eq!(secure.range(1u32..=6).unwrap_err().kind(), ErrorKind::EntropyUnavailable);
-    assert_eq!(secure.unit_f32().unwrap_err().kind(), ErrorKind::EntropyUnavailable);
-    assert_eq!(secure.unit_f64().unwrap_err().kind(), ErrorKind::EntropyUnavailable);
-    assert_eq!(secure.chance(1, 3).unwrap_err().kind(), ErrorKind::EntropyUnavailable);
-    assert_eq!(secure.index(4).unwrap_err().kind(), ErrorKind::EntropyUnavailable);
-    assert_eq!(secure.choose(&[1, 2]).unwrap_err().kind(), ErrorKind::EntropyUnavailable);
+    assert_eq!(secure.u32().unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.u64().unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.range(1u32..=6).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.unit_f32().unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.unit_f64().unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.chance(1, 3).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.index(4).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.choose(&[1, 2]).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
     let mut items = [1, 2, 3];
-    assert_eq!(secure.shuffle(&mut items).unwrap_err().kind(), ErrorKind::EntropyUnavailable);
+    assert_eq!(secure.shuffle(&mut items).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
     assert_eq!(items, [1, 2, 3]);
 }
 
@@ -177,7 +177,7 @@ fn a_mid_shuffle_failure_keeps_the_swaps_already_made() {
     // on the next request.
     let mut secure = Secure::with_entropy(OneWordThenFail { word: 3, used: false });
     let mut items = [1, 2, 3];
-    assert_eq!(secure.shuffle(&mut items).unwrap_err().kind(), ErrorKind::EntropyUnavailable);
+    assert_eq!(secure.shuffle(&mut items).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
     assert_eq!(items, [3, 2, 1]);
 }
 

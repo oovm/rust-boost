@@ -9,16 +9,18 @@ mod windows;
 mod write;
 
 use characters::Draw;
-use console::Color;
 pub use characters::{BuiltinDrawer, DrawElements};
+use console::Color;
 pub use source_map::SourceRegistry;
 pub use sources::{ProviderError, SourceCache, SourceID, SourceLine, SourcePath, SourceProvider, SourceSpan, SourceView};
-pub use structured::{eprint_structured_set, structured_to_terminal, StructuredRenderError};
+pub use structured::{StructuredRenderError, eprint_structured_set, structured_to_terminal};
 pub use windows::enable_ansi_color;
 
-use core::cmp::{Eq, PartialEq};
-use core::fmt::{Debug, Formatter};
-use core::hash::Hash;
+use core::{
+    cmp::{Eq, PartialEq},
+    fmt::{Debug, Formatter},
+    hash::Hash,
+};
 use unicode_width::UnicodeWidthChar;
 
 /// A type that represents a labelled section of identifier code.

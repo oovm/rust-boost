@@ -1,10 +1,8 @@
-use diagnostic::terminal::{structured_to_terminal, Config, SourceRegistry};
 use diagnostic::{
-    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, LabelRole, Message,
-    SourceRef,
+    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity,
+    LabelRole, Message, SourceRef,
+    terminal::{Config, SourceCache, SourceRegistry, structured_to_terminal},
 };
-use diagnostic::DiagnosticSeverity;
-use diagnostic::terminal::SourceCache;
 
 fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
     Diagnostic::new(
@@ -14,10 +12,7 @@ fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
         Message::new("oak.syntax.unexpected-token").with_fallback("unexpected token"),
     )
     .with_primary(DiagnosticLabel::new(
-        DiagnosticLocation::Text {
-            source: source_ref,
-            range: ByteRange::new(32, 33).unwrap(),
-        },
+        DiagnosticLocation::Text { source: source_ref, range: ByteRange::new(32, 33).unwrap() },
         Message::new("label.token").with_fallback("token"),
         LabelRole::Primary,
     ))
@@ -58,8 +53,7 @@ fn terminal_text_diagnostic_matches_golden() {
 #[test]
 #[ignore = "run manually to refresh terminal golden fixtures"]
 fn write_terminal_golden_fixture() {
-    use std::fs;
-    use std::path::PathBuf;
+    use std::{fs, path::PathBuf};
 
     let mut cache = SourceCache::default();
     let text = fixture_text();

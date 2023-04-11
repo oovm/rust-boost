@@ -1,9 +1,9 @@
 use std::io::{self, Write};
 
-use crate::event::{EventKind, LogEvent};
-use crate::field::{Field, FieldValue};
-use crate::payload::{
-    ActionPayload, CausePayload, DiagnosticPayload, LabelPayload, LocationPayload, MessagePayload,
+use crate::{
+    event::{EventKind, LogEvent},
+    field::{Field, FieldValue},
+    payload::{ActionPayload, CausePayload, DiagnosticPayload, LabelPayload, LocationPayload, MessagePayload},
 };
 
 /// Writes one JSON object per line for downstream log collectors.
@@ -48,11 +48,7 @@ pub fn event_to_json(event: &LogEvent) -> String {
     parts.push(format!("\"target\":{}", json_string(event.target())));
     parts.push(format!(
         "\"timestampSecs\":{}",
-        event
-            .timestamp()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|duration| duration.as_secs())
-            .unwrap_or(0)
+        event.timestamp().duration_since(std::time::UNIX_EPOCH).map(|duration| duration.as_secs()).unwrap_or(0)
     ));
     if let Some(span_id) = event.span_id() {
         parts.push(format!("\"spanId\":{}", span_id.as_u64()));
@@ -112,11 +108,7 @@ fn diagnostic_payload_to_json(payload: &DiagnosticPayload) -> String {
         parts.push(format!("\"primary\":{}", label_payload_to_json(primary)));
     }
     if !payload.secondary().is_empty() {
-        let items = payload
-            .secondary()
-            .iter()
-            .map(label_payload_to_json)
-            .collect::<Vec<_>>();
+        let items = payload.secondary().iter().map(label_payload_to_json).collect::<Vec<_>>();
         parts.push(format!("\"secondary\":[{}]", items.join(",")));
     }
     if !payload.notes().is_empty() {
@@ -184,23 +176,14 @@ fn location_payload_to_json(location: &LocationPayload) -> String {
             format!(
                 "{{\"kind\":{},\"fields\":{}}}",
                 json_string(kind),
-                fields_to_json(
-                    &fields
-                        .iter()
-                        .map(|(name, value)| Field::new(name.clone(), value.clone()))
-                        .collect::<Vec<_>>()
-                )
+                fields_to_json(&fields.iter().map(|(name, value)| Field::new(name.clone(), value.clone())).collect::<Vec<_>>())
             )
         }
     }
 }
 
 fn cause_payload_to_json(cause: &CausePayload) -> String {
-    format!(
-        "{{\"code\":{},\"message\":{}}}",
-        json_string(cause.code()),
-        message_payload_to_json(cause.message())
-    )
+    format!("{{\"code\":{},\"message\":{}}}", json_string(cause.code()), message_payload_to_json(cause.message()))
 }
 
 fn action_payload_to_json(action: &ActionPayload) -> String {

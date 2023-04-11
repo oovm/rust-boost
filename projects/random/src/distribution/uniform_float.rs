@@ -15,7 +15,7 @@
 //!   result for such an interval, not a bias introduced by the mapping.
 
 use crate::{
-    error::{Error, ErrorKind},
+    error::{RandomError, RandomErrorKind},
     sampling,
     source::RandomSource,
 };
@@ -38,13 +38,13 @@ macro_rules! uniform_float {
             ///
             /// Both bounds must be finite and `low` must be strictly below `high`. A non-finite
             /// bound, an empty interval, or a reversed one fails with
-            /// [`ErrorKind::InvalidParameter`](crate::ErrorKind::InvalidParameter) during
+            /// [`ErrorKind::InvalidParameter`](crate::RandomErrorKind::InvalidParameter) during
             /// construction, so a sampling call never has to re-validate its parameters.
-            pub fn new(low: $ty, high: $ty) -> Result<Self, Error> {
+            pub fn new(low: $ty, high: $ty) -> Result<Self, RandomError> {
                 if low.is_finite() && high.is_finite() && low < high {
                     return Ok(Self { low, high });
                 }
-                Err(Error::new(ErrorKind::InvalidParameter))
+                Err(RandomError::new(RandomErrorKind::InvalidParameter))
             }
 
             /// Returns the inclusive lower bound of the support.
@@ -63,7 +63,7 @@ macro_rules! uniform_float {
             /// whose width is not representable: there the two scaled bounds are combined instead, so
             /// a cross-zero interval such as `[-MAX, MAX]` still produces a finite value. Both forms
             /// keep the result inside `[low, high)`.
-            pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<$ty, Error> {
+            pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<$ty, RandomError> {
                 let unit = sampling::$unit(source)?;
                 let width = self.high - self.low;
                 let sampled = if width.is_finite() {

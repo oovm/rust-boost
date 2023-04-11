@@ -1,5 +1,4 @@
-use console::Color::*;
-use console::{Paint, Style};
+use console::{Color::*, Paint, Style};
 use serial_test::serial;
 
 macro_rules! assert_renders {
@@ -162,8 +161,10 @@ fn wrapping() {
 
 #[test]
 fn hash_eq() {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
+    use std::{
+        collections::hash_map::DefaultHasher,
+        hash::{Hash, Hasher},
+    };
 
     fn hash<T: Hash>(t: &T) -> u64 {
         let mut s = DefaultHasher::new();

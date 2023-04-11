@@ -39,12 +39,9 @@ fn paint_level(level: Level, text: String) -> String {
 
 fn summary_text(event: &LogEvent) -> String {
     match event.kind() {
-        EventKind::Diagnostic(payload) => format!(
-            "diagnostic {} [{}] {}",
-            payload.severity(),
-            payload.code(),
-            payload.message().key()
-        ),
+        EventKind::Diagnostic(payload) => {
+            format!("diagnostic {} [{}] {}", payload.severity(), payload.code(), payload.message().key())
+        }
         EventKind::Log | EventKind::Progress | EventKind::Metric => event
             .fields()
             .iter()
@@ -56,9 +53,7 @@ fn summary_text(event: &LogEvent) -> String {
 
 fn paint_summary(event: &LogEvent) -> String {
     match event.kind() {
-        EventKind::Diagnostic(payload) => {
-            paint_diagnostic_severity(payload.severity(), summary_text(event))
-        }
+        EventKind::Diagnostic(payload) => paint_diagnostic_severity(payload.severity(), summary_text(event)),
         _ => summary_text(event),
     }
 }

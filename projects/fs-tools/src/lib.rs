@@ -6,8 +6,8 @@
 //! Standard operations are re-exported at the crate root. Recursive traversal lives in
 //! [`walk`] and [`async_walk`].
 
-pub mod folder;
 pub mod file;
+pub mod folder;
 pub mod link;
 pub mod metadata;
 pub mod permissions;
@@ -21,16 +21,14 @@ pub mod walk;
 #[cfg(feature = "async")]
 pub mod async_walk;
 
-pub use folder::{create_folder, create_folder_all, read_dir, FolderEntry, ReadFolder};
-pub use file::{exists, File, OpenOptions};
-pub use link::{canonicalize, hard_link, read_link};
+pub use file::{File, OpenOptions, exists};
+pub use folder::{FolderEntry, ReadFolder, create_folder, create_folder_all, read_dir};
 #[cfg(unix)]
 pub use link::symlink;
-pub use metadata::{metadata, symlink_metadata, FileType, Metadata};
-pub use permissions::{set_permissions, Permissions};
+pub use link::{canonicalize, hard_link, read_link};
+pub use metadata::{FileType, Metadata, metadata, symlink_metadata};
+pub use permissions::{Permissions, set_permissions};
+pub use publish::{AtomicPublisher, OverwritePolicy, PublishOptions, publish_bytes, publish_bytes_with_options};
 pub use read_write::{copy, read, read_to_string, write};
 pub use remove::{remove_file, remove_folder, remove_folder_all};
-pub use publish::{
-    publish_bytes, publish_bytes_with_options, AtomicPublisher, OverwritePolicy, PublishOptions,
-};
 pub use rename::rename;

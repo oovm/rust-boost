@@ -1,12 +1,18 @@
-use std::cell::RefCell;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
-use std::vec::Vec;
+use std::{
+    cell::RefCell,
+    sync::{
+        Arc, Mutex, OnceLock,
+        atomic::{AtomicU64, Ordering},
+    },
+    vec::Vec,
+};
 
-use crate::event::LogEvent;
-use crate::field::Field;
-use crate::sink::{Filter, LogSink};
-use crate::span::{current_parent_span_id, current_span_id};
+use crate::{
+    event::LogEvent,
+    field::Field,
+    sink::{Filter, LogSink},
+    span::{current_parent_span_id, current_span_id},
+};
 
 static GLOBAL_SINK: OnceLock<Mutex<GlobalSinkState>> = OnceLock::new();
 static GLOBAL_FILTER: OnceLock<Mutex<Filter>> = OnceLock::new();
@@ -82,7 +88,8 @@ pub fn emit(mut event: LogEvent) {
 
     if let Some(sink) = sink {
         sink.lock().expect("logger sink mutex poisoned").emit(&event);
-    } else {
+    }
+    else {
         record_dropped();
     }
 }

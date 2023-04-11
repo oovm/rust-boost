@@ -1,3 +1,3 @@
 //! Permission changes.
 
-pub use std::fs::{set_permissions, Permissions};
+pub use std::fs::{Permissions, set_permissions};

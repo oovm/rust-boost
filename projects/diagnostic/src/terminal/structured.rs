@@ -1,18 +1,16 @@
 use alloc::string::{String, ToString};
-use core::fmt::{self, Display, Formatter};
-use core::ops::Range;
+use core::{
+    fmt::{self, Display, Formatter},
+    ops::Range,
+};
 
 use super::sources::{SourceCache, SourceID, SourceSpan};
 
 use crate::{
-    model::Diagnostic,
-    ByteRange, DiagnosticLabel, DiagnosticLocation, DiagnosticSeverity, DiagnosticSet, Message, SourceRef,
+    ByteRange, DiagnosticLabel, DiagnosticLocation, DiagnosticSet, DiagnosticSeverity, Message, SourceRef, model::Diagnostic,
 };
 
-use super::{
-    source_map::SourceRegistry,
-    Config, Diagnostic as TerminalDiagnostic, Label, ReportKind,
-};
+use super::{Config, Diagnostic as TerminalDiagnostic, Label, ReportKind, source_map::SourceRegistry};
 
 /// Failure while converting a structured diagnostic for terminal rendering.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -127,9 +125,8 @@ fn primary_text_location(location: &DiagnosticLocation, registry: &SourceRegistr
 
 fn try_text_label(label: &DiagnosticLabel, registry: &SourceRegistry) -> Result<Option<Label>, StructuredRenderError> {
     if let Some((source, range)) = text_like_location(label.location()) {
-        let file = registry
-            .resolve(source)
-            .ok_or_else(|| StructuredRenderError::UnknownSource { wire_id: source.wire_id() })?;
+        let file =
+            registry.resolve(source).ok_or_else(|| StructuredRenderError::UnknownSource { wire_id: source.wire_id() })?;
         let span = byte_range_to_span(*file, range)?;
         return Ok(Some(Label::new(span).with_message(render_message(label.message()))));
     }
@@ -164,9 +161,7 @@ fn location_summary(location: &DiagnosticLocation, message: &Message) -> String 
                 .map(|segment| format!("{}/{}", segment.kind(), segment.name()))
                 .collect::<Vec<_>>()
                 .join(" -> ");
-            let range = range
-                .map(|range| format!(" [{}, {})", range.start(), range.end()))
-                .unwrap_or_default();
+            let range = range.map(|range| format!(" [{}, {})", range.start(), range.end())).unwrap_or_default();
             format!("{}::{path}{range} ({precision:?})", container.id())
         }
         DiagnosticLocation::Object { source, object, .. } => {

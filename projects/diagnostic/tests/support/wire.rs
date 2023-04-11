@@ -26,8 +26,7 @@ fn binary_location_serializes() {
 #[test]
 #[ignore = "run manually to refresh on-disk JSON fixtures"]
 fn write_wire_fixtures() {
-    use std::fs;
-    use std::path::PathBuf;
+    use std::{fs, path::PathBuf};
 
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures");
     fs::create_dir_all(&root).unwrap();
@@ -42,8 +41,5 @@ fn write_wire_fixtures() {
     write("member.json", &serde_json::to_value(member_diagnostic()).unwrap());
     write("object.json", &serde_json::to_value(object_diagnostic()).unwrap());
     write("semantic.json", &serde_json::to_value(semantic_diagnostic()).unwrap());
-    write(
-        "envelope.json",
-        &serde_json::to_value(DiagnosticEnvelope::from_set(&sample_set())).unwrap(),
-    );
+    write("envelope.json", &serde_json::to_value(DiagnosticEnvelope::from_set(&sample_set())).unwrap());
 }

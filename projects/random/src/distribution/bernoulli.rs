@@ -1,7 +1,7 @@
 //! Bernoulli distribution over a rational probability.
 
 use crate::{
-    error::{Error, ErrorKind},
+    error::{RandomError, RandomErrorKind},
     range::RangeEndpoint,
     source::RandomSource,
 };
@@ -23,10 +23,10 @@ impl Bernoulli {
     /// Creates the distribution from the rational probability `numerator / denominator`.
     ///
     /// A zero denominator or a numerator above the denominator fails with
-    /// [`ErrorKind::InvalidProbability`](crate::ErrorKind::InvalidProbability).
-    pub fn new(numerator: u64, denominator: u64) -> Result<Self, Error> {
+    /// [`ErrorKind::InvalidProbability`](crate::RandomErrorKind::InvalidProbability).
+    pub fn new(numerator: u64, denominator: u64) -> Result<Self, RandomError> {
         if denominator == 0 || numerator > denominator {
-            return Err(Error::new(ErrorKind::InvalidProbability));
+            return Err(RandomError::new(RandomErrorKind::InvalidProbability));
         }
         Ok(Self { numerator, denominator })
     }
@@ -45,7 +45,7 @@ impl Bernoulli {
     ///
     /// The mapping is the one used by [`Stream::chance`](crate::Stream::chance): a probability of
     /// zero returns `false` and a probability of one returns `true` without consuming any byte.
-    pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<bool, Error> {
+    pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<bool, RandomError> {
         if self.numerator == 0 {
             return Ok(false);
         }

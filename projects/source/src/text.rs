@@ -1,5 +1,7 @@
-use crate::access::{AccessError, ByteAccess};
-use crate::range::ByteRange;
+use crate::{
+    access::{AccessError, ByteAccess},
+    range::ByteRange,
+};
 
 /// Zero-based line and UTF-8 byte column coordinates.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -143,9 +145,7 @@ impl<'a, T: ByteAccess + ?Sized> TextView<'a, T> {
     /// Decode a UTF-8 byte range.
     pub fn utf8_range(&self, range: ByteRange) -> Result<&str, AccessError> {
         let bytes = self.access.read(range)?;
-        core::str::from_utf8(bytes).map_err(|error| AccessError::NotUtf8 {
-            offset: range.start() + error.valid_up_to() as u64,
-        })
+        core::str::from_utf8(bytes).map_err(|error| AccessError::NotUtf8 { offset: range.start() + error.valid_up_to() as u64 })
     }
 }
 

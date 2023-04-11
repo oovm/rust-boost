@@ -1,12 +1,10 @@
 use std::collections::BTreeMap;
 
 use diagnostic::{
-    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, LabelRole, Message,
-    SourceRef,
+    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity,
+    LabelRole, Message, SourceRef, terminal::SourceID,
 };
-use diagnostic::DiagnosticSeverity;
-use diagnostic::terminal::SourceID;
-use diagnostic_lsp::{byte_index_to_position, position_to_byte_index, structured_to_lsp, SourceCache, SourceResolver};
+use diagnostic_lsp::{SourceCache, SourceResolver, byte_index_to_position, position_to_byte_index, structured_to_lsp};
 use lsp_types::{Position, Url};
 
 const UNICODE: &str = "åä t𐐀b";
@@ -69,21 +67,12 @@ fn structured_text_diagnostic_to_lsp() {
         Message::new("oak.syntax.unexpected-token").with_fallback("unexpected token"),
     )
     .with_primary(DiagnosticLabel::new(
-        DiagnosticLocation::Text {
-            source: source_ref,
-            range: ByteRange::new(4, 9).unwrap(),
-        },
+        DiagnosticLocation::Text { source: source_ref, range: ByteRange::new(4, 9).unwrap() },
         Message::new("label.token").with_fallback("token"),
         LabelRole::Primary,
     ));
 
-    let lsp = structured_to_lsp(
-        &diagnostic,
-        &cache,
-        &resolver,
-        &|_| Some(Url::parse("file:///sample.tao").unwrap()),
-    )
-    .unwrap();
+    let lsp = structured_to_lsp(&diagnostic, &cache, &resolver, &|_| Some(Url::parse("file:///sample.tao").unwrap())).unwrap();
 
     assert_eq!(lsp.message, "unexpected token");
     assert_eq!(lsp.severity, Some(lsp_types::DiagnosticSeverity::ERROR));

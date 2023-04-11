@@ -6,7 +6,7 @@
 //! before returning success, so no chunking or short-read loop is needed.
 
 use super::SystemEntropy;
-use crate::error::{Error, ErrorKind};
+use crate::error::{RandomError, RandomErrorKind};
 
 // Preview 1 import of `random_get`, which fills `buf` with `buf_len` random bytes and returns a
 // WASI `errno`. A foreign block does not accept a doc comment, so this is an ordinary comment.
@@ -25,7 +25,7 @@ const ERRNO_INTR: u16 = 27;
 const ERRNO_NOSYS: u16 = 52;
 
 /// Fills `dst` with host entropy, or fails without delivering partial output.
-pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Error> {
+pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
     loop {
         let code = unsafe { random_get(dst.as_mut_ptr(), dst.len()) };
         match code {
@@ -34,11 +34,11 @@ pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Er
             ERRNO_INTR => continue,
             ERRNO_NOSYS => {
                 entropy.mark_unsupported();
-                return Err(Error::with_platform_code(ErrorKind::Unsupported, i32::from(ERRNO_NOSYS)));
+                return Err(RandomError::with_platform_code(RandomErrorKind::Unsupported, i32::from(ERRNO_NOSYS)));
             }
             // Any other errno is a host decision about this request, and the raw code is preserved
             // so the caller can tell which WASI failure it was.
-            code => return Err(Error::with_platform_code(ErrorKind::BackendFailure, i32::from(code))),
+            code => return Err(RandomError::with_platform_code(RandomErrorKind::BackendFailure, i32::from(code))),
         }
     }
 }

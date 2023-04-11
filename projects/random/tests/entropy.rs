@@ -6,7 +6,7 @@
 
 use core::cell::Cell;
 
-use random::{EntropySource, Error, ErrorKind, Secure, Seed, Stream};
+use random::{EntropySource, RandomError, RandomErrorKind, Secure, Seed, Stream};
 
 /// Byte pattern produced by the recording provider.
 const PATTERN: u8 = 0x42;
@@ -17,7 +17,7 @@ struct RecordingProvider<'a> {
 }
 
 impl EntropySource for RecordingProvider<'_> {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         self.calls.set(self.calls.get() + 1);
         dst.fill(PATTERN);
         Ok(())
@@ -28,10 +28,10 @@ impl EntropySource for RecordingProvider<'_> {
 struct FailingProvider;
 
 impl EntropySource for FailingProvider {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         let prefix = dst.len() / 2;
         dst[..prefix].fill(0xAA);
-        Err(Error::new(ErrorKind::BackendFailure))
+        Err(RandomError::new(RandomErrorKind::BackendFailure))
     }
 }
 
@@ -39,9 +39,9 @@ impl EntropySource for FailingProvider {
 struct CodedProvider;
 
 impl EntropySource for CodedProvider {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         dst.fill(0xAA);
-        Err(Error::with_platform_code(ErrorKind::EntropyUnavailable, 11))
+        Err(RandomError::with_platform_code(RandomErrorKind::EntropyUnavailable, 11))
     }
 }
 
@@ -49,9 +49,9 @@ impl EntropySource for CodedProvider {
 struct UnsupportedProvider;
 
 impl EntropySource for UnsupportedProvider {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), Error> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
         dst.fill(0xAA);
-        Err(Error::new(ErrorKind::Unsupported))
+        Err(RandomError::new(RandomErrorKind::Unsupported))
     }
 }
 
@@ -72,7 +72,7 @@ fn empty_request_never_reaches_the_provider() {
 fn failed_request_clears_the_whole_buffer() {
     let mut secure = Secure::with_entropy(FailingProvider);
     let mut bytes = [0x11u8; 16];
-    assert_eq!(secure.fill(&mut bytes).unwrap_err().kind(), ErrorKind::BackendFailure);
+    assert_eq!(secure.fill(&mut bytes).unwrap_err().kind(), RandomErrorKind::BackendFailure);
     assert_eq!(bytes, [0u8; 16]);
 }
 
@@ -81,7 +81,7 @@ fn provider_error_keeps_its_classification_and_platform_code() {
     let mut secure = Secure::with_entropy(CodedProvider);
     let mut bytes = [0x11u8; 8];
     let error = secure.fill(&mut bytes).unwrap_err();
-    assert_eq!(error.kind(), ErrorKind::EntropyUnavailable);
+    assert_eq!(error.kind(), RandomErrorKind::EntropyUnavailable);
     assert_eq!(error.platform_code(), Some(11));
     assert_eq!(bytes, [0u8; 8]);
 }
@@ -91,7 +91,7 @@ fn unsupported_provider_is_reported_without_partial_output() {
     let mut secure = Secure::with_entropy(UnsupportedProvider);
     let mut bytes = [0x11u8; 8];
     let error = secure.fill(&mut bytes).unwrap_err();
-    assert_eq!(error.kind(), ErrorKind::Unsupported);
+    assert_eq!(error.kind(), RandomErrorKind::Unsupported);
     assert_eq!(error.platform_code(), None);
     assert_eq!(bytes, [0u8; 8]);
 }
@@ -111,7 +111,7 @@ fn seed_generation_reads_only_the_passed_provider() {
 #[test]
 fn seed_generation_reports_a_failing_provider() {
     let mut secure = Secure::with_entropy(FailingProvider);
-    assert_eq!(Seed::generate(&mut secure).unwrap_err().kind(), ErrorKind::BackendFailure);
+    assert_eq!(Seed::generate(&mut secure).unwrap_err().kind(), RandomErrorKind::BackendFailure);
 }
 
 /// Platform backends compiled by this crate, which the test host must exercise directly.
@@ -160,14 +160,14 @@ mod host {
 /// the `Unsupported` contract as long as the `system` feature is off.
 #[cfg(not(feature = "system"))]
 mod unconfigured {
-    use random::{ErrorKind, Secure};
+    use random::{RandomErrorKind, Secure};
 
     #[test]
     fn system_without_the_feature_reports_unsupported() {
         let mut secure = Secure::system();
         let mut bytes = [0x11u8; 8];
         let error = secure.fill(&mut bytes).unwrap_err();
-        assert_eq!(error.kind(), ErrorKind::Unsupported);
+        assert_eq!(error.kind(), RandomErrorKind::Unsupported);
         assert_eq!(bytes, [0u8; 8]);
     }
 

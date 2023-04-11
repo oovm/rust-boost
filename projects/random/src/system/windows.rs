@@ -7,7 +7,7 @@
 use core::{cmp, ffi::c_void, ptr};
 
 use super::SystemEntropy;
-use crate::error::{Error, ErrorKind};
+use crate::error::{RandomError, RandomErrorKind};
 
 /// Asks BCrypt for the system-preferred random number generator, so no algorithm handle is needed.
 const USE_SYSTEM_PREFERRED_RNG: u32 = 0x0000_0002;
@@ -21,7 +21,7 @@ unsafe extern "system" {
 }
 
 /// Fills `dst` with host entropy, or fails without delivering partial output.
-pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Error> {
+pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
     let mut written = 0;
     while written < dst.len() {
         // The requested length is a `ULONG`, so a longer buffer is split into pieces.
@@ -32,9 +32,9 @@ pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Er
             0 => written += piece,
             STATUS_NOT_SUPPORTED => {
                 entropy.mark_unsupported();
-                return Err(Error::new(ErrorKind::Unsupported));
+                return Err(RandomError::new(RandomErrorKind::Unsupported));
             }
-            code => return Err(Error::with_platform_code(ErrorKind::BackendFailure, code)),
+            code => return Err(RandomError::with_platform_code(RandomErrorKind::BackendFailure, code)),
         }
     }
     Ok(())

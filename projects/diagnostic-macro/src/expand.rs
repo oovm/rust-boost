@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
-    parse::{Parse, ParseStream},
     Ident, LitStr, Result, Token,
+    parse::{Parse, ParseStream},
 };
 
 pub struct DiagnosticInput {
@@ -22,10 +22,7 @@ pub enum Severity {
 
 pub enum MessageSpec {
     Text(LitStr),
-    Structured {
-        key: LitStr,
-        fallback: Option<LitStr>,
-    },
+    Structured { key: LitStr, fallback: Option<LitStr> },
 }
 
 pub struct OriginSpec {

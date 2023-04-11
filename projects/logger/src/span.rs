@@ -1,7 +1,9 @@
-use std::cell::RefCell;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::string::String;
-use std::vec::Vec;
+use std::{
+    cell::RefCell,
+    string::String,
+    sync::atomic::{AtomicU64, Ordering},
+    vec::Vec,
+};
 
 use crate::field::{Field, Fields};
 
@@ -38,12 +40,7 @@ pub struct LogSpan {
 impl LogSpan {
     /// Create a span with the given target.
     pub fn new(target: impl Into<String>) -> Self {
-        Self {
-            id: SpanId::next(),
-            target: target.into(),
-            parent: current_span_id(),
-            fields: Fields::new(),
-        }
+        Self { id: SpanId::next(), target: target.into(), parent: current_span_id(), fields: Fields::new() }
     }
 
     /// Attach a field to the span.
@@ -114,10 +111,6 @@ pub fn current_span_id() -> Option<SpanId> {
 pub fn current_parent_span_id() -> Option<SpanId> {
     SPAN_STACK.with(|stack| {
         let stack = stack.borrow();
-        if stack.len() >= 2 {
-            stack.get(stack.len() - 2).copied()
-        } else {
-            None
-        }
+        if stack.len() >= 2 { stack.get(stack.len() - 2).copied() } else { None }
     })
 }
