@@ -26,6 +26,8 @@ license = "MPL-2.0"
 serde = { version = "1.0.197", features = ["derive"] }
 unicode-width = "0.1.11"
 url = "2.5.0"
+rustls = { version = "0.23.45", default-features = false, features = ["std", "ring", "tls12"] }
+webpki-roots = "1.0.9"
 lsp-types = "0.95.0"
 syn = "2.0.52"
 quote = "1.0.35"
