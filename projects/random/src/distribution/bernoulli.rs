@@ -1,10 +1,6 @@
 //! Bernoulli distribution over a rational probability.
 
-use crate::{
-    error::{RandomError, RandomErrorKind},
-    range::RangeEndpoint,
-    source::RandomSource,
-};
+use crate::{error::RandomError, sampling, source::RandomSource};
 
 /// Distribution of one boolean event with the rational probability `numerator / denominator`.
 ///
@@ -23,10 +19,10 @@ impl Bernoulli {
     /// Creates the distribution from the rational probability `numerator / denominator`.
     ///
     /// A zero denominator or a numerator above the denominator fails with
-    /// [`ErrorKind::InvalidProbability`](crate::RandomErrorKind::InvalidProbability).
+    /// [`RandomError::InvalidProbability`].
     pub fn new(numerator: u64, denominator: u64) -> Result<Self, RandomError> {
         if denominator == 0 || numerator > denominator {
-            return Err(RandomError::new(RandomErrorKind::InvalidProbability));
+            return Err(RandomError::InvalidProbability);
         }
         Ok(Self { numerator, denominator })
     }
@@ -43,7 +39,7 @@ impl Bernoulli {
 
     /// Samples the event with the shared unbiased integer kernel.
     ///
-    /// The mapping is the one used by [`Stream::chance`](crate::Stream::chance): a probability of
+    /// The mapping is the one used by [`Random::chance`](crate::Random::chance): a probability of
     /// zero returns `false` and a probability of one returns `true` without consuming any byte.
     pub fn sample<S: RandomSource + ?Sized>(&self, source: &mut S) -> Result<bool, RandomError> {
         if self.numerator == 0 {
@@ -52,7 +48,7 @@ impl Bernoulli {
         if self.numerator == self.denominator {
             return Ok(true);
         }
-        Ok(u64::sample_bounded(source, 0, self.denominator - 1)? < self.numerator)
+        Ok(sampling::sample_inclusive(source, 0u64, self.denominator - 1).map_err(RandomError::Source)? < self.numerator)
     }
 
     /// Returns the probability mass of one outcome as a float approximation.

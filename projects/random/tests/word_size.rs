@@ -6,7 +6,7 @@
 //! this file also runs on a 32-bit target: a `usize`-dependent mapping would fail on one of the two
 //! word sizes while a mapping over an explicit `u64` interval passes on both.
 
-use random::{Seed, Stream};
+use random::{ChaCha12, Random};
 
 /// Seed used by every fixture in this file.
 const SEED: u64 = 0x5eed_1234;
@@ -14,9 +14,9 @@ const SEED: u64 = 0x5eed_1234;
 /// Stream identifier used by every fixture in this file.
 const STREAM_ID: u64 = 9;
 
-/// Creates the fixture stream.
-fn fixture() -> Stream {
-    Stream::new(Seed::from_u64(SEED), STREAM_ID)
+/// Creates the fixture source.
+fn fixture() -> Random<ChaCha12> {
+    Random::new(ChaCha12::from_u64(SEED, STREAM_ID))
 }
 
 // Recorded from the profile for the fixture seed, then confirmed unchanged on a 32-bit target.
@@ -47,17 +47,17 @@ const GOLDEN_SHUFFLED: [u32; 32] =
 #[test]
 #[ignore = "run manually to refresh the word-size goldens"]
 fn record_word_size_goldens() {
-    let mut stream = fixture();
+    let mut random = fixture();
 
-    let ranges: Vec<u32> = (0..16).map(|_| stream.range(1u32..=6).unwrap()).collect();
-    let wide: Vec<u64> = (0..8).map(|_| stream.range(10u64..40).unwrap()).collect();
-    let signed: Vec<i32> = (0..8).map(|_| stream.range(-4i32..=4).unwrap()).collect();
-    let long: Vec<i64> = (0..8).map(|_| stream.range(i64::MIN..=-1).unwrap()).collect();
-    let indices: Vec<usize> = (0..8).map(|_| stream.index(1_000_000).unwrap().unwrap()).collect();
-    let chosen: Vec<i32> = (0..8).map(|_| *stream.choose(&[-90, 0, 90]).unwrap().unwrap()).collect();
-    let chances: Vec<bool> = (0..32).map(|_| stream.chance(1, 3).unwrap()).collect();
+    let ranges: Vec<u32> = (0..16).map(|_| random.range_u32(1..=6).unwrap()).collect();
+    let wide: Vec<u64> = (0..8).map(|_| random.range_u64(10..40).unwrap()).collect();
+    let signed: Vec<i32> = (0..8).map(|_| random.range_i32(-4..=4).unwrap()).collect();
+    let long: Vec<i64> = (0..8).map(|_| random.range_i64(i64::MIN..=-1).unwrap()).collect();
+    let indices: Vec<usize> = (0..8).map(|_| random.index(1_000_000).unwrap().unwrap()).collect();
+    let chosen: Vec<i32> = (0..8).map(|_| *random.choose(&[-90, 0, 90]).unwrap().unwrap()).collect();
+    let chances: Vec<bool> = (0..32).map(|_| random.chance(1, 3).unwrap()).collect();
     let mut items: Vec<u32> = (0..32).collect();
-    stream.shuffle(&mut items).unwrap();
+    random.shuffle(&mut items).unwrap();
 
     println!("ranges = {ranges:?}");
     println!("wide = {wide:?}");
@@ -71,17 +71,17 @@ fn record_word_size_goldens() {
 
 #[test]
 fn recorded_entries_are_word_size_independent() {
-    let mut stream = fixture();
+    let mut random = fixture();
 
-    let ranges: Vec<u32> = (0..16).map(|_| stream.range(1u32..=6).unwrap()).collect();
-    let wide: Vec<u64> = (0..8).map(|_| stream.range(10u64..40).unwrap()).collect();
-    let signed: Vec<i32> = (0..8).map(|_| stream.range(-4i32..=4).unwrap()).collect();
-    let long: Vec<i64> = (0..8).map(|_| stream.range(i64::MIN..=-1).unwrap()).collect();
-    let indices: Vec<usize> = (0..8).map(|_| stream.index(1_000_000).unwrap().unwrap()).collect();
-    let chosen: Vec<i32> = (0..8).map(|_| *stream.choose(&[-90, 0, 90]).unwrap().unwrap()).collect();
-    let chances: Vec<bool> = (0..32).map(|_| stream.chance(1, 3).unwrap()).collect();
+    let ranges: Vec<u32> = (0..16).map(|_| random.range_u32(1..=6).unwrap()).collect();
+    let wide: Vec<u64> = (0..8).map(|_| random.range_u64(10..40).unwrap()).collect();
+    let signed: Vec<i32> = (0..8).map(|_| random.range_i32(-4..=4).unwrap()).collect();
+    let long: Vec<i64> = (0..8).map(|_| random.range_i64(i64::MIN..=-1).unwrap()).collect();
+    let indices: Vec<usize> = (0..8).map(|_| random.index(1_000_000).unwrap().unwrap()).collect();
+    let chosen: Vec<i32> = (0..8).map(|_| *random.choose(&[-90, 0, 90]).unwrap().unwrap()).collect();
+    let chances: Vec<bool> = (0..32).map(|_| random.chance(1, 3).unwrap()).collect();
     let mut items: Vec<u32> = (0..32).collect();
-    stream.shuffle(&mut items).unwrap();
+    random.shuffle(&mut items).unwrap();
 
     assert_eq!(ranges, GOLDEN_RANGES);
     assert_eq!(wide, GOLDEN_WIDE);
@@ -99,7 +99,7 @@ fn a_maximal_usize_length_stays_inside_its_own_bound() {
     // intentionally different and cannot be one fixture. What must not differ is the mapping path:
     // the length is converted to `u64`, sampled as a `u64` interval, and converted back, so a
     // 32-bit target never falls back to a narrower algorithm for the same request.
-    let mut stream = fixture();
-    let index = stream.index(usize::MAX).unwrap().unwrap();
+    let mut random = fixture();
+    let index = random.index(usize::MAX).unwrap().unwrap();
     assert!(index < usize::MAX, "an index at the maximal length left its bound: {index}");
 }

@@ -7,7 +7,7 @@
 //! excluded upper bound is checked exactly instead of statistically.
 
 use random::{
-    RandomError, RandomErrorKind, RandomSource, Seed, Stream,
+    ChaCha12, Random, RandomError, RandomSource, SourceError,
     distribution::{UniformF32, UniformF64},
 };
 
@@ -29,9 +29,9 @@ impl WordQueue {
 }
 
 impl RandomSource for WordQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), SourceError> {
         if dst.len() > self.word.len() {
-            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
+            return Err(SourceError::Exhausted);
         }
         dst.copy_from_slice(&self.word[..dst.len()]);
         Ok(())
@@ -53,10 +53,10 @@ impl SequenceQueue {
 }
 
 impl RandomSource for SequenceQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), SourceError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
+            return Err(SourceError::Exhausted);
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -68,24 +68,24 @@ impl RandomSource for SequenceQueue {
 struct FailingSource;
 
 impl RandomSource for FailingSource {
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), RandomError> {
-        Err(RandomError::new(RandomErrorKind::BackendFailure))
+    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), SourceError> {
+        Err(SourceError::Failed)
     }
 }
 
-/// Stream used by tests that only need a stable identity.
-fn fresh() -> Stream {
-    Stream::new(Seed::from_u64(0x5eed), 3)
+/// Source used by tests that only need a stable identity.
+fn fresh() -> Random<ChaCha12> {
+    Random::new(ChaCha12::from_u64(0x5eed, 3))
 }
 
 #[test]
 fn invalid_parameters_are_rejected() {
-    assert_eq!(UniformF64::new(f64::NAN, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(0.0, f64::NAN).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(f64::NEG_INFINITY, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(0.0, f64::INFINITY).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(1.0, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(UniformF64::new(2.0, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(UniformF64::new(f64::NAN, 1.0).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(UniformF64::new(0.0, f64::NAN).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(UniformF64::new(f64::NEG_INFINITY, 1.0).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(UniformF64::new(0.0, f64::INFINITY).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(UniformF64::new(1.0, 1.0).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(UniformF64::new(2.0, 1.0).unwrap_err(), RandomError::InvalidParameter);
 
     let interval = UniformF64::new(-1.0, 2.5).unwrap();
     assert_eq!(interval.low(), -1.0);
@@ -103,11 +103,11 @@ fn samples_stay_inside_the_support() {
         (f64::MIN_POSITIVE, f64::MIN_POSITIVE * 4.0),
         (1.0, 1.0 + f64::EPSILON),
     ];
-    let mut stream = fresh();
+    let mut random = fresh();
     for (low, high) in intervals {
         let interval = UniformF64::new(low, high).unwrap();
         for _ in 0..256 {
-            let value = interval.sample(&mut stream).unwrap();
+            let value = interval.sample(&mut random).unwrap();
             assert!(value.is_finite(), "interval [{low}, {high}) produced {value}");
             assert!(value >= low && value < high, "interval [{low}, {high}) produced {value}");
         }
@@ -140,16 +140,16 @@ fn an_interval_narrower_than_one_step_concentrates_its_mass_inside() {
     // Only one representable value lies inside `[1.0, 1.0 + EPSILON)`, so every sample has to be that
     // value: rounding up to the excluded bound is corrected, and it is not a clamp across the support.
     let interval = UniformF64::new(1.0, 1.0 + f64::EPSILON).unwrap();
-    let mut stream = fresh();
+    let mut random = fresh();
     for _ in 0..256 {
-        assert_eq!(interval.sample(&mut stream).unwrap(), 1.0);
+        assert_eq!(interval.sample(&mut random).unwrap(), 1.0);
     }
 
     let smallest = f64::from_bits(5);
     let interval = UniformF64::new(0.0, smallest).unwrap();
-    let mut stream = fresh();
+    let mut random = fresh();
     for _ in 0..256 {
-        let value = interval.sample(&mut stream).unwrap();
+        let value = interval.sample(&mut random).unwrap();
         assert!(value.is_finite() && value >= 0.0 && value < smallest, "subnormal width produced {value}");
     }
 }
@@ -200,9 +200,9 @@ fn increasing_input_produces_non_decreasing_samples() {
 #[test]
 fn samples_are_bit_reproducible() {
     let bytes = {
-        let mut stream = Stream::new(Seed::from_u64(0xf10a_7000), 1);
+        let mut random = Random::new(ChaCha12::from_u64(0xf10a_7000, 1));
         let mut bytes = vec![0u8; 4096];
-        stream.fill(&mut bytes).unwrap();
+        random.fill(&mut bytes).unwrap();
         bytes
     };
     let replay = |bytes: Vec<u8>| Replay { bytes, position: 0 };
@@ -224,10 +224,10 @@ struct Replay {
 }
 
 impl RandomSource for Replay {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), SourceError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
+            return Err(SourceError::Exhausted);
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -238,37 +238,37 @@ impl RandomSource for Replay {
 #[test]
 fn source_failures_are_reported() {
     let interval = UniformF64::new(0.0, 1.0).unwrap();
-    assert_eq!(interval.sample(&mut FailingSource).unwrap_err().kind(), RandomErrorKind::BackendFailure);
+    assert_eq!(interval.sample(&mut FailingSource).unwrap_err(), RandomError::Source(SourceError::Failed));
 
     let interval = UniformF32::new(0.0, 1.0).unwrap();
-    assert_eq!(interval.sample(&mut FailingSource).unwrap_err().kind(), RandomErrorKind::BackendFailure);
+    assert_eq!(interval.sample(&mut FailingSource).unwrap_err(), RandomError::Source(SourceError::Failed));
 }
 
 #[test]
 #[ignore = "run manually to refresh the float sample goldens"]
 fn record_float_sample_goldens() {
-    let mut stream = Stream::new(Seed::from_u64(42), 0);
+    let mut random = Random::new(ChaCha12::from_u64(42, 0));
     let interval = UniformF64::new(-1.0, 1.0).unwrap();
-    let bits: [u64; 4] = core::array::from_fn(|_| interval.sample(&mut stream).unwrap().to_bits());
+    let bits: [u64; 4] = core::array::from_fn(|_| interval.sample(&mut random).unwrap().to_bits());
     println!("f64 = {bits:#x?}");
 
-    let mut stream = Stream::new(Seed::from_u64(42), 0);
+    let mut random = Random::new(ChaCha12::from_u64(42, 0));
     let interval = UniformF32::new(0.0, 1.0).unwrap();
-    let bits: [u32; 4] = core::array::from_fn(|_| interval.sample(&mut stream).unwrap().to_bits());
+    let bits: [u32; 4] = core::array::from_fn(|_| interval.sample(&mut random).unwrap().to_bits());
     println!("f32 = {bits:#x?}");
 }
 
 #[test]
 fn recorded_float_samples_are_locked() {
-    let mut stream = Stream::new(Seed::from_u64(42), 0);
+    let mut random = Random::new(ChaCha12::from_u64(42, 0));
     let interval = UniformF64::new(-1.0, 1.0).unwrap();
     let expected: [u64; 4] = [0xbfc1_667d_af43_5390, 0xbfe5_b0e5_901b_8fc6, 0x3fd6_0936_0d5b_4db4, 0x3fd7_d0bd_1502_b37c];
-    let actual: [u64; 4] = core::array::from_fn(|_| interval.sample(&mut stream).unwrap().to_bits());
+    let actual: [u64; 4] = core::array::from_fn(|_| interval.sample(&mut random).unwrap().to_bits());
     assert_eq!(actual, expected);
 
-    let mut stream = Stream::new(Seed::from_u64(42), 0);
+    let mut random = Random::new(ChaCha12::from_u64(42, 0));
     let interval = UniformF32::new(0.0, 1.0).unwrap();
     let expected: [u32; 4] = [0x3f3c_ac71, 0x3edd_3304, 0x3f11_c0e9, 0x3e24_f1a4];
-    let actual: [u32; 4] = core::array::from_fn(|_| interval.sample(&mut stream).unwrap().to_bits());
+    let actual: [u32; 4] = core::array::from_fn(|_| interval.sample(&mut random).unwrap().to_bits());
     assert_eq!(actual, expected);
 }

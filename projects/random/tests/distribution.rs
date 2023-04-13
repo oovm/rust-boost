@@ -6,8 +6,8 @@
 //! approximates.
 
 use random::{
-    RandomError, RandomErrorKind, RandomSource, Seed, Stream,
-    distribution::{Bernoulli, Categorical, UniformI32, UniformI64, UniformU32, UniformU64},
+    ChaCha12, Random, RandomError, RandomSource, SourceError,
+    distribution::{Bernoulli, Categorical, Uniform},
 };
 
 /// Deterministic source that plays a fixed byte sequence and reports exhaustion at the end.
@@ -25,10 +25,10 @@ impl ByteQueue {
 }
 
 impl RandomSource for ByteQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), SourceError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
+            return Err(SourceError::Exhausted);
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -40,140 +40,140 @@ impl RandomSource for ByteQueue {
 struct FailingSource;
 
 impl RandomSource for FailingSource {
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), RandomError> {
-        Err(RandomError::new(RandomErrorKind::BackendFailure))
+    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), SourceError> {
+        Err(SourceError::Failed)
     }
 }
 
-/// Stream used by tests that only need a stable identity.
-fn fresh() -> Stream {
-    Stream::new(Seed::from_u64(0x5eed), 3)
+/// Source used by tests that only need a stable identity.
+fn fresh() -> Random<ChaCha12> {
+    Random::new(ChaCha12::from_u64(0x5eed, 3))
 }
 
 /// Reads one word to detect whether previous calls consumed bytes.
-fn probe(stream: &mut Stream) -> u32 {
-    stream.u32().unwrap()
+fn probe(random: &mut Random<ChaCha12>) -> u32 {
+    random.u32().unwrap()
 }
 
 #[test]
 // The reversed bounds are the subject of this test, not a mistake in an iteration.
 #[allow(clippy::reversed_empty_ranges)]
 fn uniform_rejects_invalid_bounds() {
-    assert_eq!(UniformU32::new(9u32..3).unwrap_err().kind(), RandomErrorKind::InvalidRange);
-    assert_eq!(UniformU32::new(3u32..=2).unwrap_err().kind(), RandomErrorKind::InvalidRange);
-    assert_eq!(UniformU64::new(0u64..0).unwrap_err().kind(), RandomErrorKind::InvalidRange);
-    assert_eq!(UniformI32::new(4i32..=-4).unwrap_err().kind(), RandomErrorKind::InvalidRange);
-    assert_eq!(UniformI64::new(6i64..=5).unwrap_err().kind(), RandomErrorKind::InvalidRange);
+    assert_eq!(Uniform::<u32>::new(9u32..3).unwrap_err(), RandomError::InvalidRange);
+    assert_eq!(Uniform::<u32>::new(3u32..=2).unwrap_err(), RandomError::InvalidRange);
+    assert_eq!(Uniform::<u64>::new(0u64..0).unwrap_err(), RandomError::InvalidRange);
+    assert_eq!(Uniform::<i32>::new(4i32..=-4).unwrap_err(), RandomError::InvalidRange);
+    assert_eq!(Uniform::<i64>::new(6i64..=5).unwrap_err(), RandomError::InvalidRange);
 }
 
 #[test]
 fn uniform_samples_and_masses_follow_the_interval() {
-    let dice = UniformU32::new(1u32..=6).unwrap();
+    let dice = Uniform::<u32>::new(1u32..=6).unwrap();
     assert_eq!(dice.bounds(), (1, 6));
     assert_eq!(dice.mass(1), 1.0 / 6.0);
     assert_eq!(dice.mass(6), 1.0 / 6.0);
     assert_eq!(dice.mass(0), 0.0);
     assert_eq!(dice.mass(7), 0.0);
 
-    let mut stream = fresh();
+    let mut random = fresh();
     for _ in 0..256 {
-        let face = dice.sample(&mut stream).unwrap();
+        let face = dice.sample(&mut random).unwrap();
         assert!((1..=6).contains(&face), "uniform sample left the interval: {face}");
     }
 
-    let signed = UniformI32::new(-2i32..=0).unwrap();
+    let signed = Uniform::<i32>::new(-2i32..=0).unwrap();
     assert_eq!(signed.mass(-3), 0.0);
     assert_eq!(signed.mass(0), 1.0 / 3.0);
-    let mut stream = Stream::new(Seed::from_u64(7), 1);
+    let mut random = Random::new(ChaCha12::from_u64(7, 1));
     for _ in 0..256 {
-        let value = signed.sample(&mut stream).unwrap();
+        let value = signed.sample(&mut random).unwrap();
         assert!((-2..=0).contains(&value), "signed uniform sample left the interval: {value}");
     }
 }
 
 #[test]
 fn uniform_matches_the_range_entry_of_the_profile() {
-    let mut through_range = Stream::new(Seed::from_u64(42), 0);
-    let mut through_uniform = Stream::new(Seed::from_u64(42), 0);
+    let mut through_range = Random::new(ChaCha12::from_u64(42, 0));
+    let mut through_uniform = Random::new(ChaCha12::from_u64(42, 0));
 
-    let unsigned = UniformU32::new(1u32..=6).unwrap();
-    let signed = UniformI32::new(-4i32..=4).unwrap();
-    let wide = UniformU64::new(10u64..40).unwrap();
-    let narrow = UniformI64::new(i64::MIN..=-1).unwrap();
+    let unsigned = Uniform::<u32>::new(1u32..=6).unwrap();
+    let signed = Uniform::<i32>::new(-4i32..=4).unwrap();
+    let wide = Uniform::<u64>::new(10u64..40).unwrap();
+    let narrow = Uniform::<i64>::new(i64::MIN..=-1).unwrap();
 
     for _ in 0..64 {
-        assert_eq!(unsigned.sample(&mut through_uniform).unwrap(), through_range.range(1u32..=6).unwrap());
-        assert_eq!(signed.sample(&mut through_uniform).unwrap(), through_range.range(-4i32..=4).unwrap());
-        assert_eq!(wide.sample(&mut through_uniform).unwrap(), through_range.range(10u64..40).unwrap());
-        assert_eq!(narrow.sample(&mut through_uniform).unwrap(), through_range.range(i64::MIN..=-1).unwrap());
+        assert_eq!(unsigned.sample(&mut through_uniform).unwrap(), through_range.range_u32(1..=6).unwrap());
+        assert_eq!(signed.sample(&mut through_uniform).unwrap(), through_range.range_i32(-4..=4).unwrap());
+        assert_eq!(wide.sample(&mut through_uniform).unwrap(), through_range.range_u64(10..40).unwrap());
+        assert_eq!(narrow.sample(&mut through_uniform).unwrap(), through_range.range_i64(i64::MIN..=-1).unwrap());
     }
     assert_eq!(through_uniform.u32().unwrap(), through_range.u32().unwrap());
 }
 
 #[test]
 fn uniform_consumption_matches_the_profile() {
-    let single = UniformU32::new(7u32..=7).unwrap();
-    let mut stream = fresh();
-    assert_eq!(single.sample(&mut stream).unwrap(), 7);
-    assert_eq!(probe(&mut stream), probe(&mut fresh()));
+    let single = Uniform::<u32>::new(7u32..=7).unwrap();
+    let mut random = fresh();
+    assert_eq!(single.sample(&mut random).unwrap(), 7);
+    assert_eq!(probe(&mut random), probe(&mut fresh()));
 
-    let full = UniformU32::new(0u32..=u32::MAX).unwrap();
-    let mut stream = fresh();
-    full.sample(&mut stream).unwrap();
+    let full = Uniform::<u32>::new(0u32..=u32::MAX).unwrap();
+    let mut random = fresh();
+    full.sample(&mut random).unwrap();
     let mut reference = fresh();
     reference.u32().unwrap();
-    assert_eq!(stream.u32().unwrap(), reference.u32().unwrap());
+    assert_eq!(random.u32().unwrap(), reference.u32().unwrap());
 
-    let full = UniformU64::new(0u64..=u64::MAX).unwrap();
-    let mut stream = fresh();
-    full.sample(&mut stream).unwrap();
+    let full = Uniform::<u64>::new(0u64..=u64::MAX).unwrap();
+    let mut random = fresh();
+    full.sample(&mut random).unwrap();
     let mut reference = fresh();
     reference.u64().unwrap();
-    assert_eq!(stream.u64().unwrap(), reference.u64().unwrap());
+    assert_eq!(random.u64().unwrap(), reference.u64().unwrap());
 
-    let full = UniformI32::new(i32::MIN..=i32::MAX).unwrap();
-    let mut stream = fresh();
-    full.sample(&mut stream).unwrap();
+    let full = Uniform::<i32>::new(i32::MIN..=i32::MAX).unwrap();
+    let mut random = fresh();
+    full.sample(&mut random).unwrap();
     let mut reference = fresh();
     reference.u32().unwrap();
-    assert_eq!(stream.u32().unwrap(), reference.u32().unwrap());
+    assert_eq!(random.u32().unwrap(), reference.u32().unwrap());
 
-    let full = UniformI64::new(i64::MIN..=i64::MAX).unwrap();
-    let mut stream = fresh();
-    full.sample(&mut stream).unwrap();
+    let full = Uniform::<i64>::new(i64::MIN..=i64::MAX).unwrap();
+    let mut random = fresh();
+    full.sample(&mut random).unwrap();
     let mut reference = fresh();
     reference.u64().unwrap();
-    assert_eq!(stream.u64().unwrap(), reference.u64().unwrap());
+    assert_eq!(random.u64().unwrap(), reference.u64().unwrap());
 }
 
 #[test]
 fn uniform_full_domain_mass_is_exact() {
-    let u32_full = UniformU32::new(0u32..=u32::MAX).unwrap();
+    let u32_full = Uniform::<u32>::new(0u32..=u32::MAX).unwrap();
     assert_eq!(u32_full.mass(0), 1.0 / 4_294_967_296.0);
 
-    let u64_full = UniformU64::new(0u64..=u64::MAX).unwrap();
+    let u64_full = Uniform::<u64>::new(0u64..=u64::MAX).unwrap();
     assert_eq!(u64_full.mass(u64::MAX), 1.0 / 18_446_744_073_709_551_616.0);
 
-    let i32_full = UniformI32::new(i32::MIN..=i32::MAX).unwrap();
+    let i32_full = Uniform::<i32>::new(i32::MIN..=i32::MAX).unwrap();
     assert_eq!(i32_full.mass(i32::MIN), 1.0 / 4_294_967_296.0);
 
-    let i64_full = UniformI64::new(i64::MIN..=i64::MAX).unwrap();
+    let i64_full = Uniform::<i64>::new(i64::MIN..=i64::MAX).unwrap();
     assert_eq!(i64_full.mass(0), 1.0 / 18_446_744_073_709_551_616.0);
 }
 
 #[test]
 fn uniform_reports_source_failures() {
-    let dice = UniformU32::new(1u32..=6).unwrap();
-    assert_eq!(dice.sample(&mut FailingSource).unwrap_err().kind(), RandomErrorKind::BackendFailure);
+    let dice = Uniform::<u32>::new(1u32..=6).unwrap();
+    assert_eq!(dice.sample(&mut FailingSource).unwrap_err(), RandomError::Source(SourceError::Failed));
 
-    let single = UniformU32::new(3u32..=3).unwrap();
+    let single = Uniform::<u32>::new(3u32..=3).unwrap();
     assert_eq!(single.sample(&mut FailingSource).unwrap(), 3);
 }
 
 #[test]
 fn bernoulli_rejects_invalid_probabilities() {
-    assert_eq!(Bernoulli::new(1, 0).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
-    assert_eq!(Bernoulli::new(6, 5).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
+    assert_eq!(Bernoulli::new(1, 0).unwrap_err(), RandomError::InvalidProbability);
+    assert_eq!(Bernoulli::new(6, 5).unwrap_err(), RandomError::InvalidProbability);
 }
 
 #[test]
@@ -192,8 +192,8 @@ fn bernoulli_masses_are_formed_in_the_integer_domain() {
 #[test]
 fn bernoulli_matches_the_chance_entry_of_the_profile() {
     let event = Bernoulli::new(1, 3).unwrap();
-    let mut through_chance = Stream::new(Seed::from_u64(11), 2);
-    let mut through_event = Stream::new(Seed::from_u64(11), 2);
+    let mut through_chance = Random::new(ChaCha12::from_u64(11, 2));
+    let mut through_event = Random::new(ChaCha12::from_u64(11, 2));
     for _ in 0..256 {
         assert_eq!(event.sample(&mut through_event).unwrap(), through_chance.chance(1, 3).unwrap());
     }
@@ -204,10 +204,10 @@ fn bernoulli_matches_the_chance_entry_of_the_profile() {
 fn degenerate_bernoulli_consumes_nothing() {
     let never = Bernoulli::new(0, 5).unwrap();
     let always = Bernoulli::new(5, 5).unwrap();
-    let mut stream = fresh();
-    assert!(!never.sample(&mut stream).unwrap());
-    assert!(always.sample(&mut stream).unwrap());
-    assert_eq!(probe(&mut stream), probe(&mut fresh()));
+    let mut random = fresh();
+    assert!(!never.sample(&mut random).unwrap());
+    assert!(always.sample(&mut random).unwrap());
+    assert_eq!(probe(&mut random), probe(&mut fresh()));
     assert_eq!(never.mass(true), 0.0);
     assert_eq!(always.mass(false), 0.0);
 }
@@ -215,10 +215,10 @@ fn degenerate_bernoulli_consumes_nothing() {
 #[test]
 fn bernoulli_produces_both_outcomes() {
     let event = Bernoulli::new(1, 3).unwrap();
-    let mut stream = fresh();
+    let mut random = fresh();
     let mut outcomes = [0usize; 2];
     for _ in 0..256 {
-        outcomes[usize::from(event.sample(&mut stream).unwrap())] += 1;
+        outcomes[usize::from(event.sample(&mut random).unwrap())] += 1;
     }
     assert!(outcomes[0] > 0 && outcomes[1] > 0, "bernoulli(1, 3) never varied: {outcomes:?}");
 }
@@ -250,9 +250,9 @@ fn categorical_masses_follow_the_weight_ratios() {
 
 #[test]
 fn categorical_rejects_unusable_weights() {
-    assert_eq!(Categorical::new(&[]).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(Categorical::new(&[0u64, 0]).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(Categorical::new(&[u64::MAX, 1]).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Categorical::new(&[]).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(Categorical::new(&[0u64, 0]).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(Categorical::new(&[u64::MAX, 1]).unwrap_err(), RandomError::InvalidParameter);
     assert_eq!(Categorical::new(&[u64::MAX]).unwrap().total(), u64::MAX);
 }
 
@@ -276,9 +276,9 @@ fn categorical_ticket_boundaries_own_their_category() {
 fn categorical_never_selects_a_zero_weight_category() {
     let weights = [0u64, 2, 5];
     let category = Categorical::new(&weights).unwrap();
-    let mut stream = Stream::new(Seed::from_u64(3), 4);
+    let mut random = Random::new(ChaCha12::from_u64(3, 4));
     for _ in 0..512 {
-        let index = category.sample(&mut stream).unwrap();
+        let index = category.sample(&mut random).unwrap();
         assert!(index == 1 || index == 2, "a zero weight category was selected: {index}");
     }
 }
@@ -288,14 +288,14 @@ fn categorical_with_a_single_unit_ticket_consumes_nothing() {
     let weights = [0u64, 0, 1];
     let category = Categorical::new(&weights).unwrap();
     assert_eq!(category.total(), 1);
-    let mut stream = fresh();
-    assert_eq!(category.sample(&mut stream).unwrap(), 2);
-    assert_eq!(probe(&mut stream), probe(&mut fresh()));
+    let mut random = fresh();
+    assert_eq!(category.sample(&mut random).unwrap(), 2);
+    assert_eq!(probe(&mut random), probe(&mut fresh()));
 }
 
 #[test]
 fn categorical_reports_source_failures() {
     let weights = [1u64, 1];
     let category = Categorical::new(&weights).unwrap();
-    assert_eq!(category.sample(&mut FailingSource).unwrap_err().kind(), RandomErrorKind::BackendFailure);
+    assert_eq!(category.sample(&mut FailingSource).unwrap_err(), RandomError::Source(SourceError::Failed));
 }

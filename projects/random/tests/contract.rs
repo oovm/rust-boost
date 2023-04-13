@@ -6,7 +6,7 @@
 //! whether every residue of an interval is reached the same number of times inside a complete set
 //! of cycles. A frequency check alone would not distinguish an exact mapping from a biased one.
 
-use random::{RandomError, RandomErrorKind, RandomSource, RangeEndpoint, Seed, Stream};
+use random::{ChaCha12, Random, RandomSource, SourceError, distribution::Uniform};
 
 /// Deterministic source that plays a programmed sequence of whole words.
 struct WordQueue {
@@ -35,10 +35,10 @@ impl WordQueue {
 }
 
 impl RandomSource for WordQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), SourceError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
+            return Err(SourceError::Exhausted);
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -63,9 +63,10 @@ fn cycle_counts_u32(start: u32, end: u32, cycles: u64) -> (Vec<u64>, u64) {
     let first = threshold_u32(interval);
     let window = u64::from(interval) * cycles;
     let mut queue = WordQueue::consecutive_u32(first, window);
+    let distribution = Uniform::<u32>::new(start..=end).unwrap();
     let mut counts = vec![0u64; interval as usize];
     for _ in 0..window {
-        let value = u32::sample_bounded(&mut queue, start, end).expect("accepted word window");
+        let value = distribution.sample(&mut queue).expect("accepted word window");
         counts[(value - start) as usize] += 1;
     }
     (counts, queue.position as u64)
@@ -92,9 +93,10 @@ fn complete_word_cycles_are_exactly_uniform_for_the_signed_domain() {
     let first = threshold_u32(interval);
     let window = u64::from(interval) * cycles;
     let mut queue = WordQueue::consecutive_u32(first, window);
+    let distribution = Uniform::<i32>::new(start..=end).unwrap();
     let mut counts = vec![0u64; interval as usize];
     for _ in 0..window {
-        let value = i32::sample_bounded(&mut queue, start, end).unwrap();
+        let value = distribution.sample(&mut queue).unwrap();
         counts[(value as i64 - start as i64) as usize] += 1;
     }
     assert!(counts.iter().all(|count| *count == cycles), "signed interval was not uniform: {counts:?}");
@@ -107,9 +109,10 @@ fn complete_word_cycles_are_exactly_uniform_for_the_wide_endpoints() {
     let first = threshold_u64(interval);
     let window = interval * cycles;
     let mut queue = WordQueue::of_u64(&(0..window).map(|step| first + step).collect::<Vec<u64>>());
+    let distribution = Uniform::<u64>::new(start..=end).unwrap();
     let mut counts = vec![0u64; interval as usize];
     for _ in 0..window {
-        let value = u64::sample_bounded(&mut queue, start, end).unwrap();
+        let value = distribution.sample(&mut queue).unwrap();
         counts[(value - start) as usize] += 1;
     }
     assert!(counts.iter().all(|count| *count == cycles), "wide interval was not uniform: {counts:?}");
@@ -120,9 +123,10 @@ fn complete_word_cycles_are_exactly_uniform_for_the_wide_endpoints() {
     let first = threshold_u64(interval);
     let window = interval * cycles;
     let mut queue = WordQueue::of_u64(&(0..window).map(|step| first + step).collect::<Vec<u64>>());
+    let distribution = Uniform::<i64>::new(start..=end).unwrap();
     let mut counts = vec![0u64; interval as usize];
     for _ in 0..window {
-        let value = i64::sample_bounded(&mut queue, start, end).unwrap();
+        let value = distribution.sample(&mut queue).unwrap();
         counts[(value - start) as usize] += 1;
     }
     assert!(counts.iter().all(|count| *count == cycles), "wide signed interval was not uniform: {counts:?}");
@@ -137,16 +141,17 @@ fn the_rejection_threshold_is_exactly_the_documented_remainder() {
     for (start, end) in [(0u32, 999u32), (1, 6), (0, 3), (10, 265)] {
         let interval = end - start + 1;
         let threshold = threshold_u32(interval);
+        let distribution = Uniform::<u32>::new(start..=end).unwrap();
 
         if threshold > 0 {
             let mut queue = WordQueue::of_u32(&[threshold - 1, threshold]);
-            let sampled = u32::sample_bounded(&mut queue, start, end).unwrap();
+            let sampled = distribution.sample(&mut queue).unwrap();
             assert_eq!(sampled, start + (threshold % interval));
             assert_eq!(queue.position, 8, "interval {start}..={end} accepted a word below its threshold");
         }
 
         let mut queue = WordQueue::of_u32(&[threshold]);
-        u32::sample_bounded(&mut queue, start, end).unwrap();
+        distribution.sample(&mut queue).unwrap();
         assert_eq!(queue.position, 4, "interval {start}..={end} rejected its threshold word");
     }
 
@@ -154,12 +159,13 @@ fn the_rejection_threshold_is_exactly_the_documented_remainder() {
     let end = 999_999_999u64;
     let interval = end - start + 1;
     let threshold = threshold_u64(interval);
+    let distribution = Uniform::<u64>::new(start..=end).unwrap();
     let mut queue = WordQueue::of_u64(&[threshold - 1, threshold]);
-    assert_eq!(u64::sample_bounded(&mut queue, start, end).unwrap(), start + (threshold % interval));
+    assert_eq!(distribution.sample(&mut queue).unwrap(), start + (threshold % interval));
     assert_eq!(queue.position, 16, "the wide interval accepted a word below its threshold");
 
     let mut queue = WordQueue::of_u64(&[threshold]);
-    u64::sample_bounded(&mut queue, start, end).unwrap();
+    distribution.sample(&mut queue).unwrap();
     assert_eq!(queue.position, 8, "the wide interval rejected its threshold word");
 }
 
@@ -170,7 +176,8 @@ fn rejection_runs_are_consumed_without_leaking_into_the_value() {
     // must decide the value.
     let words = [0u32, 0, 0, 0, 5, 0];
     let mut queue = WordQueue::of_u32(&words);
-    assert_eq!(u32::sample_bounded(&mut queue, 1, 3).unwrap(), 1 + (5 % 3));
+    let distribution = Uniform::<u32>::new(1..=3).unwrap();
+    assert_eq!(distribution.sample(&mut queue).unwrap(), 1 + (5 % 3));
     assert_eq!(queue.position, 5 * 4, "the rejected run was not consumed word by word");
 
     // A wide interval with a large threshold rejects every word below it.
@@ -180,7 +187,8 @@ fn rejection_runs_are_consumed_without_leaking_into_the_value() {
     let mut words = vec![0u64; 4];
     words.extend([first, first + 1]);
     let mut queue = WordQueue::of_u64(&words);
-    assert_eq!(u64::sample_bounded(&mut queue, 0, interval - 1).unwrap(), first % interval);
+    let distribution = Uniform::<u64>::new(0..=interval - 1).unwrap();
+    assert_eq!(distribution.sample(&mut queue).unwrap(), first % interval);
     assert_eq!(queue.position, 5 * 8, "the rejected run was not consumed word by word");
 }
 
@@ -189,15 +197,15 @@ fn word_width_follows_the_endpoint_and_not_the_target() {
     // Each endpoint samples with its own unsigned width, so the same interval consumes four bytes on
     // the 32-bit endpoints and eight bytes on the 64-bit ones, whatever the host word size is.
     let mut queue = WordQueue::of_u64(&[0x0000_0007_0000_0003, 0]);
-    assert_eq!(u32::sample_bounded(&mut queue, 0, 255).unwrap(), 3);
+    assert_eq!(Uniform::<u32>::new(0..=255).unwrap().sample(&mut queue).unwrap(), 3);
     assert_eq!(queue.position, 4);
 
     let mut queue = WordQueue::of_u64(&[0x0000_0007_0000_0003, 0]);
-    assert_eq!(u64::sample_bounded(&mut queue, 0, 255).unwrap(), 3);
+    assert_eq!(Uniform::<u64>::new(0..=255).unwrap().sample(&mut queue).unwrap(), 3);
     assert_eq!(queue.position, 8);
 
     let mut queue = WordQueue::of_u64(&[0x0000_0007_0000_0003, 0]);
-    assert_eq!(i32::sample_bounded(&mut queue, 0, 255).unwrap(), 3);
+    assert_eq!(Uniform::<i32>::new(0..=255).unwrap().sample(&mut queue).unwrap(), 3);
     assert_eq!(queue.position, 4);
 }
 
@@ -206,40 +214,44 @@ fn full_domain_intervals_accept_every_word_of_their_width() {
     // A full-domain interval rejects nothing, so a threshold-free mapping consumes exactly one word
     // per sample for every endpoint type.
     let mut queue = WordQueue::of_u32(&[0xdead_beef, 0xffff_ffff]);
-    assert_eq!(u32::sample_bounded(&mut queue, 0, u32::MAX).unwrap(), 0xdead_beef);
-    assert_eq!(u32::sample_bounded(&mut queue, 0, u32::MAX).unwrap(), 0xffff_ffff);
+    let distribution = Uniform::<u32>::new(0..=u32::MAX).unwrap();
+    assert_eq!(distribution.sample(&mut queue).unwrap(), 0xdead_beef);
+    assert_eq!(distribution.sample(&mut queue).unwrap(), 0xffff_ffff);
     assert_eq!(queue.position, 8);
 
     let mut queue = WordQueue::of_u32(&[0xdead_beef, 0]);
-    assert_eq!(i32::sample_bounded(&mut queue, i32::MIN, i32::MAX).unwrap(), (0xdead_beef_u32 ^ 0x8000_0000) as i32);
+    assert_eq!(
+        Uniform::<i32>::new(i32::MIN..=i32::MAX).unwrap().sample(&mut queue).unwrap(),
+        (0xdead_beef_u32 ^ 0x8000_0000) as i32
+    );
     assert_eq!(queue.position, 4);
 
     let mut queue = WordQueue::of_u64(&[u64::MAX, 0]);
-    assert_eq!(u64::sample_bounded(&mut queue, 0, u64::MAX).unwrap(), u64::MAX);
+    assert_eq!(Uniform::<u64>::new(0..=u64::MAX).unwrap().sample(&mut queue).unwrap(), u64::MAX);
     assert_eq!(queue.position, 8);
 }
 
 #[test]
 fn non_power_of_two_edge_intervals_stay_inside_their_bounds() {
-    let mut stream = Stream::new(Seed::from_u64(0xc0ffee), 2);
+    let mut random = Random::new(ChaCha12::from_u64(0xc0ffee, 2));
 
     for _ in 0..256 {
-        let value = stream.range(0u32..u32::MAX).unwrap();
+        let value = random.range_u32(0..u32::MAX).unwrap();
         assert!(value < u32::MAX, "0..u32::MAX returned {value}");
 
-        let value = stream.range(1u32..=u32::MAX).unwrap();
+        let value = random.range_u32(1..=u32::MAX).unwrap();
         assert!(value >= 1, "1..=u32::MAX returned {value}");
 
-        let value = stream.range(0i32..=i32::MAX).unwrap();
+        let value = random.range_i32(0..=i32::MAX).unwrap();
         assert!(value >= 0, "0..=i32::MAX returned {value}");
 
-        let value = stream.range(i32::MIN..=-1).unwrap();
+        let value = random.range_i32(i32::MIN..=-1).unwrap();
         assert!(value < 0, "i32::MIN..=-1 returned {value}");
 
-        let value = stream.range(0u64..u64::MAX).unwrap();
+        let value = random.range_u64(0..u64::MAX).unwrap();
         assert!(value < u64::MAX, "0..u64::MAX returned {value}");
 
-        let value = stream.range(i64::MIN..=i64::MAX - 1).unwrap();
+        let value = random.range_i64(i64::MIN..=i64::MAX - 1).unwrap();
         assert!(value < i64::MAX, "i64::MIN..=i64::MAX-1 returned {value}");
     }
 }
@@ -247,51 +259,51 @@ fn non_power_of_two_edge_intervals_stay_inside_their_bounds() {
 #[test]
 fn every_fill_length_matches_one_reference() {
     let reference: Vec<u8> = {
-        let mut stream = Stream::new(Seed::from_u64(0x1234), 4);
+        let mut random = Random::new(ChaCha12::from_u64(0x1234, 4));
         let mut bytes = vec![0u8; 129];
-        stream.fill(&mut bytes).unwrap();
+        random.fill(&mut bytes).unwrap();
         bytes
     };
 
     for length in [0usize, 1, 3, 4, 7, 8, 63, 64, 65, 127, 129] {
-        let mut stream = Stream::new(Seed::from_u64(0x1234), 4);
+        let mut random = Random::new(ChaCha12::from_u64(0x1234, 4));
         let mut bytes = vec![0u8; length];
-        stream.fill(&mut bytes).unwrap();
+        random.fill(&mut bytes).unwrap();
         assert_eq!(bytes.as_slice(), &reference[..length], "fill({length}) diverged from the reference");
     }
 
     // A one-byte fill followed by a seven-byte fill is one eight-byte fill, so no block or word tail
     // is dropped between calls.
-    let mut stream = Stream::new(Seed::from_u64(0x1234), 4);
+    let mut random = Random::new(ChaCha12::from_u64(0x1234, 4));
     let mut split = [0u8; 8];
-    stream.fill(&mut split[..1]).unwrap();
-    stream.fill(&mut split[1..]).unwrap();
+    random.fill(&mut split[..1]).unwrap();
+    random.fill(&mut split[1..]).unwrap();
     assert_eq!(split.as_slice(), &reference[..8]);
 
     // Scalar reads and fills share the byte order of the same position.
-    let mut stream = Stream::new(Seed::from_u64(0x1234), 4);
-    assert_eq!(stream.u32().unwrap(), u32::from_le_bytes(reference[..4].try_into().unwrap()));
+    let mut random = Random::new(ChaCha12::from_u64(0x1234, 4));
+    assert_eq!(random.u32().unwrap(), u32::from_le_bytes(reference[..4].try_into().unwrap()));
     let mut middle = [0u8; 3];
-    stream.fill(&mut middle).unwrap();
+    random.fill(&mut middle).unwrap();
     assert_eq!(middle.as_slice(), &reference[4..7]);
-    assert_eq!(stream.u64().unwrap(), u64::from_le_bytes(reference[7..15].try_into().unwrap()));
+    assert_eq!(random.u64().unwrap(), u64::from_le_bytes(reference[7..15].try_into().unwrap()));
 }
 
 #[test]
 fn large_fills_stay_contiguous_across_blocks() {
     const LENGTH: usize = 16 * 1024;
-    let mut stream = Stream::new(Seed::from_u64(0xabc), 7);
+    let mut random = Random::new(ChaCha12::from_u64(0xabc, 7));
     let mut single = vec![0u8; LENGTH];
-    stream.fill(&mut single).unwrap();
+    random.fill(&mut single).unwrap();
 
-    let mut stream = Stream::new(Seed::from_u64(0xabc), 7);
+    let mut random = Random::new(ChaCha12::from_u64(0xabc, 7));
     let mut chunked = vec![0u8; LENGTH];
     let mut written = 0;
     for length in [1usize, 63, 64, 65, 1000, 4096, 8192] {
         let end = (written + length).min(LENGTH);
-        stream.fill(&mut chunked[written..end]).unwrap();
+        random.fill(&mut chunked[written..end]).unwrap();
         written = end;
     }
-    stream.fill(&mut chunked[written..]).unwrap();
+    random.fill(&mut chunked[written..]).unwrap();
     assert_eq!(chunked, single);
 }

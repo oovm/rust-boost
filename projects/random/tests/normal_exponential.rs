@@ -10,7 +10,7 @@
 //! distribution changed, not that one run happened to differ.
 
 use random::{
-    RandomError, RandomErrorKind, RandomSource, Seed, Stream,
+    ChaCha12, Random, RandomError, RandomSource, SourceError,
     distribution::{Exponential, Normal},
 };
 
@@ -34,10 +34,10 @@ impl WordQueue {
 }
 
 impl RandomSource for WordQueue {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), SourceError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
+            return Err(SourceError::Exhausted);
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -45,9 +45,9 @@ impl RandomSource for WordQueue {
     }
 }
 
-/// Creates a stream that only provides a stable identity for statistical cases.
-fn fixture() -> Stream {
-    Stream::new(Seed::from_u64(0x5eed_2a01), 11)
+/// Creates a source that only provides a stable identity for statistical cases.
+fn fixture() -> Random<ChaCha12> {
+    Random::new(ChaCha12::from_u64(0x5eed_2a01, 11))
 }
 
 /// Turns a word into the `(0, 1]` grid value used by the exponential distribution.
@@ -70,15 +70,15 @@ fn ulp_distance(value: f64, reference: f64) -> f64 {
 
 #[test]
 fn invalid_parameters_are_rejected() {
-    assert_eq!(Normal::new(f64::NAN, 1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(Normal::new(0.0, f64::INFINITY).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(Normal::new(0.0, 0.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(Normal::new(0.0, -1.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Normal::new(f64::NAN, 1.0).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(Normal::new(0.0, f64::INFINITY).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(Normal::new(0.0, 0.0).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(Normal::new(0.0, -1.0).unwrap_err(), RandomError::InvalidParameter);
 
-    assert_eq!(Exponential::new(f64::NAN).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(Exponential::new(f64::INFINITY).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(Exponential::new(0.0).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
-    assert_eq!(Exponential::new(-0.5).unwrap_err().kind(), RandomErrorKind::InvalidParameter);
+    assert_eq!(Exponential::new(f64::NAN).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(Exponential::new(f64::INFINITY).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(Exponential::new(0.0).unwrap_err(), RandomError::InvalidParameter);
+    assert_eq!(Exponential::new(-0.5).unwrap_err(), RandomError::InvalidParameter);
 
     let normal = Normal::new(3.0, 2.0).unwrap();
     assert_eq!(normal.mean(), 3.0);
@@ -194,11 +194,11 @@ fn the_normal_density_matches_the_closed_form() {
 #[test]
 fn the_exponential_statistics_hold_for_a_fixed_seed() {
     let distribution = Exponential::new(2.0).unwrap();
-    let mut stream = fixture();
+    let mut random = fixture();
     let draws = 20_000;
     let mut sum = 0.0;
     for _ in 0..draws {
-        let value = distribution.sample(&mut stream).unwrap();
+        let value = distribution.sample(&mut random).unwrap();
         assert!(value >= 0.0 && value.is_finite(), "the support starts at zero, got {value}");
         sum += value;
     }
@@ -209,13 +209,13 @@ fn the_exponential_statistics_hold_for_a_fixed_seed() {
 #[test]
 fn the_normal_statistics_and_symmetry_hold_for_a_fixed_seed() {
     let distribution = Normal::new(3.0, 2.0).unwrap();
-    let mut stream = fixture();
+    let mut random = fixture();
     let draws = 20_000;
     let mut sum = 0.0;
     let mut squared_sum = 0.0;
     let mut within_one_deviation = 0usize;
     for _ in 0..draws {
-        let value = distribution.sample(&mut stream).unwrap();
+        let value = distribution.sample(&mut random).unwrap();
         assert!(value.is_finite());
         sum += value;
         squared_sum += (value - 3.0) * (value - 3.0);
@@ -237,13 +237,13 @@ fn unrepresentable_samples_are_reported() {
     // A mean at the format maximum cannot survive a positive standard score, so the position-scale
     // step overflows and must be reported instead of returning an infinity.
     let distribution = Normal::new(f64::MAX, f64::MAX).unwrap();
-    let mut stream = fixture();
+    let mut random = fixture();
     let mut reported = false;
     for _ in 0..256 {
-        match distribution.sample(&mut stream) {
+        match distribution.sample(&mut random) {
             Ok(value) => assert!(value.is_finite(), "an overflowed sample was returned as {value}"),
             Err(error) => {
-                assert_eq!(error.kind(), RandomErrorKind::NumericalFailure);
+                assert_eq!(error, RandomError::NumericalFailure);
                 reported = true;
                 break;
             }
@@ -253,13 +253,13 @@ fn unrepresentable_samples_are_reported() {
 
     // A rate at the smallest subnormal makes the quotient leave the format.
     let distribution = Exponential::new(f64::from_bits(1)).unwrap();
-    let mut stream = fixture();
+    let mut random = fixture();
     let mut reported = false;
     for _ in 0..256 {
-        match distribution.sample(&mut stream) {
+        match distribution.sample(&mut random) {
             Ok(value) => assert!(value.is_finite(), "an overflowed sample was returned as {value}"),
             Err(error) => {
-                assert_eq!(error.kind(), RandomErrorKind::NumericalFailure);
+                assert_eq!(error, RandomError::NumericalFailure);
                 reported = true;
                 break;
             }
@@ -275,8 +275,8 @@ fn sampling_is_reproducible_within_one_target() {
     let distribution = Normal::new(-0.5, 1.25).unwrap();
     let exponential = Exponential::new(0.75).unwrap();
 
-    let mut left = Stream::new(Seed::from_u64(9), 4);
-    let mut right = Stream::new(Seed::from_u64(9), 4);
+    let mut left = Random::new(ChaCha12::from_u64(9, 4));
+    let mut right = Random::new(ChaCha12::from_u64(9, 4));
     for _ in 0..256 {
         assert_eq!(distribution.sample(&mut left).unwrap().to_bits(), distribution.sample(&mut right).unwrap().to_bits());
         assert_eq!(exponential.sample(&mut left).unwrap().to_bits(), exponential.sample(&mut right).unwrap().to_bits());

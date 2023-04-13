@@ -6,7 +6,7 @@
 //! before returning success, so no chunking or short-read loop is needed.
 
 use super::SystemEntropy;
-use crate::error::{RandomError, RandomErrorKind};
+use crate::error::EntropyError;
 
 // Preview 1 import of `random_get`, which fills `buf` with `buf_len` random bytes and returns a
 // WASI `errno`. A foreign block does not accept a doc comment, so this is an ordinary comment.
@@ -21,11 +21,12 @@ const ERRNO_INTR: u16 = 27;
 /// WASI `errno::nosys`, which means the host has no such import at all.
 ///
 /// That is a permanent platform fact, so the handle records it instead of reporting a transient
-/// failure. The numbering follows the WASI preview 1 `errno` enum.
+/// failure, and later requests report the cached fact directly. The numbering follows the WASI
+/// preview 1 `errno` enum.
 const ERRNO_NOSYS: u16 = 52;
 
 /// Fills `dst` with host entropy, or fails without delivering partial output.
-pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
+pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), EntropyError> {
     loop {
         let code = unsafe { random_get(dst.as_mut_ptr(), dst.len()) };
         match code {
@@ -34,11 +35,11 @@ pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Ra
             ERRNO_INTR => continue,
             ERRNO_NOSYS => {
                 entropy.mark_unsupported();
-                return Err(RandomError::with_platform_code(RandomErrorKind::Unsupported, i32::from(ERRNO_NOSYS)));
+                return Err(EntropyError::Wasi(ERRNO_NOSYS));
             }
-            // Any other errno is a host decision about this request, and the raw code is preserved
-            // so the caller can tell which WASI failure it was.
-            code => return Err(RandomError::with_platform_code(RandomErrorKind::BackendFailure, i32::from(code))),
+            // Any other errno is a host decision about this request, and the raw code is preserved in
+            // its own WASI domain so the caller can tell which failure it was.
+            code => return Err(EntropyError::Wasi(code)),
         }
     }
 }

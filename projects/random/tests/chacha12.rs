@@ -5,7 +5,7 @@
 //! the eight-byte IV is the 64-bit nonce of the original ChaCha state layout: words 12 and 13 hold
 //! the block counter, words 14 and 15 hold the nonce.
 
-use random::{Seed, Stream};
+use random::{ChaCha12, Random};
 
 /// Profile identifier frozen by the output contract.
 const PROFILE: &str = "boost-chacha12-v1";
@@ -62,53 +62,53 @@ const PROFILE_KEYSTREAM: [u8; 64] = [
     0x8c, 0xfd, 0x86, 0xb0,
 ];
 
-/// Reads `len` keystream bytes from a fresh stream.
-fn keystream(seed: Seed, stream_id: u64, len: usize) -> Vec<u8> {
-    let mut stream = Stream::new(seed, stream_id);
+/// Reads `len` keystream bytes from a fresh deterministic source.
+fn keystream(source: ChaCha12, len: usize) -> Vec<u8> {
+    let mut random = Random::new(source);
     let mut bytes = vec![0u8; len];
-    stream.fill(&mut bytes).unwrap();
+    random.fill(&mut bytes).unwrap();
     bytes
 }
 
 #[test]
 fn profile_identifier_is_frozen() {
-    assert_eq!(Stream::PROFILE, PROFILE);
+    assert_eq!(ChaCha12::PROFILE, PROFILE);
 }
 
 #[test]
 fn zero_key_and_zero_nonce_match_chacha12_vector() {
     let expected: Vec<u8> = TC1_BLOCK_0.iter().chain(TC1_BLOCK_1.iter()).copied().collect();
-    assert_eq!(keystream(Seed::from_bytes([0u8; 32]), 0, expected.len()), expected);
+    assert_eq!(keystream(ChaCha12::from_seed([0u8; 32], 0), expected.len()), expected);
 }
 
 #[test]
 fn non_zero_key_and_nonce_match_chacha12_vector() {
     let expected: Vec<u8> = TC8_BLOCK_0.iter().chain(TC8_BLOCK_1.iter()).copied().collect();
-    assert_eq!(keystream(Seed::from_bytes(TC8_KEY), TC8_STREAM_ID, expected.len()), expected);
+    assert_eq!(keystream(ChaCha12::from_seed(TC8_KEY, TC8_STREAM_ID), expected.len()), expected);
 }
 
 #[test]
 fn profile_keystream_matches_this_crate() {
     let key: [u8; 32] = core::array::from_fn(|index| index as u8);
-    let bytes = keystream(Seed::from_bytes(key), 0x0123_4567_89ab_cdef, PROFILE_KEYSTREAM.len());
+    let bytes = keystream(ChaCha12::from_seed(key, 0x0123_4567_89ab_cdef), PROFILE_KEYSTREAM.len());
     assert_eq!(bytes, PROFILE_KEYSTREAM);
 }
 
 #[test]
 fn zero_fill_consumes_nothing() {
-    let mut stream = Stream::new(Seed::from_u64(7), 3);
-    stream.fill(&mut []).unwrap();
-    assert_eq!(stream.u32().unwrap(), Stream::new(Seed::from_u64(7), 3).u32().unwrap());
+    let mut random = Random::new(ChaCha12::from_u64(7, 3));
+    random.fill(&mut []).unwrap();
+    assert_eq!(random.u32().unwrap(), Random::new(ChaCha12::from_u64(7, 3)).u32().unwrap());
 }
 
 #[test]
 fn fill_consumes_contiguous_bytes() {
-    let reference = keystream(Seed::from_u64(9), 0, 8);
+    let reference = keystream(ChaCha12::from_u64(9, 0), 8);
     for split in 1..8 {
-        let mut stream = Stream::new(Seed::from_u64(9), 0);
+        let mut random = Random::new(ChaCha12::from_u64(9, 0));
         let (mut head, mut tail) = ([0u8; 8], [0u8; 8]);
-        stream.fill(&mut head[..split]).unwrap();
-        stream.fill(&mut tail[split..]).unwrap();
+        random.fill(&mut head[..split]).unwrap();
+        random.fill(&mut tail[split..]).unwrap();
         assert_eq!(&head[..split], &reference[..split]);
         assert_eq!(&tail[split..], &reference[split..]);
     }
@@ -116,41 +116,45 @@ fn fill_consumes_contiguous_bytes() {
 
 #[test]
 fn words_match_the_byte_sequence() {
-    let reference = keystream(Seed::from_u64(11), 5, 24);
-    let mut stream = Stream::new(Seed::from_u64(11), 5);
-    assert_eq!(stream.u32().unwrap(), u32::from_le_bytes(reference[0..4].try_into().unwrap()));
-    assert_eq!(stream.u64().unwrap(), u64::from_le_bytes(reference[4..12].try_into().unwrap()));
+    let reference = keystream(ChaCha12::from_u64(11, 5), 24);
+    let mut random = Random::new(ChaCha12::from_u64(11, 5));
+    assert_eq!(random.u32().unwrap(), u32::from_le_bytes(reference[0..4].try_into().unwrap()));
+    assert_eq!(random.u64().unwrap(), u64::from_le_bytes(reference[4..12].try_into().unwrap()));
     let mut tail = [0u8; 12];
-    stream.fill(&mut tail).unwrap();
+    random.fill(&mut tail).unwrap();
     assert_eq!(tail, reference[12..24]);
 }
 
 #[test]
 fn block_boundaries_do_not_realign_consumption() {
-    let reference = keystream(Seed::from_u64(13), 1, 130);
-    let mut stream = Stream::new(Seed::from_u64(13), 1);
+    let reference = keystream(ChaCha12::from_u64(13, 1), 130);
+    let mut random = Random::new(ChaCha12::from_u64(13, 1));
     let mut first = [0u8; 65];
     let mut second = [0u8; 65];
-    stream.fill(&mut first).unwrap();
-    stream.fill(&mut second).unwrap();
+    random.fill(&mut first).unwrap();
+    random.fill(&mut second).unwrap();
     assert_eq!(&first[..], &reference[..65]);
     assert_eq!(&second[..], &reference[65..]);
 }
 
 #[test]
 fn equal_seeds_and_identifiers_produce_equal_streams() {
-    assert_eq!(keystream(Seed::from_u64(21), 8, 32), keystream(Seed::from_u64(21), 8, 32));
+    assert_eq!(keystream(ChaCha12::from_u64(21, 8), 32), keystream(ChaCha12::from_u64(21, 8), 32));
 }
 
 #[test]
 fn different_stream_identifiers_produce_different_streams() {
-    assert_ne!(keystream(Seed::from_u64(21), 8, 32), keystream(Seed::from_u64(21), 9, 32));
+    assert_ne!(keystream(ChaCha12::from_u64(21, 8), 32), keystream(ChaCha12::from_u64(21, 9), 32));
 }
 
 #[test]
 fn seed_from_u64_uses_a_little_endian_prefix() {
-    let seed = Seed::from_u64(0x0123_4567_89ab_cdef);
-    let bytes = seed.to_bytes();
-    assert_eq!(&bytes[..8], &[0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01]);
-    assert_eq!(&bytes[8..], &[0u8; 24]);
+    // `from_u64` encodes the value little-endian in the first eight key bytes and zeroes the rest, so
+    // it must produce the same keystream as the explicit key carrying that prefix.
+    let stream_id = 7;
+    let mut prefix = [0u8; 32];
+    prefix[..8].copy_from_slice(&[0xef, 0xcd, 0xab, 0x89, 0x67, 0x45, 0x23, 0x01]);
+    let from_value = keystream(ChaCha12::from_u64(0x0123_4567_89ab_cdef, stream_id), 32);
+    let from_prefix = keystream(ChaCha12::from_seed(prefix, stream_id), 32);
+    assert_eq!(from_value, from_prefix);
 }

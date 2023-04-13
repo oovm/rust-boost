@@ -12,7 +12,7 @@
 use wasm_bindgen::{JsValue, prelude::wasm_bindgen};
 
 use super::SystemEntropy;
-use crate::error::{RandomError, RandomErrorKind};
+use crate::error::{EntropyError, WebError};
 
 /// Largest buffer `getRandomValues` accepts in one call.
 const REQUEST_LIMIT: usize = 65_536;
@@ -35,7 +35,7 @@ extern "C" {
     fn get_random_values(buffer: &mut [u8]) -> Result<(), JsValue>;
 }
 
-/// Returns the host `crypto` object, or `None` when the host has none.
+/// Returns the host `crypto` object, or `None` when the host has none or it cannot be probed.
 fn host_crypto() -> Option<JsValue> {
     GLOBAL.with(|global| match reflect_get(global, "crypto") {
         Ok(value) if !value.is_undefined() && !value.is_null() => Some(value.clone()),
@@ -44,10 +44,12 @@ fn host_crypto() -> Option<JsValue> {
 }
 
 /// Fills `dst` with host entropy, or fails without delivering partial output.
-pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
+pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), EntropyError> {
     if host_crypto().is_none() {
+        // A missing `crypto` property is a property of the host, not of one request, so the fact is
+        // recorded and later requests fail through it.
         entropy.mark_unsupported();
-        return Err(RandomError::new(RandomErrorKind::Unsupported));
+        return Err(EntropyError::Web(WebError::Probe));
     }
 
     let mut written = 0;
@@ -57,9 +59,8 @@ pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Ra
         match get_random_values(chunk) {
             Ok(()) => written += piece,
             // The host refused the request. The thrown value is a JavaScript error object whose shape
-            // is not part of this crate's contract, so the classification stays generic and no
-            // platform code is invented for it.
-            Err(_) => return Err(RandomError::new(RandomErrorKind::BackendFailure)),
+            // is not part of this crate's contract, so no platform code is invented for it.
+            Err(_) => return Err(EntropyError::Web(WebError::Rejected)),
         }
     }
     Ok(())

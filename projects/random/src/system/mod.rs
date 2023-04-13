@@ -3,12 +3,9 @@
 //! The crate owns backend selection, capability facts, chunking, short-read handling, and error
 //! classification. System SDKs and ABI bindings are used only as platform bindings: no random
 //! source crate is linked, and a target without an implemented and tested backend reports
-//! [`ErrorKind::Unsupported`](crate::RandomErrorKind::Unsupported) instead of guessing.
+//! [`EntropyError::Unsupported`](crate::EntropyError::Unsupported) instead of guessing.
 
-use crate::{
-    entropy::EntropySource,
-    error::{RandomError, RandomErrorKind},
-};
+use crate::{entropy::EntropySource, error::EntropyError};
 
 #[cfg(all(feature = "system", target_vendor = "apple"))]
 mod apple;
@@ -37,12 +34,12 @@ use windows::fill as host_fill;
 /// Only a permanent platform fact is cached, because availability must not be remembered: one
 /// successful request does not prove that the next one succeeds, and an uninitialized pool or a
 /// changed permission must never be stored as a permanent failure. A request therefore always goes
-/// to the host while nothing permanent is known, and only a reported
-/// [`RandomErrorKind::Unsupported`] stops later requests.
+/// to the host while nothing permanent is known, and only a backend that proved the request
+/// permanently unsupported stops later requests.
 enum Capability {
     /// Nothing permanent is known yet, so requests go to the host.
     Unknown,
-    /// The platform reported a permanently unsupported request, so later requests fail directly.
+    /// The platform proved the request permanently unsupported, so later requests fail directly.
     Unsupported,
 }
 
@@ -59,8 +56,8 @@ impl SystemEntropy {
         Self { capability: Capability::Unknown }
     }
 
-    /// Returns the cached capability fact, which is only permanent when the host rejected the
-    /// request for good.
+    /// Returns the cached capability fact, which is only permanent when the host proved the request
+    /// unsupported for good.
     fn unsupported(&self) -> bool {
         matches!(self.capability, Capability::Unsupported)
     }
@@ -72,9 +69,9 @@ impl SystemEntropy {
 }
 
 impl EntropySource for SystemEntropy {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), EntropyError> {
         if self.unsupported() {
-            return Err(RandomError::new(RandomErrorKind::Unsupported));
+            return Err(EntropyError::Unsupported);
         }
         dispatch(self, dst)
     }
@@ -88,7 +85,7 @@ impl EntropySource for SystemEntropy {
     all(feature = "system", target_vendor = "apple"),
     all(feature = "web", target_arch = "wasm32", target_os = "unknown"),
 ))]
-fn dispatch(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
+fn dispatch(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), EntropyError> {
     host_fill(entropy, dst)
 }
 
@@ -100,7 +97,7 @@ fn dispatch(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomErr
     all(feature = "system", target_vendor = "apple"),
     all(feature = "web", target_arch = "wasm32", target_os = "unknown"),
 )))]
-fn dispatch(entropy: &mut SystemEntropy, _dst: &mut [u8]) -> Result<(), RandomError> {
+fn dispatch(entropy: &mut SystemEntropy, _dst: &mut [u8]) -> Result<(), EntropyError> {
     entropy.mark_unsupported();
-    Err(RandomError::new(RandomErrorKind::Unsupported))
+    Err(EntropyError::Unsupported)
 }

@@ -2,12 +2,13 @@
 //!
 //! `BCryptGenRandom` with `BCRYPT_USE_SYSTEM_PREFERRED_RNG` is documented from Windows Vista on,
 //! and is bound directly here rather than through another random crate. The backend keeps the
-//! `NTSTATUS` value, so a failure is reported with the platform code instead of a generic message.
+//! `NTSTATUS` value, so a failure is reported with its own status domain instead of a generic
+//! message.
 
 use core::{cmp, ffi::c_void, ptr};
 
 use super::SystemEntropy;
-use crate::error::{RandomError, RandomErrorKind};
+use crate::error::EntropyError;
 
 /// Asks BCrypt for the system-preferred random number generator, so no algorithm handle is needed.
 const USE_SYSTEM_PREFERRED_RNG: u32 = 0x0000_0002;
@@ -21,7 +22,7 @@ unsafe extern "system" {
 }
 
 /// Fills `dst` with host entropy, or fails without delivering partial output.
-pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
+pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), EntropyError> {
     let mut written = 0;
     while written < dst.len() {
         // The requested length is a `ULONG`, so a longer buffer is split into pieces.
@@ -32,9 +33,9 @@ pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Ra
             0 => written += piece,
             STATUS_NOT_SUPPORTED => {
                 entropy.mark_unsupported();
-                return Err(RandomError::new(RandomErrorKind::Unsupported));
+                return Err(EntropyError::NtStatus(STATUS_NOT_SUPPORTED));
             }
-            code => return Err(RandomError::with_platform_code(RandomErrorKind::BackendFailure, code)),
+            code => return Err(EntropyError::NtStatus(code)),
         }
     }
     Ok(())

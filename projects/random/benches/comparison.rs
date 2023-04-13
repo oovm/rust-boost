@@ -10,15 +10,15 @@
 
 extern crate test;
 
-use random::{Secure, Seed, Stream};
+use random::{ChaCha12, Random, Secure};
 use test::Bencher;
 
-/// Reads 64 bytes from the deterministic stream.
+/// Reads 64 bytes from the deterministic source.
 #[bench]
 fn stream_fill_64(b: &mut Bencher) {
-    let mut stream = Stream::new(Seed::from_u64(1), 0);
+    let mut random = Random::new(ChaCha12::from_u64(1, 0));
     let mut buffer = [0u8; 64];
-    b.iter(|| stream.fill(&mut buffer).unwrap());
+    b.iter(|| random.fill(&mut buffer).unwrap());
 }
 
 /// Reads 64 bytes from `rand`, the comparison crate.
@@ -39,11 +39,11 @@ fn fastrand_fill_64(b: &mut Bencher) {
     b.iter(|| rng.fill(&mut buffer));
 }
 
-/// Draws one `u32` word from the deterministic stream.
+/// Draws one `u32` word from the deterministic source.
 #[bench]
 fn stream_word(b: &mut Bencher) {
-    let mut stream = Stream::new(Seed::from_u64(2), 0);
-    b.iter(|| stream.u32().unwrap());
+    let mut random = Random::new(ChaCha12::from_u64(2, 0));
+    b.iter(|| random.u32().unwrap());
 }
 
 /// Draws one `u32` word from the comparison crate.
@@ -65,8 +65,8 @@ fn fastrand_word(b: &mut Bencher) {
 /// Draws one value from a small non-power-of-two interval, which exercises rejection sampling.
 #[bench]
 fn stream_range_1_to_6(b: &mut Bencher) {
-    let mut stream = Stream::new(Seed::from_u64(3), 0);
-    b.iter(|| stream.range(1u32..=6).unwrap());
+    let mut random = Random::new(ChaCha12::from_u64(3, 0));
+    b.iter(|| random.range_u32(1..=6).unwrap());
 }
 
 /// Draws one value from the same interval through the comparison crate.
@@ -85,12 +85,12 @@ fn fastrand_range_1_to_6(b: &mut Bencher) {
     b.iter(|| rng.u32(1..=6));
 }
 
-/// Shuffles 32 elements through the deterministic stream.
+/// Shuffles 32 elements through the deterministic source.
 #[bench]
 fn stream_shuffle_32(b: &mut Bencher) {
-    let mut stream = Stream::new(Seed::from_u64(4), 0);
+    let mut random = Random::new(ChaCha12::from_u64(4, 0));
     let mut items: Vec<u32> = (0..32).collect();
-    b.iter(|| stream.shuffle(&mut items).unwrap());
+    b.iter(|| random.shuffle(&mut items).unwrap());
 }
 
 /// Shuffles 32 elements through the comparison crate.

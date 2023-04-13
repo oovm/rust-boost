@@ -8,14 +8,14 @@
 use core::{cmp, ffi::c_void};
 
 use super::SystemEntropy;
-use crate::error::{RandomError, RandomErrorKind};
+use crate::error::EntropyError;
 
 /// One request never asks for more than this many bytes, so the loop does not rely on a kernel
 /// returning a large request in a single call.
 const REQUEST_LIMIT: usize = 256;
 
 /// Fills `dst` with host entropy, or fails without delivering partial output.
-pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), RandomError> {
+pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), EntropyError> {
     let mut written = 0;
     while written < dst.len() {
         let piece = cmp::min(dst.len() - written, REQUEST_LIMIT);
@@ -23,19 +23,20 @@ pub(super) fn fill(entropy: &mut SystemEntropy, dst: &mut [u8]) -> Result<(), Ra
         match unsafe { libc::getrandom(head, piece, 0) } {
             // A short read is expected, so the same request continues with the rest.
             returned if returned > 0 => written += returned as usize,
-            // No progress was made, so continuing would loop forever.
-            0 => return Err(RandomError::new(RandomErrorKind::BackendFailure)),
+            // No progress and no errno were reported, so continuing would loop forever.
+            0 => return Err(EntropyError::Failed),
             _ => match current_errno() {
                 // The call was interrupted, so the same request is retried instead of failing.
                 libc::EINTR => continue,
                 // The pool is not ready yet, which does not make the platform permanently unusable.
-                libc::EAGAIN => return Err(RandomError::with_platform_code(RandomErrorKind::EntropyUnavailable, libc::EAGAIN)),
-                // The kernel has no such call, which is a permanent platform fact.
+                libc::EAGAIN => return Err(EntropyError::Unavailable),
+                // The kernel has no such call, which is a permanent platform fact. The raw code is
+                // kept, and later requests report the cached fact directly.
                 libc::ENOSYS => {
                     entropy.mark_unsupported();
-                    return Err(RandomError::with_platform_code(RandomErrorKind::Unsupported, libc::ENOSYS));
+                    return Err(EntropyError::Errno(libc::ENOSYS));
                 }
-                code => return Err(RandomError::with_platform_code(RandomErrorKind::BackendFailure, code)),
+                code => return Err(EntropyError::Errno(code)),
             },
         }
     }

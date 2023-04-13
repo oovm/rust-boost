@@ -1,28 +1,29 @@
-//! Contract tests for the sampling surface shared by `Stream` and `Secure`.
+//! Contract tests for the sampling surface shared by `Random<ChaCha12>` and `Random<Secure>`.
 //!
-//! `Stream` and `Secure` expose the same first-batch entries. The tests check the shared mapping by
-//! replaying one stream keystream into an entropy provider: the provider is not the platform
-//! backend, but it is a real `EntropySource`, so the handle consumes the same bytes and must reach
-//! the same values, the same consumption, and the same end position as the stream.
+//! `Random` exposes the same first-batch entries whatever source it wraps. The tests check the
+//! shared mapping by replaying one deterministic keystream into an entropy provider: the provider is
+//! not the platform backend, but it is a real `EntropySource`, so the handle consumes the same bytes
+//! and must reach the same values, the same consumption, and the same end position as the
+//! deterministic source.
 //!
 //! The tests observe the host only through a recording or failing provider, so the clearing
 //! contract and the "no request for a degenerate call" contract are verified from the outside.
 
 use core::cell::Cell;
 
-use random::{EntropySource, RandomError, RandomErrorKind, Secure, Seed, Stream};
+use random::{ChaCha12, EntropyError, EntropySource, Random, RandomError, Secure, SourceError};
 
-/// Provider that replays a fixed byte sequence and reports exhaustion at the end.
+/// Provider that replays a fixed byte sequence and reports failure at the end.
 struct ReplayProvider {
     bytes: Vec<u8>,
     position: usize,
 }
 
 impl EntropySource for ReplayProvider {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), EntropyError> {
         let end = self.position + dst.len();
         if end > self.bytes.len() {
-            return Err(RandomError::new(RandomErrorKind::StreamExhausted));
+            return Err(EntropyError::Failed);
         }
         dst.copy_from_slice(&self.bytes[self.position..end]);
         self.position = end;
@@ -36,7 +37,7 @@ struct CountingProvider<'a> {
 }
 
 impl EntropySource for CountingProvider<'_> {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), EntropyError> {
         self.calls.set(self.calls.get() + 1);
         dst.fill(0x42);
         Ok(())
@@ -47,8 +48,8 @@ impl EntropySource for CountingProvider<'_> {
 struct FailingProvider;
 
 impl EntropySource for FailingProvider {
-    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), RandomError> {
-        Err(RandomError::new(RandomErrorKind::EntropyUnavailable))
+    fn try_fill_bytes(&mut self, _dst: &mut [u8]) -> Result<(), EntropyError> {
+        Err(EntropyError::Unavailable)
     }
 }
 
@@ -59,9 +60,9 @@ struct OneWordThenFail {
 }
 
 impl EntropySource for OneWordThenFail {
-    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), RandomError> {
+    fn try_fill_bytes(&mut self, dst: &mut [u8]) -> Result<(), EntropyError> {
         if self.used || dst.len() != 8 {
-            return Err(RandomError::new(RandomErrorKind::EntropyUnavailable));
+            return Err(EntropyError::Unavailable);
         }
         self.used = true;
         dst.copy_from_slice(&self.word.to_le_bytes());
@@ -69,26 +70,31 @@ impl EntropySource for OneWordThenFail {
     }
 }
 
-/// Returns the first `length` bytes of one stream, so a provider can replay them.
+/// Returns the first `length` bytes of one deterministic source, so a provider can replay them.
 fn keystream(length: usize) -> Vec<u8> {
-    let mut stream = Stream::new(Seed::from_u64(42), 0);
+    let mut random = Random::new(ChaCha12::from_u64(42, 0));
     let mut bytes = vec![0u8; length];
-    stream.fill(&mut bytes).unwrap();
+    random.fill(&mut bytes).unwrap();
     bytes
+}
+
+/// The failure reported by a source whose provider is unavailable, wrapped as one sampling error.
+fn unavailable() -> RandomError {
+    RandomError::Source(SourceError::Entropy(EntropyError::Unavailable))
 }
 
 #[test]
 fn secure_replays_a_stream_byte_for_byte() {
     let bytes = keystream(8192);
-    let mut secure = Secure::with_entropy(ReplayProvider { bytes, position: 0 });
-    let mut stream = Stream::new(Seed::from_u64(42), 0);
+    let mut secure = Random::new(Secure::with_entropy(ReplayProvider { bytes, position: 0 }));
+    let mut stream = Random::new(ChaCha12::from_u64(42, 0));
 
     let rotations = [10, 20, 30];
     for _ in 0..32 {
         assert_eq!(secure.u32().unwrap(), stream.u32().unwrap());
         assert_eq!(secure.u64().unwrap(), stream.u64().unwrap());
-        assert_eq!(secure.range(1u32..=6).unwrap(), stream.range(1u32..=6).unwrap());
-        assert_eq!(secure.range(-4i32..=4).unwrap(), stream.range(-4i32..=4).unwrap());
+        assert_eq!(secure.range_u32(1..=6).unwrap(), stream.range_u32(1..=6).unwrap());
+        assert_eq!(secure.range_i32(-4..=4).unwrap(), stream.range_i32(-4..=4).unwrap());
         assert_eq!(secure.unit_f32().unwrap().to_bits(), stream.unit_f32().unwrap().to_bits());
         assert_eq!(secure.unit_f64().unwrap().to_bits(), stream.unit_f64().unwrap().to_bits());
         assert_eq!(secure.chance(1, 3).unwrap(), stream.chance(1, 3).unwrap());
@@ -109,9 +115,9 @@ fn secure_replays_a_stream_byte_for_byte() {
 #[test]
 fn degenerate_calls_never_touch_the_host() {
     let calls = Cell::new(0);
-    let mut secure = Secure::with_entropy(CountingProvider { calls: &calls });
+    let mut secure = Random::new(Secure::with_entropy(CountingProvider { calls: &calls }));
 
-    assert_eq!(secure.range(7u32..=7).unwrap(), 7);
+    assert_eq!(secure.range_u32(7..=7).unwrap(), 7);
     assert!(!secure.chance(0, 5).unwrap());
     assert!(secure.chance(5, 5).unwrap());
     assert_eq!(secure.index(0).unwrap(), None);
@@ -133,36 +139,36 @@ fn degenerate_calls_never_touch_the_host() {
 #[allow(clippy::reversed_empty_ranges)]
 fn invalid_arguments_fail_before_touching_the_host() {
     let calls = Cell::new(0);
-    let mut secure = Secure::with_entropy(CountingProvider { calls: &calls });
+    let mut secure = Random::new(Secure::with_entropy(CountingProvider { calls: &calls }));
 
-    assert_eq!(secure.range(9u32..3).unwrap_err().kind(), RandomErrorKind::InvalidRange);
-    assert_eq!(secure.chance(6, 5).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
-    assert_eq!(secure.chance(1, 0).unwrap_err().kind(), RandomErrorKind::InvalidProbability);
+    assert_eq!(secure.range_u32(9..3).unwrap_err(), RandomError::InvalidRange);
+    assert_eq!(secure.chance(6, 5).unwrap_err(), RandomError::InvalidProbability);
+    assert_eq!(secure.chance(1, 0).unwrap_err(), RandomError::InvalidProbability);
     assert_eq!(calls.get(), 0);
 }
 
 #[test]
 fn a_failing_provider_is_reported_by_every_populated_entry() {
-    let mut secure = Secure::with_entropy(FailingProvider);
+    let mut secure = Random::new(Secure::with_entropy(FailingProvider));
 
-    assert_eq!(secure.u32().unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
-    assert_eq!(secure.u64().unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
-    assert_eq!(secure.range(1u32..=6).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
-    assert_eq!(secure.unit_f32().unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
-    assert_eq!(secure.unit_f64().unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
-    assert_eq!(secure.chance(1, 3).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
-    assert_eq!(secure.index(4).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
-    assert_eq!(secure.choose(&[1, 2]).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.u32().unwrap_err(), SourceError::Entropy(EntropyError::Unavailable));
+    assert_eq!(secure.u64().unwrap_err(), SourceError::Entropy(EntropyError::Unavailable));
+    assert_eq!(secure.range_u32(1..=6).unwrap_err(), unavailable());
+    assert_eq!(secure.unit_f32().unwrap_err(), SourceError::Entropy(EntropyError::Unavailable));
+    assert_eq!(secure.unit_f64().unwrap_err(), SourceError::Entropy(EntropyError::Unavailable));
+    assert_eq!(secure.chance(1, 3).unwrap_err(), unavailable());
+    assert_eq!(secure.index(4).unwrap_err(), unavailable());
+    assert_eq!(secure.choose(&[1, 2]).unwrap_err(), unavailable());
     let mut items = [1, 2, 3];
-    assert_eq!(secure.shuffle(&mut items).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.shuffle(&mut items).unwrap_err(), unavailable());
     assert_eq!(items, [1, 2, 3]);
 }
 
 #[test]
 fn a_failing_provider_still_serves_the_degenerate_entries() {
-    let mut secure = Secure::with_entropy(FailingProvider);
+    let mut secure = Random::new(Secure::with_entropy(FailingProvider));
 
-    assert_eq!(secure.range(3u32..=3).unwrap(), 3);
+    assert_eq!(secure.range_u32(3..=3).unwrap(), 3);
     assert!(!secure.chance(0, 1).unwrap());
     assert_eq!(secure.index(0).unwrap(), None);
     let mut single = [1u8];
@@ -175,20 +181,20 @@ fn a_mid_shuffle_failure_keeps_the_swaps_already_made() {
     // The first index request is answered with the exact word `3`, which maps to index `0` of the
     // `0..3` interval, so the descending Fisher-Yates pass swaps positions 2 and 0 before failing
     // on the next request.
-    let mut secure = Secure::with_entropy(OneWordThenFail { word: 3, used: false });
+    let mut secure = Random::new(Secure::with_entropy(OneWordThenFail { word: 3, used: false }));
     let mut items = [1, 2, 3];
-    assert_eq!(secure.shuffle(&mut items).unwrap_err().kind(), RandomErrorKind::EntropyUnavailable);
+    assert_eq!(secure.shuffle(&mut items).unwrap_err(), unavailable());
     assert_eq!(items, [3, 2, 1]);
 }
 
 #[test]
 fn secure_entries_stay_inside_their_contract() {
     let bytes = keystream(8192);
-    let mut secure = Secure::with_entropy(ReplayProvider { bytes, position: 0 });
+    let mut secure = Random::new(Secure::with_entropy(ReplayProvider { bytes, position: 0 }));
 
     let choices = [10, 20, 30];
     for _ in 0..128 {
-        let face = secure.range(1u32..=6).unwrap();
+        let face = secure.range_u32(1..=6).unwrap();
         assert!((1..=6).contains(&face), "the range entry left its interval: {face}");
 
         let unit = secure.unit_f64().unwrap();
