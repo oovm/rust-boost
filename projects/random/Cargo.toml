@@ -10,16 +10,13 @@ edition.workspace = true
 
 [dependencies]
 
-[target.'cfg(unix)'.dependencies]
-libc = { version = "0.2.155", optional = true }
-
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 wasm-bindgen = { version = "0.2.95", optional = true }
 
 [features]
 default = []
 std = []
-system = ["dep:libc"]
+system = []
 web = ["dep:wasm-bindgen"]
 
 # Comparison crates used only by the benchmarks, so the shipped graph stays free of them.

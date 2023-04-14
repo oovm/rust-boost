@@ -36,6 +36,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
+          targets: aarch64-linux-android
       - name: Source default features
         run: cargo test -p source
       - name: Source serde
@@ -50,6 +51,8 @@ jobs:
         run: cargo test -p diagnostic --features serde
       - name: Diagnostic logger
         run: cargo test -p diagnostic --features logger
+      - name: Android must not reuse the Linux backend
+        run: cargo check -p random --features system --target aarch64-linux-android
 
   word-size:
     runs-on: windows-latest
@@ -107,12 +110,20 @@ jobs:
           targets: wasm32-unknown-unknown
       - name: Compile-only check of the Web Crypto bridge
         run: cargo check -p random --features web --target wasm32-unknown-unknown
-      - name: The shipped graph must stay free of bridge and comparison crates
+      - name: The shipped graph must stay free of comparison, platform-binding, and bridge crates
         run: |
-          if cargo tree -p random --all-features --edges normal | grep -qE '([^a-z]|^)(rand|rand_chacha|rand_core|getrandom|fastrand|wasm-bindgen) v'; then
-            echo "the shipped graph must not contain a comparison crate or wasm-bindgen" >&2
+          if cargo tree -p random --all-features --edges normal | grep -qE '([^a-z]|^)(rand|rand_chacha|rand_core|getrandom|fastrand|libc|wasm-bindgen) v'; then
+            echo "the shipped graph must not contain a comparison crate, a platform-binding crate, or wasm-bindgen" >&2
             exit 1
           fi
+      - name: The default and system builds must stay free of the libc crate
+        run: |
+          for features in "" "--features system"; do
+            if cargo tree -p random $features --edges normal | grep -qE '([^a-z]|^)libc v'; then
+              echo "the shipped graph must not contain the libc crate" >&2
+              exit 1
+            fi
+          done
       - name: The browser target must stay free of `wasm-bindgen` by default
         run: |
           if cargo tree -p random --target wasm32-unknown-unknown --edges normal | grep -q wasm-bindgen; then
