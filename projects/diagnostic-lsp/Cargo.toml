@@ -1,7 +1,7 @@
 [package]
 name = "diagnostic-lsp"
 version.workspace = true
-license = "Apache-2.0"
+license.workspace = true
 authors.workspace = true
 description = "UTF-16 position mapping and structured diagnostic conversion for LSP clients"
 homepage = "https://github.com/oovm/diagnostic-rs"

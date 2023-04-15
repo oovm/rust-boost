@@ -20,7 +20,7 @@ exclude = [
 version = "0.1.0"
 edition = "2024"
 authors = ["Aster <192607617@qq.com>"]
-license = "MPL-2.0"
+license = "Apache-2.0"
 
 [workspace.dependencies]
 serde = { version = "1.0.197", features = ["derive"] }
@@ -62,7 +62,8 @@ image = "0.24.9"
 imageproc = "0.23.0"
 winreg = "0.52.0"
 serial_test = "3.2.0"
-source = { path = "projects/source", version = "0.1.0" }
+source = { path = "projects/source", version = "0.1.0", default-features = false }
+random = { path = "projects/random", version = "0.1.0" }
 terminal = { path = "projects/terminal", version = "0.1.0" }
 logger = { path = "projects/logger", version = "0.1.0" }
 console = { path = "projects/console", version = "0.1.0" }

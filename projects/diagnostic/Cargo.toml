@@ -13,7 +13,7 @@ exclude = ["package.json", "tests/**"]
 [dependencies]
 serde = { workspace = true, optional = true }
 unicode-width = { workspace = true, optional = true }
-source = { path = "../source", version = "0.1.0", default-features = false }
+source = { workspace = true }
 terminal = { workspace = true, optional = true }
 logger = { workspace = true, optional = true }
 console = { workspace = true, optional = true }

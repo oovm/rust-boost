@@ -1,7 +1,7 @@
 [package]
 name = "diagnostic-svg"
 version.workspace = true
-license = "Apache-2.0"
+license.workspace = true
 authors.workspace = true
 description = "Structured diagnostic SVG preview rendering"
 homepage = "https://github.com/oovm/diagnostic-rs"

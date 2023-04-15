@@ -14,7 +14,7 @@ futures-core = { workspace = true, optional = true }
 async-channel = { workspace = true, optional = true }
 futures-lite = { workspace = true, optional = true }
 pin-project-lite = { workspace = true, optional = true }
-random = { path = "../random", version = "0.1.0", features = ["system"] }
+random = { workspace = true, features = ["system"] }
 
 [dev-dependencies]
 futures-lite = { workspace = true }
