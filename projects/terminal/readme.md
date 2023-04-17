@@ -2,4 +2,4 @@
 
 Platform terminal device capabilities: virtual terminal processing, ANSI support probes, and future TTY helpers.
 
-This crate does not know about diagnostics. Use `console` for styled text and `diagnostic` for diagnostic rendering.
+See `src/readme.md` for what this crate owns and what belongs to `console` or `diagnostic`.
