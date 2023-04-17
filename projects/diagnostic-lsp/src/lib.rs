@@ -1,5 +1,7 @@
 //! UTF-16 position mapping and structured diagnostic conversion for LSP clients.
 
+#![deny(missing_docs)]
+
 mod convert;
 mod error;
 mod position;
