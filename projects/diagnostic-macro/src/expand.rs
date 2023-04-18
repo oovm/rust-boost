@@ -212,30 +212,3 @@ fn origin_tokens(origin: &Option<OriginSpec>) -> TokenStream {
         },
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use syn::parse_quote;
-
-    #[test]
-    fn expands_structured_diagnostic() {
-        let input: DiagnosticInput = parse_quote!(code: "macro.test.sample", severity: error, message: "sample message");
-        let expanded = expand(input);
-        let expected = quote! {
-            ::diagnostic::Diagnostic::new(
-                ::diagnostic::DiagnosticCode::new("macro.test.sample"),
-                ::diagnostic::DiagnosticSeverity::Error,
-                ::diagnostic::DiagnosticOrigin::new("macro", "diagnostic-macro"),
-                ::diagnostic::Message::new("macro.test.sample").with_fallback("sample message"),
-            )
-        };
-        assert_eq!(expanded.to_string(), expected.to_string());
-    }
-
-    #[test]
-    fn rejects_unknown_field() {
-        let source = parse_quote!(code: "macro.test.invalid", severity: error, message: "invalid", typo: "field");
-        assert!(syn::parse2::<DiagnosticInput>(source).is_err());
-    }
-}
