@@ -168,10 +168,7 @@ fn the_exponential_queries_match_the_closed_form() {
         assert!(ulp_distance(distribution.density(value), expected_density) <= 4.0);
         // The CDF is a subtraction from one, so a small probability cancels and the honest bound is
         // absolute, measured in units of the last place of one.
-        assert!(
-            (distribution.cdf(value) - expected_cdf).abs() <= 4.0 * f64::EPSILON,
-            "the CDF at {value} is outside the absolute bound"
-        );
+        assert!((distribution.cdf(value) - expected_cdf).abs() <= 4.0 * f64::EPSILON, "the CDF at {value} is outside the absolute bound");
     }
 }
 
@@ -184,10 +181,7 @@ fn the_normal_density_matches_the_closed_form() {
     // One standard deviation away the density is the peak times `exp(-1/2)`.
     for offset in [2.0f64, -2.0, 4.0, -4.0] {
         let expected = peak * (-0.5 * (offset / 2.0).powi(2)).exp();
-        assert!(
-            ulp_distance(distribution.density(1.0 + offset), expected) <= 8.0,
-            "the density at offset {offset} is outside the bound"
-        );
+        assert!(ulp_distance(distribution.density(1.0 + offset), expected) <= 8.0, "the density at offset {offset} is outside the bound");
     }
 }
 

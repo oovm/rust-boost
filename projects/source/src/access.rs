@@ -12,10 +12,9 @@ pub trait ByteAccess {
 
     /// Read `len` bytes starting at `offset`.
     fn read_at(&self, offset: u64, len: u64) -> Result<&[u8], AccessError> {
-        let end = offset.checked_add(len).ok_or(AccessError::OutOfRange {
-            len: self.len(),
-            range: ByteRange::new(offset, offset).expect("zero-length range is valid"),
-        })?;
+        let end = offset
+            .checked_add(len)
+            .ok_or(AccessError::OutOfRange { len: self.len(), range: ByteRange::new(offset, offset).expect("zero-length range is valid") })?;
         self.read(ByteRange::new(offset, end).expect("checked addition preserves ordering"))
     }
 }
@@ -77,8 +76,8 @@ pub struct PartialByteAccess<'a> {
 impl<'a> PartialByteAccess<'a> {
     /// Create a partial view over `bytes` with `available_end` bytes readable.
     pub fn new(bytes: &'a [u8], available_end: u64) -> Result<Self, AccessError> {
-        let len = u64::try_from(bytes.len())
-            .map_err(|_| AccessError::OutOfRange { len: 0, range: ByteRange::new(0, 1).expect("constant range") })?;
+        let len =
+            u64::try_from(bytes.len()).map_err(|_| AccessError::OutOfRange { len: 0, range: ByteRange::new(0, 1).expect("constant range") })?;
         if available_end > len {
             return Err(AccessError::OutOfRange {
                 len,

@@ -121,14 +121,7 @@ macro_rules! uniform_float {
     };
 }
 
-uniform_float!(
-    UniformF32,
-    f32,
-    u32,
-    0x8000_0001_u32,
-    unit_f32,
-    "Uniform distribution over the half-open `f32` interval `[low, high)`."
-);
+uniform_float!(UniformF32, f32, u32, 0x8000_0001_u32, unit_f32, "Uniform distribution over the half-open `f32` interval `[low, high)`.");
 uniform_float!(
     UniformF64,
     f64,

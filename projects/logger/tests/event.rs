@@ -1,9 +1,8 @@
 use std::sync::{Arc, Mutex};
 
 use logger::{
-    DiagnosticPayload, EventKind, Field, FieldValue, Filter, Level, LogEvent, LogSink, MessagePayload, VecSink,
-    clear_global_sink, current_span_id, dropped_events, enter, event, reset_dropped_events, set_global_filter, set_global_sink,
-    span, with_scope,
+    DiagnosticPayload, EventKind, Field, FieldValue, Filter, Level, LogEvent, LogSink, MessagePayload, VecSink, clear_global_sink,
+    current_span_id, dropped_events, enter, event, reset_dropped_events, set_global_filter, set_global_sink, span, with_scope,
 };
 use serial_test::serial;
 

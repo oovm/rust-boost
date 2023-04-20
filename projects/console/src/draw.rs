@@ -48,12 +48,7 @@ pub trait Console: Sized {
     where
         Self: Display,
     {
-        if cfg!(feature = "concolor") {
-            StreamAwareFmt::fg(self, color, StreamType::Stderr)
-        }
-        else {
-            Foreground(self, color.into())
-        }
+        if cfg!(feature = "concolor") { StreamAwareFmt::fg(self, color, StreamType::Stderr) } else { Foreground(self, color.into()) }
     }
 
     /// Give this value the specified background colour.
@@ -61,12 +56,7 @@ pub trait Console: Sized {
     where
         Self: Display,
     {
-        if cfg!(feature = "concolor") {
-            StreamAwareFmt::bg(self, color, StreamType::Stdout)
-        }
-        else {
-            Background(self, color.into())
-        }
+        if cfg!(feature = "concolor") { StreamAwareFmt::bg(self, color, StreamType::Stdout) } else { Background(self, color.into()) }
     }
 }
 
@@ -124,8 +114,7 @@ impl Palette {
         Color::Fixed(
             16 + ((self.state[2] as f32 / 65535.0 * (1.0 - self.min_brightness) + self.min_brightness) * 5.0
                 + (self.state[1] as f32 / 65535.0 * (1.0 - self.min_brightness) + self.min_brightness) * 30.0
-                + (self.state[0] as f32 / 65535.0 * (1.0 - self.min_brightness) + self.min_brightness) * 180.0)
-                as u8,
+                + (self.state[0] as f32 / 65535.0 * (1.0 - self.min_brightness) + self.min_brightness) * 180.0) as u8,
         )
     }
 }

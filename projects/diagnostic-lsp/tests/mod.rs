@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
 use diagnostic::{
-    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity,
-    LabelRole, Message, SourceRef, terminal::SourceID,
+    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity, LabelRole, Message,
+    SourceRef, terminal::SourceID,
 };
 use diagnostic_lsp::{SourceCache, SourceResolver, byte_index_to_position, position_to_byte_index, structured_to_lsp};
 use lsp_types::{Position, Url};

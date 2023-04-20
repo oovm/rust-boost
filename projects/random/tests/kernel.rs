@@ -5,9 +5,7 @@
 //! and the same entry points are driven by `Random<ChaCha12>`, by a custom `RandomSource`, and by
 //! `Secure`, which is the architectural point of the shared kernel.
 
-use random::{
-    ChaCha12, EntropyError, EntropySource, Random, RandomError, RandomSource, Secure, SourceError, distribution::Uniform,
-};
+use random::{ChaCha12, EntropyError, EntropySource, Random, RandomError, RandomSource, Secure, SourceError, distribution::Uniform};
 
 /// Deterministic source that plays a fixed byte sequence and reports exhaustion at the end.
 struct ByteQueue {
@@ -154,18 +152,9 @@ fn stream_range_and_the_shared_kernel_agree() {
     let mut through_range = Random::new(ChaCha12::from_u64(42, 0));
     let mut through_kernel = Random::new(ChaCha12::from_u64(42, 0));
     for _ in 0..64 {
-        assert_eq!(
-            through_range.range_u32(1..=6).unwrap(),
-            Uniform::<u32>::new(1..=6).unwrap().sample(&mut through_kernel).unwrap()
-        );
-        assert_eq!(
-            through_range.range_i32(-4..=4).unwrap(),
-            Uniform::<i32>::new(-4..=4).unwrap().sample(&mut through_kernel).unwrap()
-        );
-        assert_eq!(
-            through_range.range_u64(10..40).unwrap(),
-            Uniform::<u64>::new(10..=39).unwrap().sample(&mut through_kernel).unwrap()
-        );
+        assert_eq!(through_range.range_u32(1..=6).unwrap(), Uniform::<u32>::new(1..=6).unwrap().sample(&mut through_kernel).unwrap());
+        assert_eq!(through_range.range_i32(-4..=4).unwrap(), Uniform::<i32>::new(-4..=4).unwrap().sample(&mut through_kernel).unwrap());
+        assert_eq!(through_range.range_u64(10..40).unwrap(), Uniform::<u64>::new(10..=39).unwrap().sample(&mut through_kernel).unwrap());
         assert_eq!(
             through_range.range_i64(i64::MIN..=-1).unwrap(),
             Uniform::<i64>::new(i64::MIN..=-1).unwrap().sample(&mut through_kernel).unwrap()

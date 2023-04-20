@@ -27,8 +27,7 @@ fn text_diagnostic_log_event_json_matches_fixture() {
     let event = diagnostic_to_log_event(&text_diagnostic());
     let json = event_to_json(&event);
     let actual: serde_json::Value = serde_json::from_str(&json).expect("log event json");
-    let expected: serde_json::Value =
-        serde_json::from_str(include_str!("../fixtures/log-text-event.json")).expect("fixture json");
+    let expected: serde_json::Value = serde_json::from_str(include_str!("../fixtures/log-text-event.json")).expect("fixture json");
 
     assert_eq!(actual["kind"], expected["kind"]);
     assert_eq!(actual["level"], expected["level"]);

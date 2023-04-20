@@ -48,8 +48,7 @@ impl Diagnostic {
             let start_line = src.get_offset_line(label.span.start).map(|(_, l, _)| l);
             let end_line = src.get_offset_line(label.span.end.saturating_sub(1).max(label.span.start)).map(|(_, l, _)| l);
 
-            let label_info =
-                LabelInfo { kind: if start_line == end_line { LabelKind::Inline } else { LabelKind::Multiline }, label };
+            let label_info = LabelInfo { kind: if start_line == end_line { LabelKind::Inline } else { LabelKind::Multiline }, label };
 
             if let Some(group) = groups.iter_mut().find(|g: &&mut SourceGroup| g.id == &label.span.file) {
                 group.span.start = group.span.start.min(label.span.start);
@@ -244,8 +243,7 @@ impl Diagnostic {
                                         }
                                     }
                                     else {
-                                        vbar = vbar
-                                            .or(Some(*label).filter(|_| !is_parent && (is_start ^ (report_row < label_row))));
+                                        vbar = vbar.or(Some(*label).filter(|_| !is_parent && (is_start ^ (report_row < label_row))));
                                     }
                                 }
                             }
@@ -259,9 +257,8 @@ impl Diagnostic {
                             }
                         }
 
-                        hbar = hbar.filter(|l| {
-                            margin_label.as_ref().map_or(true, |margin| margin.label as *const _ != *l as *const _) || !is_line
-                        });
+                        hbar = hbar
+                            .filter(|l| margin_label.as_ref().map_or(true, |margin| margin.label as *const _ != *l as *const _) || !is_line);
 
                         let (a, b) = if let Some((label, is_start)) = corner {
                             (if is_start { draw.ltop } else { draw.lbot }.fg(label.color, s), draw.hbar.fg(label.color, s))
@@ -373,9 +370,7 @@ impl Diagnostic {
                     })
                     .collect::<Vec<_>>();
 
-                for label_info in
-                    labels.iter().filter(|l| l.label.span.start >= line.range().start && l.label.span.end <= line.range().end)
-                {
+                for label_info in labels.iter().filter(|l| l.label.span.start >= line.range().start && l.label.span.end <= line.range().end) {
                     if matches!(label_info.kind, LabelKind::Inline) {
                         line_labels.push(LineLabel {
                             column: match &self.config.label_attach {
@@ -428,8 +423,7 @@ impl Diagnostic {
                         // Only labels with notes get an arrow
                         .enumerate()
                         .filter(|(_, ll)| {
-                            ll.label.msg.is_some()
-                                && margin_label.as_ref().map_or(true, |m| ll.label as *const _ != m.label as *const _)
+                            ll.label.msg.is_some() && margin_label.as_ref().map_or(true, |m| ll.label as *const _ != m.label as *const _)
                         })
                         .find(|(j, ll)| ll.column == col && ((row <= *j && !ll.multi) || (row <= *j && ll.multi)))
                         .map(|(_, ll)| ll)
@@ -465,12 +459,8 @@ impl Diagnostic {
                 // Line
                 if !is_ellipsis {
                     for (col, c) in line.chars().enumerate() {
-                        let color = if let Some(highlight) = get_highlight(col as u32) {
-                            highlight.color
-                        }
-                        else {
-                            self.config.unimportant_color()
-                        };
+                        let color =
+                            if let Some(highlight) = get_highlight(col as u32) { highlight.color } else { self.config.unimportant_color() };
                         let (c, width) = self.config.char_width(c, col);
                         if c.is_whitespace() {
                             for _ in 0..width {
@@ -551,18 +541,12 @@ impl Diagnostic {
                             && margin_label.as_ref().map_or(true, |m| line_label.label as *const _ != m.label as *const _)
                         {
                             [
-                                if line_label.multi {
-                                    if line_label.draw_msg { draw.mbot } else { draw.rbot }
-                                }
-                                else {
-                                    draw.lbot
-                                }
-                                .fg(line_label.label.color, s),
+                                if line_label.multi { if line_label.draw_msg { draw.mbot } else { draw.rbot } } else { draw.lbot }
+                                    .fg(line_label.label.color, s),
                                 draw.hbar.fg(line_label.label.color, s),
                             ]
                         }
-                        else if let Some(vbar_ll) =
-                            get_vbar(col, row).filter(|_| col != line_label.column || line_label.label.msg.is_some())
+                        else if let Some(vbar_ll) = get_vbar(col, row).filter(|_| col != line_label.column || line_label.label.msg.is_some())
                         {
                             if !self.config.cross_gap && is_hbar {
                                 [draw.xbar.fg(line_label.label.color, s), ' '.fg(line_label.label.color, s)]

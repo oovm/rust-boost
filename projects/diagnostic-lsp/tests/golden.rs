@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
 use diagnostic::{
-    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSet,
-    DiagnosticSeverity, LabelRole, Message, SourceRef, terminal::SourceID,
+    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSet, DiagnosticSeverity, LabelRole,
+    Message, SourceRef, terminal::SourceID,
 };
 use diagnostic_lsp::{SourceCache, SourceResolver, structured_set_to_lsp, structured_to_lsp};
 use lsp_types::Url;
@@ -44,10 +44,8 @@ fn lsp_text_diagnostic_matches_golden_json() {
     let file_id = cache.load_text("let value = 1", "sample.tao");
     let resolver = TestResolver::new(&source_ref, file_id);
 
-    let lsp = structured_to_lsp(&sample_text_diagnostic(source_ref), &cache, &resolver, &|_| {
-        Some(Url::parse("file:///sample.tao").unwrap())
-    })
-    .unwrap();
+    let lsp = structured_to_lsp(&sample_text_diagnostic(source_ref), &cache, &resolver, &|_| Some(Url::parse("file:///sample.tao").unwrap()))
+        .unwrap();
 
     let actual = serde_json::to_string_pretty(&lsp).expect("serialize lsp diagnostic");
     let expected = include_str!("golden/lsp-text.json");
@@ -80,10 +78,8 @@ fn write_lsp_golden_fixture() {
     let file_id = cache.load_text("let value = 1", "sample.tao");
     let resolver = TestResolver::new(&source_ref, file_id);
 
-    let lsp = structured_to_lsp(&sample_text_diagnostic(source_ref), &cache, &resolver, &|_| {
-        Some(Url::parse("file:///sample.tao").unwrap())
-    })
-    .unwrap();
+    let lsp = structured_to_lsp(&sample_text_diagnostic(source_ref), &cache, &resolver, &|_| Some(Url::parse("file:///sample.tao").unwrap()))
+        .unwrap();
 
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/golden/lsp-text.json");
     fs::create_dir_all(path.parent().unwrap()).expect("create golden dir");

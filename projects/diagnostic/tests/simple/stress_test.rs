@@ -40,40 +40,14 @@ fn main() {
         .with_label(Label::new(stress.with_range(53..55)).with_message("This is of type [_]").with_color(colors.random()))
         .with_label(Label::new(stress.with_range(25..78)).with_message("This is of type Str").with_color(colors.random()))
         .with_label(Label::new(stress.with_range(81..124)).with_message("This is of type Nat").with_color(colors.random()))
-        .with_label(
-            Label::new(stress.with_range(100..126)).with_message("This is an inner multi-line").with_color(colors.random()),
-        )
-        .with_label(
-            Label::new(stress.with_range(106..120))
-                .with_message("This is another inner multi-line")
-                .with_color(colors.random()),
-        )
-        .with_label(
-            Label::new(stress.with_range(108..122))
-                .with_message("This is *really* nested multi-line")
-                .with_color(colors.random()),
-        )
-        .with_label(
-            Label::new(stress.with_range(110..111))
-                .with_message("This is an inline within the nesting!")
-                .with_color(colors.random()),
-        )
+        .with_label(Label::new(stress.with_range(100..126)).with_message("This is an inner multi-line").with_color(colors.random()))
+        .with_label(Label::new(stress.with_range(106..120)).with_message("This is another inner multi-line").with_color(colors.random()))
+        .with_label(Label::new(stress.with_range(108..122)).with_message("This is *really* nested multi-line").with_color(colors.random()))
+        .with_label(Label::new(stress.with_range(110..111)).with_message("This is an inline within the nesting!").with_color(colors.random()))
         .with_label(Label::new(stress.with_range(111..112)).with_message("And another!").with_color(colors.random()))
-        .with_label(
-            Label::new(stress.with_range(103..123))
-                .with_message("This is *really* nested multi-line")
-                .with_color(colors.random()),
-        )
-        .with_label(
-            Label::new(stress.with_range(105..125))
-                .with_message("This is *really* nested multi-line")
-                .with_color(colors.random()),
-        )
-        .with_label(
-            Label::new(stress.with_range(112..116))
-                .with_message("This is *really* nested multi-line")
-                .with_color(colors.random()),
-        )
+        .with_label(Label::new(stress.with_range(103..123)).with_message("This is *really* nested multi-line").with_color(colors.random()))
+        .with_label(Label::new(stress.with_range(105..125)).with_message("This is *really* nested multi-line").with_color(colors.random()))
+        .with_label(Label::new(stress.with_range(112..116)).with_message("This is *really* nested multi-line").with_color(colors.random()))
         .with_label(Label::new(stress.with_range(26..100)).with_message("Hahaha!").with_color(Color::Fixed(75)))
         .with_label(Label::new(stress.with_range(85..110)).with_message("Oh god, no more 1").with_color(colors.random()))
         .with_label(Label::new(stress.with_range(84..114)).with_message("Oh god, no more 2").with_color(colors.random()))

@@ -27,8 +27,7 @@ pub use source::SourceLookup;
 
 #[cfg(feature = "logger")]
 pub use console_projection::{
-    diagnostic_to_event, diagnostic_to_log_event, diagnostic_to_payload, emit_diagnostic, emit_diagnostic_log,
-    emit_diagnostic_set,
+    diagnostic_to_event, diagnostic_to_log_event, diagnostic_to_payload, emit_diagnostic, emit_diagnostic_log, emit_diagnostic_set,
 };
 
 #[cfg(feature = "serde")]
@@ -38,9 +37,8 @@ pub use wire::{DiagnosticEnvelope, SCHEMA_VERSION};
 pub use console::{Color, Console, Paint, Palette, Style};
 #[cfg(feature = "terminal")]
 pub use terminal::{
-    BuiltinDrawer, Config, Diagnostic as TerminalDiagnostic, DiagnosticBuilder as TerminalDiagnosticBuilder, DrawElements,
-    Label, LabelAttach, ReportKind, ReportLevel, SourceRegistry, StructuredRenderError, enable_ansi_color,
-    eprint_structured_set, structured_to_terminal,
+    BuiltinDrawer, Config, Diagnostic as TerminalDiagnostic, DiagnosticBuilder as TerminalDiagnosticBuilder, DrawElements, Label, LabelAttach,
+    ReportKind, ReportLevel, SourceRegistry, StructuredRenderError, enable_ansi_color, eprint_structured_set, structured_to_terminal,
 };
 #[cfg(feature = "terminal")]
 pub use terminal::{SourceCache, SourceID, SourceSpan};

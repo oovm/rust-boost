@@ -3,8 +3,8 @@ use diagnostic::{
     terminal::{SourceID, SourceProvider},
 };
 use lsp_types::{
-    Diagnostic as LspDiagnostic, DiagnosticRelatedInformation, DiagnosticSeverity as LspSeverity, Location, NumberOrString,
-    Position, Range, Url,
+    Diagnostic as LspDiagnostic, DiagnosticRelatedInformation, DiagnosticSeverity as LspSeverity, Location, NumberOrString, Position, Range,
+    Url,
 };
 
 use crate::{DiagnosticError, position::byte_range_to_lsp_range};
@@ -48,8 +48,7 @@ pub fn structured_to_lsp(
 
     for secondary in diagnostic.secondary() {
         match label_text_location(provider, resolver, uri_for, secondary)? {
-            Some(location) => related_information
-                .push(DiagnosticRelatedInformation { location, message: render_message(secondary.message()) }),
+            Some(location) => related_information.push(DiagnosticRelatedInformation { location, message: render_message(secondary.message()) }),
             None => related_information.push(message_only_related(location_summary(secondary.location(), secondary.message()))),
         }
     }
@@ -82,8 +81,7 @@ fn label_text_location(
     match label.location() {
         DiagnosticLocation::Text { source, range } | DiagnosticLocation::Virtual { source, range } => {
             let file = resolver.resolve(source).ok_or_else(|| DiagnosticError::UnknownSource { wire_id: source.wire_id() })?;
-            let uri =
-                uri_for(file).ok_or_else(|| DiagnosticError::Provider(format!("missing URI for source {}", source.id())))?;
+            let uri = uri_for(file).ok_or_else(|| DiagnosticError::Provider(format!("missing URI for source {}", source.id())))?;
             let range = byte_range_to_lsp_range(provider, file, range.start(), range.end())?;
             Ok(Some(Location { uri, range }))
         }
@@ -110,12 +108,8 @@ fn location_summary(location: &DiagnosticLocation, message: &Message) -> String 
             format!("{}:{} [{}, {})", source.id(), address_space.id(), range.start(), range.end())
         }
         DiagnosticLocation::Member { container, member, range, precision, .. } => {
-            let path = member
-                .segments()
-                .iter()
-                .map(|segment| format!("{}/{}", segment.kind(), segment.name()))
-                .collect::<Vec<_>>()
-                .join(" -> ");
+            let path =
+                member.segments().iter().map(|segment| format!("{}/{}", segment.kind(), segment.name())).collect::<Vec<_>>().join(" -> ");
             let range = range.map(|range: ByteRange| format!(" [{}, {})", range.start(), range.end())).unwrap_or_default();
             format!("{}::{path}{range} ({precision:?})", container.id())
         }

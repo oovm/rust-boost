@@ -6,9 +6,7 @@ use core::{
 
 use super::sources::{SourceCache, SourceID, SourceSpan};
 
-use crate::{
-    ByteRange, DiagnosticLabel, DiagnosticLocation, DiagnosticSet, DiagnosticSeverity, Message, SourceRef, model::Diagnostic,
-};
+use crate::{ByteRange, DiagnosticLabel, DiagnosticLocation, DiagnosticSet, DiagnosticSeverity, Message, SourceRef, model::Diagnostic};
 
 use super::{Config, Diagnostic as TerminalDiagnostic, Label, ReportKind, source_map::SourceRegistry};
 
@@ -51,9 +49,8 @@ pub fn structured_to_terminal(
     registry: &SourceRegistry,
     config: Config,
 ) -> Result<TerminalDiagnostic, StructuredRenderError> {
-    let mut builder = TerminalDiagnostic::new(severity_to_kind(diagnostic.severity()))
-        .with_message(render_message(diagnostic.message()))
-        .with_config(config);
+    let mut builder =
+        TerminalDiagnostic::new(severity_to_kind(diagnostic.severity())).with_message(render_message(diagnostic.message())).with_config(config);
 
     let mut notes = diagnostic.notes().iter().map(render_message).collect::<Vec<_>>();
     let helps = diagnostic.helps().iter().map(render_message).collect::<Vec<_>>();
@@ -95,9 +92,7 @@ pub fn eprint_structured_set(
     config: Config,
 ) -> Result<(), StructuredRenderError> {
     for diagnostic in set.diagnostics() {
-        structured_to_terminal(diagnostic, registry, config)?
-            .eprint(cache)
-            .map_err(|error| StructuredRenderError::Io(error.to_string()))?;
+        structured_to_terminal(diagnostic, registry, config)?.eprint(cache).map_err(|error| StructuredRenderError::Io(error.to_string()))?;
     }
     Ok(())
 }
@@ -125,8 +120,7 @@ fn primary_text_location(location: &DiagnosticLocation, registry: &SourceRegistr
 
 fn try_text_label(label: &DiagnosticLabel, registry: &SourceRegistry) -> Result<Option<Label>, StructuredRenderError> {
     if let Some((source, range)) = text_like_location(label.location()) {
-        let file =
-            registry.resolve(source).ok_or_else(|| StructuredRenderError::UnknownSource { wire_id: source.wire_id() })?;
+        let file = registry.resolve(source).ok_or_else(|| StructuredRenderError::UnknownSource { wire_id: source.wire_id() })?;
         let span = byte_range_to_span(*file, range)?;
         return Ok(Some(Label::new(span).with_message(render_message(label.message()))));
     }
@@ -142,10 +136,8 @@ fn text_like_location(location: &DiagnosticLocation) -> Option<(&SourceRef, Byte
 }
 
 fn byte_range_to_span(file: SourceID, range: ByteRange) -> Result<SourceSpan, StructuredRenderError> {
-    let start = u32::try_from(range.start())
-        .map_err(|_| StructuredRenderError::RangeOutOfBounds { start: range.start(), end: range.end() })?;
-    let end = u32::try_from(range.end())
-        .map_err(|_| StructuredRenderError::RangeOutOfBounds { start: range.start(), end: range.end() })?;
+    let start = u32::try_from(range.start()).map_err(|_| StructuredRenderError::RangeOutOfBounds { start: range.start(), end: range.end() })?;
+    let end = u32::try_from(range.end()).map_err(|_| StructuredRenderError::RangeOutOfBounds { start: range.start(), end: range.end() })?;
     Ok(file.with_range(Range { start, end }))
 }
 
@@ -155,12 +147,8 @@ fn location_summary(location: &DiagnosticLocation, message: &Message) -> String 
             format!("{}:{} [{}, {})", source.id(), address_space.id(), range.start(), range.end())
         }
         DiagnosticLocation::Member { container, member, range, precision, .. } => {
-            let path = member
-                .segments()
-                .iter()
-                .map(|segment| format!("{}/{}", segment.kind(), segment.name()))
-                .collect::<Vec<_>>()
-                .join(" -> ");
+            let path =
+                member.segments().iter().map(|segment| format!("{}/{}", segment.kind(), segment.name())).collect::<Vec<_>>().join(" -> ");
             let range = range.map(|range| format!(" [{}, {})", range.start(), range.end())).unwrap_or_default();
             format!("{}::{path}{range} ({precision:?})", container.id())
         }

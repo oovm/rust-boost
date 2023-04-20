@@ -9,9 +9,7 @@ mod origin;
 mod record;
 mod severity;
 
-pub use crate::provenance::{
-    AddressSpaceRef, DocumentRef, MappingPrecision, MemberPath, MemberSegment, ObjectRef, SemanticPath,
-};
+pub use crate::provenance::{AddressSpaceRef, DocumentRef, MappingPrecision, MemberPath, MemberSegment, ObjectRef, SemanticPath};
 pub use action::{DiagnosticAction, DiagnosticCause};
 pub use code::DiagnosticCode;
 pub use label::{DiagnosticLabel, LabelRole};

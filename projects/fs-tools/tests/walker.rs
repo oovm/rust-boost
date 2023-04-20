@@ -9,10 +9,8 @@ fn sync_walker_visits_nested_files() {
     fs_tools::create_folder_all(root.path().join("nested")).unwrap();
     fs_tools::write(root.path().join("nested").join("child.txt"), b"ok").unwrap();
 
-    let paths: Vec<_> = Walker::new(root.path())
-        .into_iter()
-        .map(|entry| entry.unwrap().path().strip_prefix(root.path()).unwrap().to_path_buf())
-        .collect();
+    let paths: Vec<_> =
+        Walker::new(root.path()).into_iter().map(|entry| entry.unwrap().path().strip_prefix(root.path()).unwrap().to_path_buf()).collect();
 
     assert!(paths.contains(&std::path::Path::new("nested").to_path_buf()));
     assert!(paths.contains(&std::path::Path::new("nested").join("child.txt")));

@@ -28,12 +28,7 @@ pub struct HttpTransportConfig {
 
 impl Default for HttpTransportConfig {
     fn default() -> Self {
-        Self {
-            max_body_bytes: 8 * 1024 * 1024,
-            max_redirects: 8,
-            timeout: Duration::from_secs(30),
-            max_header_bytes: 64 * 1024,
-        }
+        Self { max_body_bytes: 8 * 1024 * 1024, max_redirects: 8, timeout: Duration::from_secs(30), max_header_bytes: 64 * 1024 }
     }
 }
 
@@ -150,10 +145,8 @@ impl Transport for HttpTransport {
                 if redirects.len() >= self.config.max_redirects as usize {
                     return Err(RequestError::Transport(format!("redirect chain exceeded {} hops", self.config.max_redirects)));
                 }
-                let location = response
-                    .headers
-                    .get("location")
-                    .ok_or_else(|| RequestError::Transport("redirect without location header".into()))?;
+                let location =
+                    response.headers.get("location").ok_or_else(|| RequestError::Transport("redirect without location header".into()))?;
                 let mut next_url = current_url.join(location).map_err(|error| RequestError::Transport(error.to_string()))?;
                 next_url.set_fragment(None);
                 validate_redirect(&current_url, &next_url)?;
@@ -188,13 +181,9 @@ impl HttpTransport {
     ) -> Result<Response, RequestError> {
         let host = url.host_str().ok_or_else(|| RequestError::Unsupported("URL has no host".into()))?;
         let network_host = host.trim_start_matches('[').trim_end_matches(']');
-        let deadline =
-            Instant::now().checked_add(timeout).ok_or_else(|| RequestError::Unsupported("timeout is too large".into()))?;
+        let deadline = Instant::now().checked_add(timeout).ok_or_else(|| RequestError::Unsupported("timeout is too large".into()))?;
         let port = url.port_or_known_default().ok_or_else(|| RequestError::Unsupported("URL has no port".into()))?;
-        let addresses = (network_host, port)
-            .to_socket_addrs()
-            .map_err(|error| RequestError::Transport(error.to_string()))?
-            .collect::<Vec<_>>();
+        let addresses = (network_host, port).to_socket_addrs().map_err(|error| RequestError::Transport(error.to_string()))?.collect::<Vec<_>>();
         let mut connected = None;
         let mut last_error = "host resolved to no addresses".to_string();
         for address in addresses {
@@ -225,9 +214,7 @@ impl HttpTransport {
         for (name, value) in headers {
             validate_header(name, value)?;
             if matches!(name.as_str(), "transfer-encoding" | "expect" | "upgrade") {
-                return Err(RequestError::Unsupported(
-                    "request streaming, expectation and upgrade headers are not supported".into(),
-                ));
+                return Err(RequestError::Unsupported("request streaming, expectation and upgrade headers are not supported".into()));
             }
             if name == "host" || name == "connection" {
                 continue;
@@ -247,13 +234,7 @@ impl HttpTransport {
         connection.write_all(wire.as_bytes()).map_err(RequestError::Body)?;
         connection.write_all(body).map_err(RequestError::Body)?;
         connection.flush().map_err(RequestError::Body)?;
-        read_response(
-            &mut BufReader::new(connection),
-            url.clone(),
-            method,
-            self.config.max_header_bytes,
-            self.config.max_body_bytes,
-        )
+        read_response(&mut BufReader::new(connection), url.clone(), method, self.config.max_header_bytes, self.config.max_body_bytes)
     }
 }
 
@@ -275,8 +256,7 @@ fn read_response<R: Read>(
             connection.read_exact(&mut byte).map_err(RequestError::Body)?;
             head.push(byte[0]);
         }
-        let text = std::str::from_utf8(&head)
-            .map_err(|error| RequestError::Transport(format!("response headers are not UTF-8: {error}")))?;
+        let text = std::str::from_utf8(&head).map_err(|error| RequestError::Transport(format!("response headers are not UTF-8: {error}")))?;
         let mut lines = text.split("\r\n");
         let status_line = lines.next().unwrap_or("");
         let mut parts = status_line.splitn(3, ' ');
@@ -294,14 +274,11 @@ fn read_response<R: Read>(
             if line.is_empty() {
                 break;
             }
-            let (name, value) =
-                line.split_once(':').ok_or_else(|| RequestError::Transport("invalid response header".into()))?;
+            let (name, value) = line.split_once(':').ok_or_else(|| RequestError::Transport("invalid response header".into()))?;
             validate_header(name, value)?;
             let name = name.to_ascii_lowercase();
             if headers.insert(name, value.trim().to_string()).is_some() {
-                return Err(RequestError::Unsupported(
-                    "duplicate response headers are not supported by single-value header model".into(),
-                ));
+                return Err(RequestError::Unsupported("duplicate response headers are not supported by single-value header model".into()));
             }
         }
         header_budget -= head.len();
@@ -428,10 +405,8 @@ fn secure_connection(scheme: &str, host: &str, stream: DeadlineSocket) -> Result
                     .map_err(|error| RequestError::Transport(error.to_string()))?
                     .with_root_certificates(roots)
                     .with_no_client_auth();
-                let name =
-                    ServerName::try_from(host.to_string()).map_err(|error| RequestError::Unsupported(error.to_string()))?;
-                let connection = ClientConnection::new(Arc::new(config), name)
-                    .map_err(|error| RequestError::Transport(error.to_string()))?;
+                let name = ServerName::try_from(host.to_string()).map_err(|error| RequestError::Unsupported(error.to_string()))?;
+                let connection = ClientConnection::new(Arc::new(config), name).map_err(|error| RequestError::Transport(error.to_string()))?;
                 Ok(Connection::Tls(Box::new(StreamOwned::new(connection, stream))))
             }
             #[cfg(not(feature = "tls"))]
@@ -478,10 +453,7 @@ fn is_token(value: &str) -> bool {
 }
 
 fn remaining_timeout(total: Duration, elapsed: Duration) -> Result<Duration, RequestError> {
-    total
-        .checked_sub(elapsed)
-        .filter(|value| !value.is_zero())
-        .ok_or_else(|| RequestError::Transport("whole-request timeout exceeded".into()))
+    total.checked_sub(elapsed).filter(|value| !value.is_zero()).ok_or_else(|| RequestError::Transport("whole-request timeout exceeded".into()))
 }
 
 fn is_redirect(status: u16) -> bool {

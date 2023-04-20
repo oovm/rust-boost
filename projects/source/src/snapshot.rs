@@ -16,11 +16,7 @@ impl SnapshotRef {
     }
 
     /// Create a snapshot reference with an explicit revision.
-    pub fn with_revision(
-        namespace: impl Into<String>,
-        id: impl Into<String>,
-        revision: impl Into<String>,
-    ) -> Result<Self, IdentityError> {
+    pub fn with_revision(namespace: impl Into<String>, id: impl Into<String>, revision: impl Into<String>) -> Result<Self, IdentityError> {
         let source = SourceRef::new(namespace, id)?.with_revision(revision)?;
         Ok(Self { source })
     }

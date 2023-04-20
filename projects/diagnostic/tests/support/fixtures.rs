@@ -1,7 +1,6 @@
 use diagnostic::{
-    AddressSpaceRef, ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin,
-    DiagnosticSet, DiagnosticSeverity, DocumentRef, LabelRole, MappingPrecision, MemberPath, MemberSegment, Message, ObjectRef,
-    SemanticPath, SourceRef,
+    AddressSpaceRef, ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSet,
+    DiagnosticSeverity, DocumentRef, LabelRole, MappingPrecision, MemberPath, MemberSegment, Message, ObjectRef, SemanticPath, SourceRef,
 };
 
 pub fn text_diagnostic() -> Diagnostic {
@@ -66,10 +65,7 @@ pub fn object_diagnostic() -> Diagnostic {
         Message::new("acorn.layout.offset-out-of-range").with_fallback("offset out of range"),
     )
     .with_primary(DiagnosticLabel::new(
-        DiagnosticLocation::Object {
-            source: SourceRef::new("acorn", "sample.pdf").unwrap(),
-            object: ObjectRef::new("xref", "42"),
-        },
+        DiagnosticLocation::Object { source: SourceRef::new("acorn", "sample.pdf").unwrap(), object: ObjectRef::new("xref", "42") },
         Message::new("label.object").with_fallback("object"),
         LabelRole::Primary,
     ))
@@ -83,10 +79,7 @@ pub fn semantic_diagnostic() -> Diagnostic {
         Message::new("notedown.semantic.unresolved-target").with_fallback("unresolved target"),
     )
     .with_primary(DiagnosticLabel::new(
-        DiagnosticLocation::Semantic {
-            document: DocumentRef::new("notedown", "chapter-1"),
-            path: SemanticPath::new("/blocks/17"),
-        },
+        DiagnosticLocation::Semantic { document: DocumentRef::new("notedown", "chapter-1"), path: SemanticPath::new("/blocks/17") },
         Message::new("label.semantic").with_fallback("semantic"),
         LabelRole::Primary,
     ))

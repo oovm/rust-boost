@@ -99,13 +99,7 @@ impl ChaChaCore {
         for (word, chunk) in words.iter_mut().zip(key.as_chunks::<4>().0) {
             *word = u32::from_le_bytes(*chunk);
         }
-        Self {
-            key: words,
-            nonce: [stream_id as u32, (stream_id >> 32) as u32],
-            buffer: [0u8; BLOCK_BYTES],
-            buffered: None,
-            position: 0,
-        }
+        Self { key: words, nonce: [stream_id as u32, (stream_id >> 32) as u32], buffer: [0u8; BLOCK_BYTES], buffered: None, position: 0 }
     }
 
     /// Fills `dst` with the next keystream bytes in consumption order.

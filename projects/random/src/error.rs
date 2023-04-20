@@ -168,11 +168,7 @@ impl core::error::Error for RandomError {
     fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {
             Self::Source(error) => Some(error),
-            Self::InvalidRange
-            | Self::InvalidProbability
-            | Self::InvalidParameter
-            | Self::LengthOverflow
-            | Self::NumericalFailure => None,
+            Self::InvalidRange | Self::InvalidProbability | Self::InvalidParameter | Self::LengthOverflow | Self::NumericalFailure => None,
         }
     }
 }

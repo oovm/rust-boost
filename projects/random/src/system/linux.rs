@@ -37,12 +37,7 @@ const EAGAIN: c_int = 11;
 /// Unlike `EINTR` and `EAGAIN`, this number is not shared by every Linux architecture, because the
 /// MIPS and SPARC families keep their own error tables. The constant is therefore stated per family
 /// rather than assumed to hold for every Linux target.
-#[cfg(any(
-    target_arch = "mips",
-    target_arch = "mips32r6",
-    target_arch = "mips64",
-    target_arch = "mips64r6"
-))]
+#[cfg(any(target_arch = "mips", target_arch = "mips32r6", target_arch = "mips64", target_arch = "mips64r6"))]
 const ENOSYS: c_int = 89;
 
 /// The `ENOSYS` code of the SPARC family, which keeps its own error table. See the MIPS variant.

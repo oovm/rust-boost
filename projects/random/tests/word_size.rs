@@ -36,8 +36,8 @@ const GOLDEN_LONG: [i64; 8] = [
 const GOLDEN_INDICES: [usize; 8] = [236_015, 407_165, 846_346, 468_393, 145_747, 600_271, 868_797, 235_873];
 const GOLDEN_CHOSEN: [i32; 8] = [0, 90, 0, 90, 90, 0, -90, 90];
 const GOLDEN_CHANCES: [bool; 32] = [
-    false, false, true, false, false, true, false, false, true, false, false, true, true, false, false, false, true, false,
-    false, false, false, false, false, false, false, false, false, false, true, true, true, true,
+    false, false, true, false, false, true, false, false, true, false, false, true, true, false, false, false, true, false, false, false,
+    false, false, false, false, false, false, false, false, true, true, true, true,
 ];
 const GOLDEN_SHUFFLED: [u32; 32] =
     [13, 26, 8, 6, 11, 27, 20, 4, 2, 21, 0, 16, 7, 14, 12, 1, 22, 24, 3, 23, 30, 10, 28, 19, 15, 31, 5, 29, 17, 25, 9, 18];

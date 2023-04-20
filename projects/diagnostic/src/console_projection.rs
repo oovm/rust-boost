@@ -1,15 +1,14 @@
 //! Project structured diagnostics into `logger` events without reversing the dependency edge.
 
 use logger::{
-    ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, FieldValue, LabelPayload, LocationPayload, LogEvent,
-    MessagePayload, SourceRefPayload,
+    ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, FieldValue, LabelPayload, LocationPayload, LogEvent, MessagePayload,
+    SourceRefPayload,
 };
 
 use crate::{
     collect::DiagnosticSet,
     model::{
-        Diagnostic, DiagnosticAction, DiagnosticCause, DiagnosticLabel, DiagnosticLocation, DiagnosticSeverity, Message,
-        MessageArg, SourceRef,
+        Diagnostic, DiagnosticAction, DiagnosticCause, DiagnosticLabel, DiagnosticLocation, DiagnosticSeverity, Message, MessageArg, SourceRef,
     },
 };
 
@@ -42,11 +41,8 @@ pub fn emit_diagnostic_set(set: &DiagnosticSet) {
 
 /// Project a diagnostic record into a logger-owned payload.
 pub fn diagnostic_to_payload(diagnostic: &Diagnostic) -> DiagnosticPayload {
-    let mut payload = DiagnosticPayload::new(
-        diagnostic.code().as_str(),
-        severity_name(diagnostic.severity()),
-        message_to_payload(diagnostic.message()),
-    );
+    let mut payload =
+        DiagnosticPayload::new(diagnostic.code().as_str(), severity_name(diagnostic.severity()), message_to_payload(diagnostic.message()));
 
     let origin = diagnostic.origin();
     if let Some(stage) = origin.stage() {

@@ -189,13 +189,7 @@ impl SourceProvider for SourceCache {
 }
 
 impl SourceCache {
-    fn insert_snapshot(
-        &mut self,
-        bytes: Vec<u8>,
-        path: SourcePath,
-        namespace: &str,
-        id: String,
-    ) -> Result<SourceID, IdentityError> {
+    fn insert_snapshot(&mut self, bytes: Vec<u8>, path: SourcePath, namespace: &str, id: String) -> Result<SourceID, IdentityError> {
         let reference = SnapshotRef::new(SourceRef::new(namespace, id)?);
         let snapshot = MemorySnapshot::from_bytes(reference, bytes);
         let handle = self.store.insert(snapshot);
@@ -253,8 +247,7 @@ impl SourceView<'_> {
     /// Returns the line range spanned by a byte range.
     pub fn get_line_range(&self, span: &Range<u32>) -> Range<usize> {
         let start = self.get_offset_line(span.start).map_or(0, |(_, line, _)| line);
-        let end =
-            self.get_offset_line(span.end.saturating_sub(1).max(span.start)).map_or(self.line_count(), |(_, line, _)| line + 1);
+        let end = self.get_offset_line(span.end.saturating_sub(1).max(span.start)).map_or(self.line_count(), |(_, line, _)| line + 1);
         start..end
     }
 }

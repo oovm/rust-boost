@@ -75,10 +75,7 @@ fn event_kind_name(kind: &EventKind) -> &'static str {
 }
 
 fn fields_to_json(fields: &[Field]) -> String {
-    let items = fields
-        .iter()
-        .map(|field| format!("{}:{}", json_string(field.name()), field_value_to_json(field.value())))
-        .collect::<Vec<_>>();
+    let items = fields.iter().map(|field| format!("{}:{}", json_string(field.name()), field_value_to_json(field.value()))).collect::<Vec<_>>();
     format!("{{{}}}", items.join(","))
 }
 
@@ -132,11 +129,8 @@ fn diagnostic_payload_to_json(payload: &DiagnosticPayload) -> String {
 fn message_payload_to_json(message: &MessagePayload) -> String {
     let mut parts = vec![format!("\"key\":{}", json_string(message.key()))];
     if !message.args().is_empty() {
-        let args = message
-            .args()
-            .iter()
-            .map(|(name, value)| format!("{}:{}", json_string(name), field_value_to_json(value)))
-            .collect::<Vec<_>>();
+        let args =
+            message.args().iter().map(|(name, value)| format!("{}:{}", json_string(name), field_value_to_json(value))).collect::<Vec<_>>();
         parts.push(format!("\"args\":{{{}}}", args.join(",")));
     }
     if let Some(fallback) = message.fallback() {
@@ -146,10 +140,8 @@ fn message_payload_to_json(message: &MessagePayload) -> String {
 }
 
 fn label_payload_to_json(label: &LabelPayload) -> String {
-    let mut parts = vec![
-        format!("\"role\":{}", json_string(label.role())),
-        format!("\"location\":{}", location_payload_to_json(label.location())),
-    ];
+    let mut parts =
+        vec![format!("\"role\":{}", json_string(label.role())), format!("\"location\":{}", location_payload_to_json(label.location()))];
     if let Some(message) = label.message() {
         parts.push(format!("\"message\":{}", message_payload_to_json(message)));
     }
@@ -189,11 +181,8 @@ fn cause_payload_to_json(cause: &CausePayload) -> String {
 fn action_payload_to_json(action: &ActionPayload) -> String {
     let mut parts = vec![format!("\"id\":{}", json_string(action.id()))];
     if !action.args().is_empty() {
-        let args = action
-            .args()
-            .iter()
-            .map(|(name, value)| format!("{}:{}", json_string(name), field_value_to_json(value)))
-            .collect::<Vec<_>>();
+        let args =
+            action.args().iter().map(|(name, value)| format!("{}:{}", json_string(name), field_value_to_json(value))).collect::<Vec<_>>();
         parts.push(format!("\"args\":{{{}}}", args.join(",")));
     }
     format!("{{{}}}", parts.join(","))

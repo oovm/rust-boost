@@ -1,6 +1,6 @@
 use diagnostic::{
-    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity,
-    LabelRole, Message, SourceRef,
+    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity, LabelRole, Message,
+    SourceRef,
     terminal::{SourceCache, SourceRegistry},
 };
 use diagnostic_svg::structured_to_svg;

@@ -1,6 +1,6 @@
 use logger::{
-    ByteRangePayload, DiagnosticPayload, FieldValue, JsonLinesSink, LabelPayload, Level, LocationPayload, LogEvent, LogSink,
-    MessagePayload, SourceRefPayload, event_to_json,
+    ByteRangePayload, DiagnosticPayload, FieldValue, JsonLinesSink, LabelPayload, Level, LocationPayload, LogEvent, LogSink, MessagePayload,
+    SourceRefPayload, event_to_json,
 };
 
 #[test]
@@ -29,15 +29,14 @@ fn event_to_json_serializes_diagnostic_payload() {
 
 #[test]
 fn event_to_json_serializes_text_span_revision() {
-    let payload =
-        DiagnosticPayload::new("oak.syntax.unexpected-token", "error", MessagePayload::new("oak.syntax.unexpected-token"))
-            .with_primary(LabelPayload::new(
-                LocationPayload::TextSpan {
-                    source: SourceRefPayload::new("oak", "sample.xml").with_revision("1"),
-                    range: ByteRangePayload { start: 12, end: 13 },
-                },
-                "primary",
-            ));
+    let payload = DiagnosticPayload::new("oak.syntax.unexpected-token", "error", MessagePayload::new("oak.syntax.unexpected-token"))
+        .with_primary(LabelPayload::new(
+            LocationPayload::TextSpan {
+                source: SourceRefPayload::new("oak", "sample.xml").with_revision("1"),
+                range: ByteRangePayload { start: 12, end: 13 },
+            },
+            "primary",
+        ));
     let json = event_to_json(&LogEvent::diagnostic(payload));
     assert!(json.contains("\"revision\":\"1\""));
 }

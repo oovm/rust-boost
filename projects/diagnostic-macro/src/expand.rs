@@ -99,10 +99,7 @@ fn parse_message(input: ParseStream) -> Result<MessageSpec> {
             "key" => key = Some(content.parse()?),
             "fallback" => fallback = Some(content.parse()?),
             other => {
-                return Err(syn::Error::new(
-                    name.span(),
-                    format!("unknown message field `{other}`; expected `key` or `fallback`"),
-                ));
+                return Err(syn::Error::new(name.span(), format!("unknown message field `{other}`; expected `key` or `fallback`")));
             }
         }
         if content.peek(Token![,]) {
@@ -110,10 +107,7 @@ fn parse_message(input: ParseStream) -> Result<MessageSpec> {
         }
     }
 
-    Ok(MessageSpec::Structured {
-        key: key.ok_or_else(|| syn::Error::new(input.span(), "missing message field `key`"))?,
-        fallback,
-    })
+    Ok(MessageSpec::Structured { key: key.ok_or_else(|| syn::Error::new(input.span(), "missing message field `key`"))?, fallback })
 }
 
 fn parse_origin(input: ParseStream) -> Result<OriginSpec> {

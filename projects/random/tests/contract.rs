@@ -220,10 +220,7 @@ fn full_domain_intervals_accept_every_word_of_their_width() {
     assert_eq!(queue.position, 8);
 
     let mut queue = WordQueue::of_u32(&[0xdead_beef, 0]);
-    assert_eq!(
-        Uniform::<i32>::new(i32::MIN..=i32::MAX).unwrap().sample(&mut queue).unwrap(),
-        (0xdead_beef_u32 ^ 0x8000_0000) as i32
-    );
+    assert_eq!(Uniform::<i32>::new(i32::MIN..=i32::MAX).unwrap().sample(&mut queue).unwrap(), (0xdead_beef_u32 ^ 0x8000_0000) as i32);
     assert_eq!(queue.position, 4);
 
     let mut queue = WordQueue::of_u64(&[u64::MAX, 0]);

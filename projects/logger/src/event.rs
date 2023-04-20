@@ -79,12 +79,7 @@ impl LogEvent {
         self.parent_span_id
     }
 
-    pub(crate) fn prepare_for_emit(
-        mut self,
-        span_id: Option<SpanId>,
-        parent_span_id: Option<SpanId>,
-        extra_fields: Vec<Field>,
-    ) -> Self {
+    pub(crate) fn prepare_for_emit(mut self, span_id: Option<SpanId>, parent_span_id: Option<SpanId>, extra_fields: Vec<Field>) -> Self {
         if self.span_id.is_none() {
             self.span_id = span_id;
             self.parent_span_id = parent_span_id;

@@ -1,8 +1,7 @@
 use std::io::{Read, Seek, SeekFrom};
 
 use logger::{
-    FieldValue, FileSink, Level, LogEvent, LogSink, VecSink, clear_global_sink, emit, event_to_json, install_global_file_sink,
-    set_global_sink,
+    FieldValue, FileSink, Level, LogEvent, LogSink, VecSink, clear_global_sink, emit, event_to_json, install_global_file_sink, set_global_sink,
 };
 use serial_test::serial;
 

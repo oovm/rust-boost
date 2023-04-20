@@ -20,11 +20,6 @@ pub struct DiagnosticEnvelope {
 impl DiagnosticEnvelope {
     /// Serialize a diagnostic set into the wire envelope.
     pub fn from_set(set: &DiagnosticSet) -> Self {
-        Self {
-            schema_version: SCHEMA_VERSION,
-            diagnostics: set.diagnostics().to_vec(),
-            truncated: set.truncated(),
-            dropped: set.dropped(),
-        }
+        Self { schema_version: SCHEMA_VERSION, diagnostics: set.diagnostics().to_vec(), truncated: set.truncated(), dropped: set.dropped() }
     }
 }

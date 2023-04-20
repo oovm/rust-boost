@@ -1,6 +1,6 @@
 use source::{
-    AccessError, ByteAccess, ByteRange, LineIndex, MemorySnapshot, MemoryStore, PartialByteAccess, SnapshotHandle, SnapshotRef,
-    SourceRef, decode_source_ref, encode_source_ref,
+    AccessError, ByteAccess, ByteRange, LineIndex, MemorySnapshot, MemoryStore, PartialByteAccess, SnapshotHandle, SnapshotRef, SourceRef,
+    decode_source_ref, encode_source_ref,
 };
 
 #[test]
@@ -103,8 +103,7 @@ fn serde_round_trip_validates_byte_range() {
 
 #[test]
 fn text_view_reads_utf8_range() {
-    let snapshot =
-        MemorySnapshot::from_bytes(SnapshotRef::new(SourceRef::new("oak", "sample.nd").unwrap()), "αβ".as_bytes().to_vec());
+    let snapshot = MemorySnapshot::from_bytes(SnapshotRef::new(SourceRef::new("oak", "sample.nd").unwrap()), "αβ".as_bytes().to_vec());
     let view = snapshot.text_view();
     assert_eq!(view.utf8_range(ByteRange::new(0, 4).unwrap()).unwrap(), "αβ");
 }

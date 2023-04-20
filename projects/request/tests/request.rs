@@ -10,25 +10,13 @@ struct EchoTransport;
 
 impl Transport for EchoTransport {
     fn send(&self, request: &Request) -> Result<Response, RequestError> {
-        Ok(Response {
-            url: request.url.clone(),
-            status: 201,
-            headers: BTreeMap::new(),
-            body: request.body.clone(),
-            redirects: Vec::new(),
-        })
+        Ok(Response { url: request.url.clone(), status: 201, headers: BTreeMap::new(), body: request.body.clone(), redirects: Vec::new() })
     }
 }
 
 /// Builds a response that only carries the status under test.
 fn with_status(status: u16) -> Response {
-    Response {
-        url: Url::parse("https://example.test").unwrap(),
-        status,
-        headers: BTreeMap::new(),
-        body: Vec::new(),
-        redirects: Vec::new(),
-    }
+    Response { url: Url::parse("https://example.test").unwrap(), status, headers: BTreeMap::new(), body: Vec::new(), redirects: Vec::new() }
 }
 
 #[test]

@@ -15,13 +15,8 @@ pub enum RenderError {
 }
 
 /// Render one structured diagnostic into an SVG preview document.
-pub fn structured_to_svg(
-    diagnostic: &Diagnostic,
-    cache: &SourceCache,
-    registry: &SourceRegistry,
-) -> Result<String, RenderError> {
-    let terminal =
-        structured_to_terminal(diagnostic, registry, Config::default().with_color(false)).map_err(RenderError::Structured)?;
+pub fn structured_to_svg(diagnostic: &Diagnostic, cache: &SourceCache, registry: &SourceRegistry) -> Result<String, RenderError> {
+    let terminal = structured_to_terminal(diagnostic, registry, Config::default().with_color(false)).map_err(RenderError::Structured)?;
 
     let mut buffer = Vec::new();
     terminal.write(cache, &mut buffer).map_err(|error| RenderError::Io(error.to_string()))?;
@@ -31,11 +26,7 @@ pub fn structured_to_svg(
 }
 
 /// Render a diagnostic set into one SVG preview document.
-pub fn structured_set_to_svg(
-    set: &DiagnosticSet,
-    cache: &SourceCache,
-    registry: &SourceRegistry,
-) -> Result<String, RenderError> {
+pub fn structured_set_to_svg(set: &DiagnosticSet, cache: &SourceCache, registry: &SourceRegistry) -> Result<String, RenderError> {
     let mut sections = Vec::new();
     for diagnostic in set.diagnostics() {
         sections.push(structured_to_svg(diagnostic, cache, registry)?);

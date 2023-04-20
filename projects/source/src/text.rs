@@ -75,10 +75,7 @@ impl LineIndex {
     /// Map a byte offset to `(line, column)`.
     pub fn coords_at_offset(&self, bytes_len: u64, offset: u64) -> Result<TextCoords, AccessError> {
         if offset > bytes_len {
-            return Err(AccessError::OutOfRange {
-                len: bytes_len,
-                range: ByteRange::new(offset, offset).expect("zero-length range is valid"),
-            });
+            return Err(AccessError::OutOfRange { len: bytes_len, range: ByteRange::new(offset, offset).expect("zero-length range is valid") });
         }
 
         let line = match self.offsets.binary_search(&offset) {
@@ -123,16 +120,11 @@ impl<'a, T: ByteAccess + ?Sized> TextView<'a, T> {
 
     /// Returns the raw bytes for a line without trimming whitespace.
     pub fn line_at(&self, line: usize) -> Result<&[u8], AccessError> {
-        let start = self.lines.line_offset(line).ok_or(AccessError::OutOfRange {
-            len: self.access.len(),
-            range: ByteRange::new(0, 0).expect("zero-length range is valid"),
-        })?;
-        let end = if line + 1 < self.lines.line_count() {
-            self.lines.line_offset(line + 1).expect("line exists")
-        }
-        else {
-            self.access.len()
-        };
+        let start = self
+            .lines
+            .line_offset(line)
+            .ok_or(AccessError::OutOfRange { len: self.access.len(), range: ByteRange::new(0, 0).expect("zero-length range is valid") })?;
+        let end = if line + 1 < self.lines.line_count() { self.lines.line_offset(line + 1).expect("line exists") } else { self.access.len() };
         let slice = self.access.read(ByteRange::new(start, end).expect("line bounds are ordered"))?;
         Ok(strip_line_ending(slice))
     }

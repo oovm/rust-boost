@@ -1,8 +1,6 @@
 use alloc::vec::Vec;
 
-use super::{
-    DiagnosticAction, DiagnosticCode, DiagnosticLabel, DiagnosticOrigin, DiagnosticSeverity, Message, action::DiagnosticCause,
-};
+use super::{DiagnosticAction, DiagnosticCode, DiagnosticLabel, DiagnosticOrigin, DiagnosticSeverity, Message, action::DiagnosticCause};
 
 /// Structured diagnostic record.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

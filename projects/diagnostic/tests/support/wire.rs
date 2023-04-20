@@ -1,8 +1,6 @@
 use diagnostic::wire::{DiagnosticEnvelope, SCHEMA_VERSION};
 
-use super::fixtures::{
-    binary_diagnostic, member_diagnostic, object_diagnostic, sample_set, semantic_diagnostic, text_diagnostic,
-};
+use super::fixtures::{binary_diagnostic, member_diagnostic, object_diagnostic, sample_set, semantic_diagnostic, text_diagnostic};
 
 #[test]
 fn wire_envelope_roundtrip() {

@@ -1,6 +1,6 @@
 use diagnostic::{
-    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity,
-    LabelRole, Message, SourceRef,
+    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSeverity, LabelRole, Message,
+    SourceRef,
     terminal::{Config, SourceCache, SourceRegistry, structured_to_terminal},
 };
 
