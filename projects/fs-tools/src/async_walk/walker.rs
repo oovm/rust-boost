@@ -9,9 +9,7 @@ use async_channel::Receiver;
 use futures_core::Stream;
 use pin_project_lite::pin_project;
 
-use crate::walk::{Entry, Error, Walker as SyncWalker};
-
-use super::Filter;
+use crate::walk::{Entry, Error, Filter, Walker as SyncWalker};
 
 pin_project! {
     /// A `Stream` of paths discovered by recursively walking a folder tree.
@@ -41,6 +39,9 @@ impl Walker {
     }
 
     /// Filter entries before they are yielded.
+    ///
+    /// The predicate runs on the traversal thread, so a folder that it reports as
+    /// [`Filter::IgnoreFolder`] is pruned instead of being visited and discarded.
     pub fn filter<F, Fut>(self, predicate: F) -> Self
     where
         F: FnMut(Entry) -> Fut + Send + 'static,
@@ -51,22 +52,10 @@ impl Walker {
         let (sender, receiver) = async_channel::bounded(64);
         std::thread::spawn(move || {
             let mut predicate = predicate;
-            for item in SyncWalker::new(walk_root).min_depth(1) {
-                match item {
-                    Ok(entry) => {
-                        if futures_lite::future::block_on(predicate(entry.clone())) != Filter::Continue {
-                            continue;
-                        }
-                        if sender.send_blocking(Ok(entry)).is_err() {
-                            break;
-                        }
-                    }
-                    Err(err) => {
-                        if sender.send_blocking(Err(err)).is_err() {
-                            break;
-                        }
-                        break;
-                    }
+            let walker = SyncWalker::new(walk_root).min_depth(1).filter(move |entry| futures_lite::future::block_on(predicate(entry.clone())));
+            for item in walker {
+                if sender.send_blocking(item).is_err() {
+                    break;
                 }
             }
         });
