@@ -1,6 +1,8 @@
 //! Atomic file publish helpers.
 //!
-//! Writes go to a same-directory temporary file first, then rename into place.
+//! Writes go to a same-directory temporary file first, then into place. The staging file is owned by
+//! the publisher until the destination is published, so a failed publish removes it instead of
+//! leaving it behind.
 
 use std::{
     fs::File,
@@ -13,9 +15,15 @@ use crate::temp::{NamedFile, create_named_in};
 /// Whether an existing destination may be replaced.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OverwritePolicy {
-    /// Fail with [`io::ErrorKind::AlreadyExists`] when the destination exists.
+    /// Never replace the destination.
+    ///
+    /// [`AtomicPublisher::commit`] links the staged file into place, which fails on an existing
+    /// destination without touching it, so a destination that appears after [`AtomicPublisher::create`]
+    /// is still reported instead of being replaced.
     RefuseExisting,
-    /// Replace an existing destination atomically when the platform allows it.
+    /// Replace an existing destination.
+    ///
+    /// Replacing is a rename, so a reader either sees the previous file or the published one.
     Replace,
 }
 
@@ -26,7 +34,10 @@ pub struct PublishOptions {
     pub overwrite: OverwritePolicy,
     /// `fsync` the temporary file before rename.
     pub fsync_file: bool,
-    /// `fsync` the destination parent directory after rename.
+    /// `fsync` the destination folder after the destination is published.
+    ///
+    /// Platforms that do not hand out a folder handle (Windows) cannot flush the parent folder, so
+    /// the option is a no-op there.
     pub fsync_parent: bool,
 }
 
@@ -46,6 +57,10 @@ pub struct AtomicPublisher {
 
 impl AtomicPublisher {
     /// Create a temporary file next to `target` for staged writing.
+    ///
+    /// An existing destination is reported here so that a refused publish fails before any byte is
+    /// staged. This check is an early report, not the guarantee: [`Self::commit`] decides whether the
+    /// destination may be published at all.
     pub fn create(target: impl AsRef<Path>, options: PublishOptions) -> io::Result<Self> {
         let target = target.as_ref();
         let parent = target
@@ -78,21 +93,39 @@ impl AtomicPublisher {
         self.temp().file()
     }
 
-    /// Rename the staging file into place.
+    /// Publish the staged file as the destination.
+    ///
+    /// [`OverwritePolicy::RefuseExisting`] publishes by linking, so a destination that appeared while
+    /// the file was staged is refused with [`io::ErrorKind::AlreadyExists`] and left untouched.
+    /// [`OverwritePolicy::Replace`] publishes by rename, so a reader sees either file and never a
+    /// partial one.
+    ///
+    /// A failure before the destination is published removes the staging file. A failure after
+    /// publishing means the destination is already visible, but the caller cannot assume it survived a
+    /// crash, because flushing the file or its parent folder failed.
     pub fn commit(mut self) -> io::Result<PathBuf> {
-        if self.target.exists() && self.options.overwrite == OverwritePolicy::RefuseExisting {
-            return Err(io::Error::new(io::ErrorKind::AlreadyExists, "destination already exists"));
-        }
-
         let temp = self.temp.take().expect("staging file");
         if self.options.fsync_file {
             temp.sync_all()?;
         }
 
-        let (_file, staging_path) = temp.keep();
-        self.committed = true;
+        // The staging handle is closed before the file is published, so the rename and the link do not
+        // depend on how the platform treats an open handle.
+        let (file, staging_path) = temp.keep();
+        drop(file);
 
-        crate::rename(&staging_path, &self.target)?;
+        let published = match self.options.overwrite {
+            OverwritePolicy::RefuseExisting => crate::hard_link(&staging_path, &self.target).and_then(|()| crate::remove_file(&staging_path)),
+            OverwritePolicy::Replace => crate::rename(&staging_path, &self.target),
+        };
+        if let Err(error) = published {
+            // `keep` gave up the ownership of the staging file, so a failed publish removes it here
+            // instead of relying on the destructor.
+            let _ = crate::remove_file(&staging_path);
+            return Err(error);
+        }
+
+        self.committed = true;
 
         let target = self.target.clone();
         if self.options.fsync_parent {
@@ -142,15 +175,23 @@ pub fn publish_bytes_with_options(target: impl AsRef<Path>, bytes: &[u8], option
     Ok(())
 }
 
+/// Flush the folder that holds the destination.
+///
+/// A folder handle keeps the published name durable across a crash, so a failure to open or flush it
+/// is reported instead of being ignored.
+#[cfg(not(windows))]
 fn sync_parent(path: &Path) -> io::Result<()> {
     let parent = path
         .parent()
         .filter(|dir| !dir.as_os_str().is_empty())
         .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "destination has no parent directory"))?;
 
-    if let Ok(dir) = std::fs::File::open(parent) {
-        let _ = dir.sync_all();
-    }
+    std::fs::File::open(parent)?.sync_all()
+}
 
+/// Windows does not let `std::fs::File` open a folder, so the parent folder cannot be flushed there.
+#[cfg(windows)]
+fn sync_parent(path: &Path) -> io::Result<()> {
+    let _ = path;
     Ok(())
 }
