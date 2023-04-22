@@ -183,7 +183,9 @@ fn walker_accepts_sibling_symlinks_to_one_folder() {
     );
 }
 
-#[cfg(unix)]
+// A file system that demands valid UTF-8 names rejects the name itself, so the case is only
+// reachable where bytes are accepted as given.
+#[cfg(target_os = "linux")]
 #[test]
 fn walker_visits_paths_that_are_not_utf8() {
     use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
