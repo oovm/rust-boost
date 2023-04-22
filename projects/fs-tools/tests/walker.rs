@@ -192,7 +192,7 @@ fn walker_visits_paths_that_are_not_utf8() {
     let name = OsStr::from_bytes(b"not-utf8-\xff.txt");
     write(root.path().join(name), b"bytes").unwrap();
 
-    let found = relative_paths(root.path(), Walker::new(root.path().min_depth(1))).into_iter().any(|path| path.file_name() == Some(name));
+    let found = relative_paths(root.path(), Walker::new(root.path()).min_depth(1)).into_iter().any(|path| path.file_name() == Some(name));
 
     assert!(found, "a path that is not valid UTF-8 is still visited");
 }
