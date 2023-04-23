@@ -42,6 +42,18 @@ pub fn set_folder(path: impl AsRef<Path>) {
     *OVERRIDE.write().expect("temp override lock poisoned") = Some(path.as_ref().to_path_buf());
 }
 
+/// Resolve a base folder to an absolute path.
+///
+/// A temporary path is owned by the value that created it and removed on drop, so it must not depend
+/// on the current working directory after it exists. A relative base is therefore joined to
+/// [`std::env::current_dir`] instead of staying relative.
+pub(crate) fn absolute(base: &Path) -> io::Result<PathBuf> {
+    if base.is_absolute() {
+        return Ok(base.to_path_buf());
+    }
+    Ok(std::env::current_dir()?.join(base))
+}
+
 /// Create `path` when missing and register it as the process temporary folder.
 pub fn configure_folder(path: impl AsRef<Path>) -> io::Result<()> {
     let path = path.as_ref();

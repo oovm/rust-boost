@@ -45,15 +45,37 @@ pub fn create_folder() -> io::Result<TempFolder> {
 }
 
 /// Create a temporary folder under `base`.
+///
+/// A relative `base` is resolved against the current folder, so the returned path is absolute and
+/// does not move when the current folder changes later.
 pub fn create_folder_in(base: impl AsRef<Path>) -> io::Result<TempFolder> {
-    let base = base.as_ref();
-    for _ in 0..128 {
+    let base = super::env::absolute(base.as_ref())?;
+    for _ in 0..super::RETRY_LIMIT {
         let path = base.join(format!("{}-folder", unique::prefix("d")?));
-        match crate::create_folder(&path) {
+        match create_owned_folder(&path) {
             Ok(()) => return Ok(TempFolder { path, keep: false }),
             Err(err) if err.kind() == io::ErrorKind::AlreadyExists => continue,
             Err(err) => return Err(err),
         }
     }
     Err(io::Error::new(io::ErrorKind::AlreadyExists, "failed to allocate a unique temporary folder"))
+}
+
+/// Create a folder that no account other than the owner can enter.
+///
+/// `std::fs::create_dir` takes no mode, so the owner-only mode goes through the folder builder on a
+/// host that carries one.
+fn create_owned_folder(path: &Path) -> io::Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        let mut builder = std::fs::DirBuilder::new();
+        builder.mode(super::OWNER_ONLY_FOLDER);
+        return builder.create(path);
+    }
+
+    #[cfg(not(unix))]
+    {
+        crate::create_folder(path)
+    }
 }

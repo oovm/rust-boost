@@ -1,13 +1,21 @@
 use std::path::{Path, PathBuf};
 
 use fs_tools::{
-    temp::create_folder,
+    temp::{TempFolder, create_folder_in},
     walk::{Entry, ErrorPolicy, Filter, Walker},
     write,
 };
 
 #[cfg(feature = "async")]
 use fs_tools::async_walk::Walker as AsyncWalker;
+
+/// A root folder taken from the host temporary folder.
+///
+/// A test that does not cover the process temporary folder names its root explicitly, so it never
+/// reads the override while another test replaces it.
+fn temp_root() -> TempFolder {
+    create_folder_in(std::env::temp_dir()).unwrap()
+}
 
 /// Collect the paths below `root` relative to `root`, and fail the calling test on a walk error.
 ///
@@ -27,7 +35,7 @@ where
 
 #[test]
 fn sync_walker_visits_nested_files() {
-    let root = create_folder().unwrap();
+    let root = temp_root();
     fs_tools::create_folder_all(root.path().join("nested")).unwrap();
     write(root.path().join("nested").join("child.txt"), b"ok").unwrap();
 
@@ -39,7 +47,7 @@ fn sync_walker_visits_nested_files() {
 
 #[test]
 fn walker_prunes_folders_that_the_filter_rejects() {
-    let root = create_folder().unwrap();
+    let root = temp_root();
     fs_tools::create_folder_all(root.path().join("skipped").join("inner")).unwrap();
     write(root.path().join("skipped").join("inner").join("hidden.txt"), b"hidden").unwrap();
     write(root.path().join("skipped").join("also-hidden.txt"), b"hidden").unwrap();
@@ -55,7 +63,7 @@ fn walker_prunes_folders_that_the_filter_rejects() {
 
 #[test]
 fn walker_ignores_an_entry_but_still_traverses_it() {
-    let root = create_folder().unwrap();
+    let root = temp_root();
     fs_tools::create_folder_all(root.path().join("visible")).unwrap();
     write(root.path().join("visible").join("child.txt"), b"child").unwrap();
 
@@ -69,7 +77,7 @@ fn walker_ignores_an_entry_but_still_traverses_it() {
 
 #[test]
 fn walker_visits_sorted_children_depth_first() {
-    let root = create_folder().unwrap();
+    let root = temp_root();
     fs_tools::create_folder_all(root.path().join("b")).unwrap();
     fs_tools::create_folder_all(root.path().join("a")).unwrap();
     write(root.path().join("b").join("d.txt"), b"d").unwrap();
@@ -82,7 +90,7 @@ fn walker_visits_sorted_children_depth_first() {
 
 #[test]
 fn walker_observes_min_and_max_depth() {
-    let root = create_folder().unwrap();
+    let root = temp_root();
     fs_tools::create_folder_all(root.path().join("outer")).unwrap();
     write(root.path().join("outer").join("inner.txt"), b"inner").unwrap();
     write(root.path().join("top.txt"), b"top").unwrap();
@@ -96,7 +104,7 @@ fn walker_observes_min_and_max_depth() {
 
 #[test]
 fn strict_policy_stops_the_iteration_at_the_first_error() {
-    let root = create_folder().unwrap();
+    let root = temp_root();
     let missing = root.path().join("missing");
 
     let mut entries = Walker::new(&missing).error_policy(ErrorPolicy::Strict).into_iter();
@@ -115,7 +123,7 @@ fn strict_policy_stops_the_iteration_at_the_first_error() {
 fn lenient_policy_keeps_visiting_after_an_error() {
     use std::os::unix::fs::PermissionsExt;
 
-    let root = create_folder().unwrap();
+    let root = temp_root();
     let blocked = root.path().join("blocked");
     fs_tools::create_folder_all(&blocked).unwrap();
     write(root.path().join("visible.txt"), b"visible").unwrap();
@@ -142,7 +150,7 @@ fn lenient_policy_keeps_visiting_after_an_error() {
 #[cfg(unix)]
 #[test]
 fn walker_reports_a_symlink_loop() {
-    let root = create_folder().unwrap();
+    let root = temp_root();
     let folder = root.path().join("folder");
     fs_tools::create_folder_all(&folder).unwrap();
     std::os::unix::fs::symlink(&folder, folder.join("back")).unwrap();
@@ -161,7 +169,7 @@ fn walker_reports_a_symlink_loop() {
 #[cfg(unix)]
 #[test]
 fn walker_accepts_sibling_symlinks_to_one_folder() {
-    let root = create_folder().unwrap();
+    let root = temp_root();
     let target = root.path().join("target");
     fs_tools::create_folder_all(&target).unwrap();
     write(target.join("leaf.txt"), b"leaf").unwrap();
@@ -190,7 +198,7 @@ fn walker_accepts_sibling_symlinks_to_one_folder() {
 fn walker_visits_paths_that_are_not_utf8() {
     use std::{ffi::OsStr, os::unix::ffi::OsStrExt};
 
-    let root = create_folder().unwrap();
+    let root = temp_root();
     let name = OsStr::from_bytes(b"not-utf8-\xff.txt");
     write(root.path().join(name), b"bytes").unwrap();
 
@@ -204,7 +212,7 @@ fn walker_visits_paths_that_are_not_utf8() {
 fn async_walker_visits_nested_files() {
     use futures_lite::stream::StreamExt;
 
-    let root = create_folder().unwrap();
+    let root = temp_root();
     fs_tools::create_folder_all(root.path().join("nested")).unwrap();
     write(root.path().join("nested").join("child.txt"), b"ok").unwrap();
 
@@ -225,7 +233,7 @@ fn async_walker_visits_nested_files() {
 fn async_walker_prunes_folders_that_the_filter_rejects() {
     use futures_lite::stream::StreamExt;
 
-    let root = create_folder().unwrap();
+    let root = temp_root();
     fs_tools::create_folder_all(root.path().join("skipped")).unwrap();
     write(root.path().join("skipped").join("hidden.txt"), b"hidden").unwrap();
     write(root.path().join("kept.txt"), b"kept").unwrap();
