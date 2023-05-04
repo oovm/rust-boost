@@ -5,12 +5,12 @@ use std::{
     path::{Path, PathBuf},
     sync::{
         Arc, Mutex,
-        mpsc::{Receiver, RecvTimeoutError, Sender, SyncSender, TrySendError},
+        mpsc::{Receiver, RecvTimeoutError, Sender},
     },
     time::Duration,
 };
 
-use super::{RescanReason, WatchError, WatchEvent, scan};
+use super::{WatchError, WatchEvent, emitter::Emitter, scan};
 
 /// Identifier of one subscription root.
 pub(super) type RootId = u64;
@@ -46,23 +46,20 @@ struct PollRoot {
 }
 
 struct Worker {
-    events: SyncSender<Message>,
+    emitter: Arc<Emitter>,
     shared: Arc<Mutex<DeliveryState>>,
     roots: BTreeMap<RootId, PollRoot>,
     by_path: HashMap<PathBuf, RootId>,
-    pending: BTreeMap<RootId, RescanReason>,
     next_id: RootId,
-    disconnected: bool,
 }
 
-fn lock(shared: &Arc<Mutex<DeliveryState>>) -> std::sync::MutexGuard<'_, DeliveryState> {
+pub(super) fn lock(shared: &Arc<Mutex<DeliveryState>>) -> std::sync::MutexGuard<'_, DeliveryState> {
     shared.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
-/// Run the backend loop until shutdown or until the watcher goes away.
-pub(super) fn run(commands: Receiver<Command>, events: SyncSender<Message>, shared: Arc<Mutex<DeliveryState>>, interval: Duration) {
-    let mut worker =
-        Worker { events, shared, roots: BTreeMap::new(), by_path: HashMap::new(), pending: BTreeMap::new(), next_id: 0, disconnected: false };
+/// Run the polling backend loop until shutdown or until the watcher goes away.
+pub(super) fn run(commands: Receiver<Command>, emitter: Arc<Emitter>, shared: Arc<Mutex<DeliveryState>>, interval: Duration) {
+    let mut worker = Worker { emitter, shared, roots: BTreeMap::new(), by_path: HashMap::new(), next_id: 0 };
 
     loop {
         match commands.recv_timeout(interval) {
@@ -85,8 +82,8 @@ pub(super) fn run(commands: Receiver<Command>, events: SyncSender<Message>, shar
             Err(RecvTimeoutError::Timeout) => worker.poll(),
             Err(RecvTimeoutError::Disconnected) => break,
         }
-        worker.flush_pending();
-        if worker.disconnected {
+        worker.emitter.flush();
+        if worker.emitter.is_disconnected() {
             break;
         }
     }
@@ -103,6 +100,7 @@ impl Worker {
         let id = self.next_id;
         self.next_id += 1;
         lock(&self.shared).active.insert(id);
+        self.emitter.register(id, root.clone());
         self.by_path.insert(root.clone(), id);
         self.roots.insert(id, PollRoot { root, snapshot });
         Ok(())
@@ -112,7 +110,7 @@ impl Worker {
         let key = scan::subscription_key(path);
         let id = self.by_path.remove(&key).ok_or_else(|| WatchError::NotWatched(path.to_path_buf()))?;
         self.roots.remove(&id);
-        self.pending.remove(&id);
+        self.emitter.unregister(id);
         lock(&self.shared).active.remove(&id);
         Ok(())
     }
@@ -120,7 +118,7 @@ impl Worker {
     fn unwatch_all(&mut self) {
         self.roots.clear();
         self.by_path.clear();
-        self.pending.clear();
+        self.emitter.clear();
         lock(&self.shared).active.clear();
     }
 
@@ -155,45 +153,18 @@ impl Worker {
         }
     }
 
+    /// Forget a root that terminated on its own.
+    ///
+    /// The delivery set keeps the subscription so the terminal `Removed` already queued for it is
+    /// still delivered; the poller produces nothing else for that root.
     fn remove(&mut self, id: RootId) {
         if let Some(entry) = self.roots.remove(&id) {
             self.by_path.remove(&entry.root);
         }
-        self.pending.remove(&id);
-        lock(&self.shared).active.remove(&id);
+        self.emitter.unregister(id);
     }
 
     fn send(&mut self, id: RootId, event: WatchEvent) {
-        match self.events.try_send(Message::Event { root: id, event }) {
-            Ok(()) => {}
-            Err(TrySendError::Full(_)) => {
-                self.pending.entry(id).or_insert(RescanReason::Overflow);
-            }
-            Err(TrySendError::Disconnected(_)) => self.disconnected = true,
-        }
-    }
-
-    fn flush_pending(&mut self) {
-        if self.pending.is_empty() {
-            return;
-        }
-        let pending = std::mem::take(&mut self.pending);
-        for (id, reason) in pending {
-            let Some(root) = self.roots.get(&id).map(|entry| entry.root.clone())
-            else {
-                continue;
-            };
-            let event = WatchEvent::Rescan { root, reason };
-            match self.events.try_send(Message::Event { root: id, event }) {
-                Ok(()) => {}
-                Err(TrySendError::Full(_)) => {
-                    self.pending.insert(id, reason);
-                }
-                Err(TrySendError::Disconnected(_)) => {
-                    self.disconnected = true;
-                    return;
-                }
-            }
-        }
+        self.emitter.send(id, event);
     }
 }

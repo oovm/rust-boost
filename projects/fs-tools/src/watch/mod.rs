@@ -11,11 +11,15 @@
 //! [`WatchEvent::Rescan`] with [`RescanReason::Overflow`] is delivered for the affected root. The
 //! consumer must re-read that subtree, because the stream alone is no longer complete.
 //!
-//! Only the native backend is selected by default. [`WatchBackend::Polling`] must be requested
-//! explicitly and reports only the net change between two samples.
+//! [`WatchBackend::Native`] is the default and currently implemented on Windows through
+//! `ReadDirectoryChangesW`. Other hosts return [`WatchError::Unsupported`] for it; there
+//! [`WatchBackend::Polling`] must be requested explicitly and reports only the net change between
+//! two samples.
 
+mod emitter;
 mod error;
 mod event;
+mod native;
 mod options;
 mod scan;
 mod worker;
@@ -34,6 +38,7 @@ use std::{
     thread::{self, JoinHandle, ThreadId},
 };
 
+use emitter::Emitter;
 use worker::{Command, DeliveryState, Message};
 
 /// A recursive file system watcher.
@@ -57,14 +62,16 @@ impl Watcher {
         F: FnMut(WatchEvent) + Send + 'static,
     {
         let options = options.validate()?;
-        let interval = match options.get_backend() {
-            WatchBackend::Polling { interval } => interval,
-            WatchBackend::Native => return Err(WatchError::Unsupported),
-        };
+        let backend = options.get_backend();
+        #[cfg(not(windows))]
+        if matches!(backend, WatchBackend::Native) {
+            return Err(WatchError::Unsupported);
+        }
 
         let (command_sender, command_receiver) = mpsc::channel();
         let (event_sender, event_receiver) = mpsc::sync_channel(options.get_queue_capacity());
         let shared = Arc::new(Mutex::new(DeliveryState::new()));
+        let emitter = Emitter::new(event_sender);
 
         let delivery_shared = Arc::clone(&shared);
         let delivery = thread::Builder::new()
@@ -74,10 +81,10 @@ impl Watcher {
         let delivery_thread = delivery.thread().id();
 
         let worker_shared = Arc::clone(&shared);
-        let worker = match thread::Builder::new()
-            .name("fs-tools-watcher-worker".into())
-            .spawn(move || worker::run(command_receiver, event_sender, worker_shared, interval))
-        {
+        let worker = match thread::Builder::new().name("fs-tools-watcher-worker".into()).spawn(move || match backend {
+            WatchBackend::Polling { interval } => worker::run(command_receiver, emitter, worker_shared, interval),
+            WatchBackend::Native => native::run(command_receiver, emitter, worker_shared),
+        }) {
             Ok(worker) => worker,
             Err(error) => {
                 drop(command_sender);
