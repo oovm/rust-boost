@@ -1,7 +1,7 @@
 //! Platform change-notification backends.
 //!
-//! Windows is the only host implemented so far. Linux and macOS still reject
-//! [`WatchBackend::Native`](super::WatchBackend::Native) with
+//! Windows (`ReadDirectoryChangesW`) and Linux (`inotify`) are implemented. macOS and other hosts
+//! still reject [`WatchBackend::Native`](super::WatchBackend::Native) with
 //! [`WatchError::Unsupported`](super::WatchError::Unsupported); callers there must select the
 //! polling backend explicitly.
 
@@ -15,17 +15,25 @@ use super::{
 #[cfg(windows)]
 mod windows;
 
+#[cfg(target_os = "linux")]
+mod linux;
+
 #[cfg(windows)]
 pub(super) fn run(commands: Receiver<Command>, emitter: Arc<Emitter>, shared: Arc<Mutex<DeliveryState>>) {
     windows::run(commands, emitter, shared);
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "linux")]
+pub(super) fn run(commands: Receiver<Command>, emitter: Arc<Emitter>, shared: Arc<Mutex<DeliveryState>>) {
+    linux::run(commands, emitter, shared);
+}
+
+#[cfg(not(any(windows, target_os = "linux")))]
 pub(super) fn run(commands: Receiver<Command>, emitter: Arc<Emitter>, shared: Arc<Mutex<DeliveryState>>) {
     unsupported::run(commands, emitter, shared);
 }
 
-#[cfg(not(windows))]
+#[cfg(not(any(windows, target_os = "linux")))]
 mod unsupported {
     use std::sync::{Arc, Mutex, mpsc::Receiver};
 

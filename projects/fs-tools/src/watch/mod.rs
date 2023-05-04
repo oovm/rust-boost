@@ -11,10 +11,10 @@
 //! [`WatchEvent::Rescan`] with [`RescanReason::Overflow`] is delivered for the affected root. The
 //! consumer must re-read that subtree, because the stream alone is no longer complete.
 //!
-//! [`WatchBackend::Native`] is the default and currently implemented on Windows through
-//! `ReadDirectoryChangesW`. Other hosts return [`WatchError::Unsupported`] for it; there
-//! [`WatchBackend::Polling`] must be requested explicitly and reports only the net change between
-//! two samples.
+//! [`WatchBackend::Native`] is the default and implemented on Windows through
+//! `ReadDirectoryChangesW` and on Linux through `inotify`. Other hosts return
+//! [`WatchError::Unsupported`] for it; there [`WatchBackend::Polling`] must be requested
+//! explicitly and reports only the net change between two samples.
 
 mod emitter;
 mod error;
@@ -63,7 +63,7 @@ impl Watcher {
     {
         let options = options.validate()?;
         let backend = options.get_backend();
-        #[cfg(not(windows))]
+        #[cfg(not(any(windows, target_os = "linux")))]
         if matches!(backend, WatchBackend::Native) {
             return Err(WatchError::Unsupported);
         }
