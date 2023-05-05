@@ -17,7 +17,7 @@ fn options(capacity: usize) -> WatchOptions {
     WatchOptions::new().queue_capacity(capacity).backend(WatchBackend::Polling { interval: INTERVAL })
 }
 
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 fn native_options(capacity: usize) -> WatchOptions {
     WatchOptions::new().queue_capacity(capacity).backend(WatchBackend::Native)
 }
@@ -253,14 +253,14 @@ fn invalid_options_are_rejected() {
     ));
 }
 
-#[cfg(not(any(windows, target_os = "linux")))]
+#[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
 #[test]
 fn native_is_rejected_where_no_backend_exists() {
     let (events, _received) = mpsc::channel();
     assert!(matches!(Watcher::new(move |event| drop(events.send(event)), WatchOptions::new()), Err(fs_tools::watch::WatchError::Unsupported)));
 }
 
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 #[test]
 fn native_reports_created_modified_and_removed() {
     let folder = fs_tools::temp::create_folder().unwrap();
@@ -305,7 +305,7 @@ fn native_pairs_a_rename() {
     watcher.close().unwrap();
 }
 
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 #[test]
 fn native_follows_a_new_folder() {
     let folder = fs_tools::temp::create_folder().unwrap();
@@ -317,6 +317,9 @@ fn native_follows_a_new_folder() {
     let nested = root.join("nested");
     fs::create_dir(&nested).unwrap();
     assert!(wait_for(&received, |event| matches!(event, WatchEvent::Created(path) if path == &nested)));
+    // Hosts that register a new directory per watch must announce the subtree; FSEvents already
+    // covers it.
+    #[cfg(any(windows, target_os = "linux"))]
     assert!(wait_for(&received, |event| matches!(
         event,
         WatchEvent::Rescan { root: path, reason: RescanReason::NewDirectory } if path == &root
@@ -356,7 +359,7 @@ fn native_follows_a_renamed_folder() {
     watcher.close().unwrap();
 }
 
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 #[test]
 fn native_reports_root_removal() {
     let folder = fs_tools::temp::create_folder().unwrap();
@@ -371,7 +374,7 @@ fn native_reports_root_removal() {
     watcher.close().unwrap();
 }
 
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 #[test]
 fn native_unwatch_discards_events_for_the_root() {
     let folder = fs_tools::temp::create_folder().unwrap();
@@ -397,7 +400,7 @@ fn native_unwatch_discards_events_for_the_root() {
     watcher.close().unwrap();
 }
 
-#[cfg(any(windows, target_os = "linux"))]
+#[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 #[test]
 fn native_overflow_is_reported_as_a_rescan() {
     let folder = fs_tools::temp::create_folder().unwrap();

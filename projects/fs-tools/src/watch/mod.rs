@@ -12,8 +12,8 @@
 //! consumer must re-read that subtree, because the stream alone is no longer complete.
 //!
 //! [`WatchBackend::Native`] is the default and implemented on Windows through
-//! `ReadDirectoryChangesW` and on Linux through `inotify`. Other hosts return
-//! [`WatchError::Unsupported`] for it; there [`WatchBackend::Polling`] must be requested
+//! `ReadDirectoryChangesW`, on Linux through `inotify`, and on macOS through FSEvents. Other hosts
+//! return [`WatchError::Unsupported`] for it; there [`WatchBackend::Polling`] must be requested
 //! explicitly and reports only the net change between two samples.
 
 mod emitter;
@@ -63,7 +63,7 @@ impl Watcher {
     {
         let options = options.validate()?;
         let backend = options.get_backend();
-        #[cfg(not(any(windows, target_os = "linux")))]
+        #[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
         if matches!(backend, WatchBackend::Native) {
             return Err(WatchError::Unsupported);
         }

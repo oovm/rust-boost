@@ -1,7 +1,7 @@
 //! Platform change-notification backends.
 //!
-//! Windows (`ReadDirectoryChangesW`) and Linux (`inotify`) are implemented. macOS and other hosts
-//! still reject [`WatchBackend::Native`](super::WatchBackend::Native) with
+//! Windows (`ReadDirectoryChangesW`), Linux (`inotify`), and macOS (FSEvents) are implemented.
+//! Other hosts still reject [`WatchBackend::Native`](super::WatchBackend::Native) with
 //! [`WatchError::Unsupported`](super::WatchError::Unsupported); callers there must select the
 //! polling backend explicitly.
 
@@ -18,6 +18,9 @@ mod windows;
 #[cfg(target_os = "linux")]
 mod linux;
 
+#[cfg(target_os = "macos")]
+mod macos;
+
 #[cfg(windows)]
 pub(super) fn run(commands: Receiver<Command>, emitter: Arc<Emitter>, shared: Arc<Mutex<DeliveryState>>) {
     windows::run(commands, emitter, shared);
@@ -28,12 +31,17 @@ pub(super) fn run(commands: Receiver<Command>, emitter: Arc<Emitter>, shared: Ar
     linux::run(commands, emitter, shared);
 }
 
-#[cfg(not(any(windows, target_os = "linux")))]
+#[cfg(target_os = "macos")]
+pub(super) fn run(commands: Receiver<Command>, emitter: Arc<Emitter>, shared: Arc<Mutex<DeliveryState>>) {
+    macos::run(commands, emitter, shared);
+}
+
+#[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
 pub(super) fn run(commands: Receiver<Command>, emitter: Arc<Emitter>, shared: Arc<Mutex<DeliveryState>>) {
     unsupported::run(commands, emitter, shared);
 }
 
-#[cfg(not(any(windows, target_os = "linux")))]
+#[cfg(not(any(windows, target_os = "linux", target_os = "macos")))]
 mod unsupported {
     use std::sync::{Arc, Mutex, mpsc::Receiver};
 
