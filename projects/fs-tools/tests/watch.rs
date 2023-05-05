@@ -331,6 +331,33 @@ fn native_follows_a_new_folder() {
 
 #[cfg(any(windows, target_os = "linux"))]
 #[test]
+fn native_follows_a_renamed_folder() {
+    let folder = fs_tools::temp::create_folder().unwrap();
+    let root = root_of(&folder);
+    let (events, received) = mpsc::channel();
+    let mut watcher = Watcher::new(move |event| drop(events.send(event)), native_options(256)).unwrap();
+    watcher.watch(&root).unwrap();
+
+    let old = root.join("old");
+    fs::create_dir(&old).unwrap();
+    assert!(wait_for(&received, |event| matches!(event, WatchEvent::Created(path) if path == &old)));
+
+    let new = root.join("new");
+    fs::rename(&old, &new).unwrap();
+    assert!(wait_for(&received, |event| matches!(
+        event,
+        WatchEvent::Renamed { from, to } if from == &old && to == &new
+    )));
+
+    let file = new.join("inside.txt");
+    fs::write(&file, b"one").unwrap();
+    assert!(wait_for(&received, |event| matches!(event, WatchEvent::Created(path) if path == &file)));
+
+    watcher.close().unwrap();
+}
+
+#[cfg(any(windows, target_os = "linux"))]
+#[test]
 fn native_reports_root_removal() {
     let folder = fs_tools::temp::create_folder().unwrap();
     let root = root_of(&folder);

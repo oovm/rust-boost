@@ -318,13 +318,12 @@ impl Backend {
         }
         if mask & IN_MOVED_TO != 0 {
             match moves.remove(&cookie) {
-                Some((from, from_is_dir)) => {
+                Some((from, _)) => {
                     self.emitter.send(id, WatchEvent::Renamed { from: from.clone(), to: path.clone() });
-                    if from_is_dir {
-                        self.forget_subtree(id, &from);
-                    }
                     if is_dir {
-                        self.follow(id, &path);
+                        // A moved directory keeps its watch descriptors, so only the recorded
+                        // paths change.
+                        self.rebase_subtree(id, &from, &path);
                     }
                 }
                 None => self.created(id, &path, is_dir),
@@ -366,6 +365,20 @@ impl Backend {
         }
         let _ = register_tree(&self.emitter, id, instance, path, &mut root.directories);
         self.emitter.mark(id, RescanReason::NewDirectory);
+    }
+
+    /// Re-point recorded directories after a rename inside this root.
+    fn rebase_subtree(&mut self, id: RootId, from: &Path, to: &Path) {
+        let Some(root) = self.roots.get_mut(&id)
+        else {
+            return;
+        };
+        for path in root.directories.values_mut() {
+            let rebased = path.strip_prefix(from).ok().map(|rest| to.join(rest));
+            if let Some(rebased) = rebased {
+                *path = rebased;
+            }
+        }
     }
 
     fn forget_subtree(&mut self, id: RootId, prefix: &Path) {
