@@ -437,13 +437,16 @@ unsafe extern "C" fn callback(
             // FSEvents reports only one side of a rename, so the pair is never guessed.
             context.emitter.mark(context.id, RescanReason::UnpairedRename);
         }
-        else if flag & ITEM_CREATED != 0 {
-            context.emitter.send(context.id, WatchEvent::Created(path));
+        // FSEvents coalesces every change to one path inside the latency window into a single
+        // record, so one record can carry several actions. Dropping all but the first would lose
+        // the modification that followed a creation.
+        if flag & ITEM_REMOVED != 0 {
+            context.emitter.send(context.id, WatchEvent::Removed(path.clone()));
         }
-        else if flag & ITEM_REMOVED != 0 {
-            context.emitter.send(context.id, WatchEvent::Removed(path));
+        if flag & ITEM_CREATED != 0 {
+            context.emitter.send(context.id, WatchEvent::Created(path.clone()));
         }
-        else if flag & (ITEM_MODIFIED | ITEM_METADATA) != 0 {
+        if flag & (ITEM_MODIFIED | ITEM_METADATA) != 0 {
             context.emitter.send(context.id, WatchEvent::Modified(path));
         }
     }
