@@ -359,6 +359,30 @@ fn native_follows_a_renamed_folder() {
     watcher.close().unwrap();
 }
 
+#[cfg(target_os = "macos")]
+#[test]
+fn native_reports_an_unpaired_rename_as_a_rescan() {
+    let folder = fs_tools::temp::create_folder().unwrap();
+    let root = root_of(&folder);
+    let (events, received) = mpsc::channel();
+    let mut watcher = Watcher::new(move |event| drop(events.send(event)), native_options(256)).unwrap();
+    watcher.watch(&root).unwrap();
+
+    let old = root.join("old.txt");
+    let new = root.join("new.txt");
+    fs::write(&old, b"one").unwrap();
+    assert!(wait_for(&received, |event| matches!(event, WatchEvent::Created(path) if path == &old)));
+
+    fs::rename(&old, &new).unwrap();
+    // FSEvents reports one side only, so the pair must never be guessed.
+    assert!(wait_for(&received, |event| matches!(
+        event,
+        WatchEvent::Rescan { root: path, reason: RescanReason::UnpairedRename } if path == &root
+    )));
+
+    watcher.close().unwrap();
+}
+
 #[cfg(any(windows, target_os = "linux", target_os = "macos"))]
 #[test]
 fn native_reports_root_removal() {
