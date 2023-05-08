@@ -166,6 +166,11 @@ fn overflow_is_reported_as_a_rescan() {
 
     assert!(wait_for(&received, |event| matches!(event, WatchEvent::Rescan { reason: RescanReason::Overflow, .. })));
 
+    // The rescan is the recovery path, so events after the overflow must still arrive.
+    let recovered = root.join("recovered.txt");
+    fs::write(&recovered, b"one").unwrap();
+    assert!(wait_for(&received, |event| matches!(event, WatchEvent::Created(path) if path == &recovered)));
+
     watcher.close().unwrap();
 }
 
@@ -456,6 +461,11 @@ fn native_overflow_is_reported_as_a_rescan() {
     release.send(()).unwrap();
 
     assert!(wait_for(&received, |event| matches!(event, WatchEvent::Rescan { reason: RescanReason::Overflow, .. })));
+
+    // The rescan is the recovery path, so events after the overflow must still arrive.
+    let recovered = root.join("recovered.txt");
+    fs::write(&recovered, b"one").unwrap();
+    assert!(wait_for(&received, |event| matches!(event, WatchEvent::Created(path) if path == &recovered)));
 
     watcher.close().unwrap();
 }
