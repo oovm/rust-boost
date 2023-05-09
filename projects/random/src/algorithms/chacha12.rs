@@ -82,14 +82,19 @@ const fn seed_from_u64(value: u64) -> [u8; 32] {
 
 /// Raw ChaCha12 keystream byte producer.
 ///
-/// The position is a byte count that cannot wrap: the profile ends after `MAX_OUTPUT` bytes, so
-/// `u128` represents both the current position and the end of the stream without a sentinel.
+/// The stream is tracked as a block index, a byte offset inside the current block, and the bytes
+/// left before `MAX_OUTPUT`. Keeping those apart means a fill never divides the position into a
+/// block index, which used to cost a `u128` division per delivered chunk.
 struct ChaChaCore {
     key: [u32; 8],
     nonce: [u32; 2],
     buffer: [u8; BLOCK_BYTES],
-    buffered: Option<u64>,
-    position: u128,
+    /// Bytes of `buffer` already delivered; `BLOCK_BYTES` means the buffer must be refilled.
+    offset: usize,
+    /// The next block to materialize.
+    block_index: u64,
+    /// Bytes the profile can still deliver.
+    remaining: u128,
 }
 
 impl ChaChaCore {
@@ -99,7 +104,14 @@ impl ChaChaCore {
         for (word, chunk) in words.iter_mut().zip(key.as_chunks::<4>().0) {
             *word = u32::from_le_bytes(*chunk);
         }
-        Self { key: words, nonce: [stream_id as u32, (stream_id >> 32) as u32], buffer: [0u8; BLOCK_BYTES], buffered: None, position: 0 }
+        Self {
+            key: words,
+            nonce: [stream_id as u32, (stream_id >> 32) as u32],
+            buffer: [0u8; BLOCK_BYTES],
+            offset: BLOCK_BYTES,
+            block_index: 0,
+            remaining: MAX_OUTPUT,
+        }
     }
 
     /// Fills `dst` with the next keystream bytes in consumption order.
@@ -110,25 +122,26 @@ impl ChaChaCore {
         if dst.is_empty() {
             return Ok(());
         }
-        if dst.len() as u128 > MAX_OUTPUT - self.position {
+        if dst.len() as u128 > self.remaining {
             dst.fill(0);
             return Err(SourceError::Exhausted);
         }
 
-        let block_bytes = BLOCK_BYTES as u128;
         let mut written = 0;
         while written < dst.len() {
-            let offset = (self.position % block_bytes) as usize;
-            let index = (self.position / block_bytes) as u64;
-            if self.buffered != Some(index) {
-                self.buffer = block(&self.key, &self.nonce, index);
-                self.buffered = Some(index);
+            if self.offset == BLOCK_BYTES {
+                self.buffer = block(&self.key, &self.nonce, self.block_index);
+                // The profile holds exactly `2^64` blocks, so the index saturates only after the
+                // last block, where `remaining` is already zero.
+                self.block_index = self.block_index.saturating_add(1);
+                self.offset = 0;
             }
-            let take = core::cmp::min(BLOCK_BYTES - offset, dst.len() - written);
-            dst[written..written + take].copy_from_slice(&self.buffer[offset..offset + take]);
+            let take = core::cmp::min(BLOCK_BYTES - self.offset, dst.len() - written);
+            dst[written..written + take].copy_from_slice(&self.buffer[self.offset..self.offset + take]);
             written += take;
-            self.position += take as u128;
+            self.offset += take;
         }
+        self.remaining -= written as u128;
         Ok(())
     }
 }
