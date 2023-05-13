@@ -13,6 +13,7 @@ mod payload;
 mod runtime;
 mod sink;
 mod span;
+mod task;
 
 pub use event::{EventKind, LogEvent, LogEventBuilder};
 pub use field::{Field, FieldValue, Fields};
@@ -25,6 +26,7 @@ pub use payload::{
 pub use runtime::{clear_global_sink, dropped_events, emit, reset_dropped_events, set_global_filter, set_global_sink, with_scope};
 pub use sink::{Filter, FilteredSink, LogSink, VecSink};
 pub use span::{LogSpan, SpanGuard, SpanId, current_span_id};
+pub use task::{TaskContext, TaskId, TaskRef};
 
 /// Enter a span and return a guard that exits it on drop.
 pub fn enter(span: LogSpan) -> SpanGuard {

@@ -56,6 +56,13 @@ pub fn event_to_json(event: &LogEvent) -> String {
     if let Some(parent_span_id) = event.parent_span_id() {
         parts.push(format!("\"parentSpanId\":{}", parent_span_id.as_u64()));
     }
+    if let Some(task) = event.task() {
+        parts.push(format!("\"taskId\":{}", task.id().as_u64()));
+        parts.push(format!("\"taskName\":{}", json_string(task.name())));
+        if let Some(parent_task_id) = task.parent() {
+            parts.push(format!("\"parentTaskId\":{}", parent_task_id.as_u64()));
+        }
+    }
     if !event.fields().is_empty() {
         parts.push(format!("\"fields\":{}", fields_to_json(event.fields())));
     }

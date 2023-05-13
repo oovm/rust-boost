@@ -5,6 +5,7 @@ use crate::{
     level::Level,
     payload::DiagnosticPayload,
     span::SpanId,
+    task::{TaskContext, TaskRef},
 };
 
 /// High-level event category.
@@ -30,6 +31,7 @@ pub struct LogEvent {
     timestamp: SystemTime,
     span_id: Option<SpanId>,
     parent_span_id: Option<SpanId>,
+    task: Option<TaskRef>,
 }
 
 impl LogEvent {
@@ -79,6 +81,14 @@ impl LogEvent {
         self.parent_span_id
     }
 
+    /// Returns the task this event was emitted for when the caller supplied one.
+    ///
+    /// A thread scope never fills this in, so an event that no task context was threaded to stays
+    /// without task identity.
+    pub fn task(&self) -> Option<&TaskRef> {
+        self.task.as_ref()
+    }
+
     pub(crate) fn prepare_for_emit(mut self, span_id: Option<SpanId>, parent_span_id: Option<SpanId>, extra_fields: Vec<Field>) -> Self {
         if self.span_id.is_none() {
             self.span_id = span_id;
@@ -98,12 +108,25 @@ pub struct LogEventBuilder {
     level: Level,
     target: String,
     fields: Fields,
+    task: Option<TaskRef>,
 }
 
 impl LogEventBuilder {
     /// Create a new event builder.
     pub fn new(kind: EventKind, level: Level, target: impl Into<String>) -> Self {
-        Self { kind, level, target: target.into(), fields: Fields::new() }
+        Self { kind, level, target: target.into(), fields: Fields::new(), task: None }
+    }
+
+    /// Record the task this event belongs to and attach the fields the task carries.
+    ///
+    /// The context is passed explicitly rather than read from the thread, so an event cannot be
+    /// attributed to a task that happens to share the thread.
+    pub fn task(mut self, context: &TaskContext) -> Self {
+        for field in context.fields() {
+            self.fields.push(field.name().to_string(), field.value().clone());
+        }
+        self.task = Some(context.reference());
+        self
     }
 
     /// Attach a field.
@@ -130,6 +153,7 @@ impl LogEventBuilder {
             timestamp: SystemTime::now(),
             span_id: None,
             parent_span_id: None,
+            task: self.task,
         }
     }
 }
