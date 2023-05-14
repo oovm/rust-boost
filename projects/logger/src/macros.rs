@@ -28,12 +28,14 @@ macro_rules! span {
     };
 }
 
-/// Convert supported literal types into [`FieldValue`].
+/// Convert a value into [`FieldValue`] while keeping its type when it has one.
+///
+/// Booleans, integers, floats, strings, characters, and [`FieldValue`] values keep their type.
+/// Any other value must be wrapped with [`FieldValue::debug`], so a type logger cannot represent
+/// fails to compile instead of turning into a `Debug` string.
 #[macro_export]
 macro_rules! field_value {
     ($value:expr) => {
-        match &$value {
-            value => $crate::FieldValue::debug(value),
-        }
+        $crate::FieldValue::from_value($value)
     };
 }

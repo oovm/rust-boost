@@ -16,7 +16,7 @@ mod span;
 mod task;
 
 pub use event::{EventKind, LogEvent, LogEventBuilder};
-pub use field::{Field, FieldValue, Fields};
+pub use field::{Field, FieldValue, Fields, IntoFieldValue};
 pub use file::{FileSink, install_global_file_sink};
 pub use json::{JsonLinesSink, event_to_json};
 pub use level::Level;
