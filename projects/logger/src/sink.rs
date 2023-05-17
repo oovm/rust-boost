@@ -1,6 +1,6 @@
 use std::vec::Vec;
 
-use crate::{event::LogEvent, level::Level};
+use crate::{event::LogEvent, filter::Filter};
 
 /// Receives structured log events.
 pub trait LogSink: Send {
@@ -9,29 +9,6 @@ pub trait LogSink: Send {
 
     /// Flush buffered output when supported.
     fn flush(&mut self) {}
-}
-
-/// Level-based event filter.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Filter {
-    min_level: Level,
-}
-
-impl Filter {
-    /// Create a filter that accepts events at or above `min_level`.
-    pub fn new(min_level: Level) -> Self {
-        Self { min_level }
-    }
-
-    /// Returns whether the event should be accepted.
-    pub fn accepts(&self, event: &LogEvent) -> bool {
-        event.level().is_at_least(self.min_level)
-    }
-
-    /// Returns the configured minimum level.
-    pub fn min_level(&self) -> Level {
-        self.min_level
-    }
 }
 
 /// Wraps a sink with a level filter.

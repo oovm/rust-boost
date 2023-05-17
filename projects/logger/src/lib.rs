@@ -7,6 +7,7 @@ mod macros;
 mod event;
 mod field;
 mod file;
+mod filter;
 mod json;
 mod level;
 mod payload;
@@ -18,13 +19,14 @@ mod task;
 pub use event::{EventKind, LogEvent, LogEventBuilder};
 pub use field::{Field, FieldValue, Fields, IntoFieldValue};
 pub use file::{FileSink, install_global_file_sink};
+pub use filter::{Filter, FilterParseError};
 pub use json::{JsonLinesSink, event_to_json};
 pub use level::Level;
 pub use payload::{
     ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, LabelPayload, LocationPayload, MessagePayload, SourceRefPayload,
 };
 pub use runtime::{clear_global_sink, dropped_events, emit, reset_dropped_events, set_global_filter, set_global_sink, with_scope};
-pub use sink::{Filter, FilteredSink, LogSink, VecSink};
+pub use sink::{FilteredSink, LogSink, VecSink};
 pub use span::{LogSpan, SpanGuard, SpanId, current_span_id};
 pub use task::{TaskContext, TaskId, TaskRef};
 

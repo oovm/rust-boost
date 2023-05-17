@@ -10,7 +10,8 @@ use std::{
 use crate::{
     event::LogEvent,
     field::Field,
-    sink::{Filter, LogSink},
+    filter::Filter,
+    sink::LogSink,
     span::{current_parent_span_id, current_span_id},
 };
 
