@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use crate::{event::LogEvent, json::JsonLinesSink, sink::LogSink};
+use crate::{event::LogEvent, json::JsonLinesSink, sink::{FlushOutcome, LogSink}};
 
 /// Appends structured log events to a file as JSON lines.
 pub struct FileSink {
@@ -25,8 +25,7 @@ impl FileSink {
 
     /// Flush buffered output to disk.
     pub fn flush(&mut self) -> io::Result<()> {
-        self.inner.flush();
-        Ok(())
+        self.inner.flush()
     }
 }
 
@@ -35,8 +34,11 @@ impl LogSink for FileSink {
         self.inner.emit(event);
     }
 
-    fn flush(&mut self) {
-        self.inner.flush();
+    fn flush(&mut self) -> FlushOutcome {
+        match FileSink::flush(self) {
+            Ok(()) => FlushOutcome::Flushed,
+            Err(_) => FlushOutcome::Failed,
+        }
     }
 }
 

@@ -2,13 +2,28 @@ use std::vec::Vec;
 
 use crate::{event::LogEvent, filter::Filter};
 
+/// Result of asking a sink to flush buffered output.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FlushOutcome {
+    /// The sink wrote out everything it had buffered.
+    Flushed,
+    /// The sink could not write out its buffer.
+    Failed,
+    /// The sink no longer accepts work.
+    Closed,
+}
+
 /// Receives structured log events.
 pub trait LogSink: Send {
     /// Handle one event.
     fn emit(&mut self, event: &LogEvent);
 
-    /// Flush buffered output when supported.
-    fn flush(&mut self) {}
+    /// Flush buffered output and report the outcome.
+    ///
+    /// The default assumes the sink keeps no buffer.
+    fn flush(&mut self) -> FlushOutcome {
+        FlushOutcome::Flushed
+    }
 }
 
 /// Wraps a sink with a level filter.
@@ -31,8 +46,8 @@ impl<S: LogSink> LogSink for FilteredSink<S> {
         }
     }
 
-    fn flush(&mut self) {
-        self.inner.flush();
+    fn flush(&mut self) -> FlushOutcome {
+        self.inner.flush()
     }
 }
 

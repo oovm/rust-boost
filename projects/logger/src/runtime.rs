@@ -11,7 +11,7 @@ use crate::{
     event::LogEvent,
     field::Field,
     filter::Filter,
-    sink::LogSink,
+    sink::{FlushOutcome, LogSink},
     span::{current_parent_span_id, current_span_id},
 };
 
@@ -56,9 +56,22 @@ pub fn reset_dropped_events() {
 }
 
 /// Install the global root sink.
+///
+/// Installing again replaces the previous sink, which is dropped.
 pub fn set_global_sink(sink: Box<dyn LogSink>) {
     let mut state = global_state().lock().expect("logger global sink mutex poisoned");
     state.sink = Some(Arc::new(Mutex::new(sink)));
+}
+
+/// Flush the global sink and report its outcome.
+///
+/// Returns `None` when no sink is installed.
+pub fn flush_global_sink() -> Option<FlushOutcome> {
+    let sink = {
+        let state = global_state().lock().expect("logger global sink mutex poisoned");
+        state.sink.clone()
+    };
+    sink.map(|sink| sink.lock().expect("logger sink mutex poisoned").flush())
 }
 
 /// Remove the installed global sink.

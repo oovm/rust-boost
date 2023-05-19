@@ -28,6 +28,11 @@ impl<W: Write> JsonLinesSink<W> {
     pub fn write_event(&mut self, event: &LogEvent) -> io::Result<()> {
         writeln!(self.writer, "{}", event_to_json(event))
     }
+
+    /// Flush the underlying writer.
+    pub fn flush(&mut self) -> io::Result<()> {
+        self.writer.flush()
+    }
 }
 
 impl<W: Write + Send> crate::sink::LogSink for JsonLinesSink<W> {
@@ -35,8 +40,11 @@ impl<W: Write + Send> crate::sink::LogSink for JsonLinesSink<W> {
         let _ = self.write_event(event);
     }
 
-    fn flush(&mut self) {
-        let _ = self.writer.flush();
+    fn flush(&mut self) -> crate::sink::FlushOutcome {
+        match JsonLinesSink::flush(self) {
+            Ok(()) => crate::sink::FlushOutcome::Flushed,
+            Err(_) => crate::sink::FlushOutcome::Failed,
+        }
     }
 }
 
