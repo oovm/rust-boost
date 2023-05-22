@@ -3,7 +3,10 @@
 use std::{
     fs,
     path::PathBuf,
-    sync::mpsc::{self, Receiver},
+    sync::{
+        Arc, Mutex,
+        mpsc::{self, Receiver},
+    },
     thread,
     time::{Duration, Instant},
 };
@@ -457,5 +460,41 @@ fn native_overflow_is_reported_as_a_rescan() {
 
     assert!(wait_for(&received, |event| matches!(event, WatchEvent::Rescan { reason: RescanReason::Overflow, .. })));
 
+    watcher.close().unwrap();
+}
+
+#[test]
+fn a_control_call_from_the_callback_reports_reentrant() {
+    let folder = fs_tools::temp::create_folder().unwrap();
+    let root = root_of(&folder);
+    let slot: Arc<Mutex<Option<Watcher>>> = Arc::new(Mutex::new(None));
+    let (outcomes, reported) = mpsc::channel();
+    let callback_slot = Arc::clone(&slot);
+    let callback_root = root.clone();
+    let watcher = Watcher::new(
+        move |_event| {
+            let Ok(mut slot) = callback_slot.lock()
+            else {
+                return;
+            };
+            let Some(watcher) = slot.as_mut()
+            else {
+                return;
+            };
+            let unwatch = matches!(watcher.unwatch(&callback_root), Err(fs_tools::watch::WatchError::Reentrant));
+            let unwatch_all = matches!(watcher.unwatch_all(), Err(fs_tools::watch::WatchError::Reentrant));
+            let _ = outcomes.send(unwatch && unwatch_all);
+        },
+        options(64),
+    )
+    .unwrap();
+    *slot.lock().unwrap() = Some(watcher);
+    slot.lock().unwrap().as_mut().unwrap().watch(&root).unwrap();
+
+    fs::write(root.join("a.txt"), b"one").unwrap();
+    assert!(reported.recv_timeout(TIMEOUT).expect("the callback reports the reentrant calls"));
+
+    let mut watcher = slot.lock().unwrap().take().unwrap();
+    watcher.unwatch(&root).unwrap();
     watcher.close().unwrap();
 }
