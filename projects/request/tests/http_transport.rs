@@ -50,6 +50,15 @@ fn keeps_repeated_response_headers() {
 }
 
 #[test]
+#[ignore = "requires outbound HTTPS access"]
+fn fetches_https_resource_with_webpki_roots() {
+    let url = Url::parse("https://example.com/").unwrap();
+    let response = HttpTransport::new().send(&Request::new(Method::Get, url)).unwrap();
+    assert_eq!(response.status, 200);
+    assert!(!response.body.is_empty());
+}
+
+#[test]
 fn rejects_response_header_budget() {
     let url = serve("HTTP/1.1 200 OK\r\nX-Large: value\r\nContent-Length: 0\r\n\r\n");
     let transport = HttpTransport::with_config(HttpTransportConfig { max_header_bytes: 10, ..HttpTransportConfig::default() });
