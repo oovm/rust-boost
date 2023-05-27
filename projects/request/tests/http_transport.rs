@@ -43,6 +43,13 @@ fn decodes_chunked_body() {
 }
 
 #[test]
+fn keeps_repeated_response_headers() {
+    let url = serve("HTTP/1.1 200 OK\r\nSet-Cookie: a=1\r\nSet-Cookie: b=2\r\nContent-Length: 0\r\n\r\n");
+    let response = HttpTransport::new().send(&Request::new(Method::Get, url)).unwrap();
+    assert_eq!(response.headers.get_all("set-cookie").iter().map(String::as_str).collect::<Vec<_>>(), ["a=1", "b=2"]);
+}
+
+#[test]
 fn rejects_response_header_budget() {
     let url = serve("HTTP/1.1 200 OK\r\nX-Large: value\r\nContent-Length: 0\r\n\r\n");
     let transport = HttpTransport::with_config(HttpTransportConfig { max_header_bytes: 10, ..HttpTransportConfig::default() });

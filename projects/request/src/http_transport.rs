@@ -11,7 +11,7 @@ use rustls::{ClientConfig, ClientConnection, RootCertStore, StreamOwned};
 #[cfg(feature = "tls")]
 use std::sync::Arc;
 
-use super::{Method, Redirect, Request, RequestError, Response, Transport};
+use super::{Headers, Method, Redirect, Request, RequestError, Response, Transport, is_token};
 
 /// Configuration for the built-in HTTP/1.1 transport.
 #[derive(Debug, Clone)]
@@ -125,15 +125,13 @@ impl Transport for HttpTransport {
         let mut current_url = request.url.clone();
         current_url.set_fragment(None);
         let mut method = request.method.clone();
-        let mut headers = std::collections::BTreeMap::new();
+        let mut headers = Headers::new();
         if !is_token(request.method.as_str()) {
             return Err(RequestError::Unsupported("invalid HTTP method".into()));
         }
-        for (name, value) in &request.headers {
+        for (name, value) in request.headers.iter() {
             validate_header(name, value)?;
-            if headers.insert(name.to_ascii_lowercase(), value.clone()).is_some() {
-                return Err(RequestError::Unsupported("duplicate case-insensitive request header".into()));
-            }
+            headers.append(name, value);
         }
         let mut body = request.body.clone();
         let mut redirects = Vec::new();
@@ -171,14 +169,7 @@ impl Transport for HttpTransport {
 }
 
 impl HttpTransport {
-    fn send_once(
-        &self,
-        url: &url::Url,
-        method: &Method,
-        headers: &std::collections::BTreeMap<String, String>,
-        body: &[u8],
-        timeout: Duration,
-    ) -> Result<Response, RequestError> {
+    fn send_once(&self, url: &url::Url, method: &Method, headers: &Headers, body: &[u8], timeout: Duration) -> Result<Response, RequestError> {
         let host = url.host_str().ok_or_else(|| RequestError::Unsupported("URL has no host".into()))?;
         let network_host = host.trim_start_matches('[').trim_end_matches(']');
         let deadline = Instant::now().checked_add(timeout).ok_or_else(|| RequestError::Unsupported("timeout is too large".into()))?;
@@ -211,9 +202,12 @@ impl HttpTransport {
             None => host.to_string(),
         };
         let mut wire = format!("{} {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n", method.as_str(), path, host_header);
-        for (name, value) in headers {
+        if headers.get_all("content-length").len() > 1 {
+            return Err(RequestError::Unsupported("request has more than one Content-Length header".into()));
+        }
+        for (name, value) in headers.iter() {
             validate_header(name, value)?;
-            if matches!(name.as_str(), "transfer-encoding" | "expect" | "upgrade") {
+            if matches!(name, "transfer-encoding" | "expect" | "upgrade") {
                 return Err(RequestError::Unsupported("request streaming, expectation and upgrade headers are not supported".into()));
             }
             if name == "host" || name == "connection" {
@@ -227,7 +221,7 @@ impl HttpTransport {
             wire.push_str(value);
             wire.push_str("\r\n");
         }
-        if !headers.contains_key("content-length") {
+        if !headers.contains("content-length") {
             wire.push_str(&format!("Content-Length: {}\r\n", body.len()));
         }
         wire.push_str("\r\n");
@@ -269,25 +263,26 @@ fn read_response<R: Read>(
         if status < 100 || status == 101 {
             return Err(RequestError::Unsupported("invalid status or protocol upgrade".into()));
         }
-        let mut headers = std::collections::BTreeMap::new();
+        let mut headers = Headers::new();
         for line in lines {
             if line.is_empty() {
                 break;
             }
             let (name, value) = line.split_once(':').ok_or_else(|| RequestError::Transport("invalid response header".into()))?;
             validate_header(name, value)?;
-            let name = name.to_ascii_lowercase();
-            if headers.insert(name, value.trim().to_string()).is_some() {
-                return Err(RequestError::Unsupported("duplicate response headers are not supported by single-value header model".into()));
-            }
+            headers.append(name, value.trim().to_string());
         }
         header_budget -= head.len();
         if status >= 200 {
             break (status, headers);
         }
     };
-    let length = headers
-        .get("content-length")
+    let lengths = headers.get_all("content-length");
+    if lengths.len() > 1 {
+        return Err(RequestError::Transport("response has more than one Content-Length header".into()));
+    }
+    let length = lengths
+        .first()
         .map(|value| {
             if value.is_empty() || !value.bytes().all(|byte| byte.is_ascii_digit()) {
                 return Err(RequestError::Transport("invalid Content-Length".into()));
@@ -295,17 +290,18 @@ fn read_response<R: Read>(
             value.parse::<usize>().map_err(|_| RequestError::Transport("Content-Length overflows".into()))
         })
         .transpose()?;
-    let transfer_encoding = headers.get("transfer-encoding");
-    if transfer_encoding.is_some() && length.is_some() {
+    let transfer_encodings = headers.get_all("transfer-encoding");
+    if !transfer_encodings.is_empty() && length.is_some() {
         return Err(RequestError::Transport("conflicting Transfer-Encoding and Content-Length".into()));
     }
-    if transfer_encoding.is_some_and(|value| !value.eq_ignore_ascii_case("chunked")) {
+    if transfer_encodings.len() > 1 || transfer_encodings.first().is_some_and(|value| !value.eq_ignore_ascii_case("chunked")) {
         return Err(RequestError::Unsupported("unsupported Transfer-Encoding".into()));
     }
+    let chunked = !transfer_encodings.is_empty();
     let body = if *method == Method::Head || matches!(status, 204 | 304) {
         Vec::new()
     }
-    else if transfer_encoding.is_some() {
+    else if chunked {
         read_chunked_body(connection, max_body_bytes, max_header_bytes)?
     }
     else if let Some(length) = length {
@@ -448,10 +444,6 @@ fn validate_header(name: &str, value: &str) -> Result<(), RequestError> {
     Ok(())
 }
 
-fn is_token(value: &str) -> bool {
-    !value.is_empty() && value.bytes().all(|byte| byte.is_ascii_alphanumeric() || b"!#$%&'*+-.^_`|~".contains(&byte))
-}
-
 fn remaining_timeout(total: Duration, elapsed: Duration) -> Result<Duration, RequestError> {
     total.checked_sub(elapsed).filter(|value| !value.is_zero()).ok_or_else(|| RequestError::Transport("whole-request timeout exceeded".into()))
 }
@@ -462,9 +454,13 @@ fn is_redirect(status: u16) -> bool {
 fn should_switch_to_get(status: u16, method: &Method) -> bool {
     (status == 303 && *method != Method::Head) || (matches!(status, 301 | 302) && *method == Method::Post)
 }
-fn remove_sensitive_headers(headers: &mut std::collections::BTreeMap<String, String>) {
-    headers.retain(|name, _| !matches!(name.as_str(), "authorization" | "proxy-authorization" | "cookie" | "host"));
+fn remove_sensitive_headers(headers: &mut Headers) {
+    for name in ["authorization", "proxy-authorization", "cookie", "host"] {
+        headers.remove(name);
+    }
 }
-fn remove_entity_headers(headers: &mut std::collections::BTreeMap<String, String>) {
-    headers.retain(|name, _| !matches!(name.as_str(), "content-length" | "content-type" | "transfer-encoding"));
+fn remove_entity_headers(headers: &mut Headers) {
+    for name in ["content-length", "content-type", "transfer-encoding"] {
+        headers.remove(name);
+    }
 }
