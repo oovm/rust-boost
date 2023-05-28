@@ -93,7 +93,8 @@ impl Filter {
                 return Err(FilterParseError::EmptyDirective { position: index + 1 });
             }
 
-            let Some((target, level)) = directive.split_once('=') else {
+            let Some((target, level)) = directive.split_once('=')
+            else {
                 if let Some(level) = parse_level(directive) {
                     if default.replace(level).is_some() {
                         return Err(FilterParseError::DuplicateGlobalLevel { directive: directive.to_string() });
@@ -126,7 +127,8 @@ impl Filter {
     /// A missing variable returns `None`. An invalid directive or a value that is not valid
     /// Unicode returns an error instead of falling back to a default level.
     pub fn from_env(variable: &str) -> Result<Option<Self>, FilterParseError> {
-        let Some(value) = env::var_os(variable) else {
+        let Some(value) = env::var_os(variable)
+        else {
             return Ok(None);
         };
         let text = value.into_string().map_err(|_| FilterParseError::NotUnicodeEnvironment { variable: variable.to_string() })?;

@@ -75,18 +75,12 @@ fn an_empty_directive_is_rejected() {
 
 #[test]
 fn an_empty_target_is_rejected() {
-    assert_eq!(
-        Filter::parse("=info"),
-        Err(FilterParseError::EmptyTarget { directive: "=info".to_string() })
-    );
+    assert_eq!(Filter::parse("=info"), Err(FilterParseError::EmptyTarget { directive: "=info".to_string() }));
 }
 
 #[test]
 fn an_empty_level_is_rejected() {
-    assert_eq!(
-        Filter::parse("oak="),
-        Err(FilterParseError::EmptyLevel { directive: "oak=".to_string() })
-    );
+    assert_eq!(Filter::parse("oak="), Err(FilterParseError::EmptyLevel { directive: "oak=".to_string() }));
 }
 
 #[test]
@@ -99,18 +93,12 @@ fn an_unknown_level_is_rejected() {
 
 #[test]
 fn a_repeated_target_is_rejected() {
-    assert_eq!(
-        Filter::parse("oak=info,oak=warn"),
-        Err(FilterParseError::DuplicateTarget { target: "oak".to_string() })
-    );
+    assert_eq!(Filter::parse("oak=info,oak=warn"), Err(FilterParseError::DuplicateTarget { target: "oak".to_string() }));
 }
 
 #[test]
 fn a_repeated_global_level_is_rejected() {
-    assert_eq!(
-        Filter::parse("info,warn"),
-        Err(FilterParseError::DuplicateGlobalLevel { directive: "warn".to_string() })
-    );
+    assert_eq!(Filter::parse("info,warn"), Err(FilterParseError::DuplicateGlobalLevel { directive: "warn".to_string() }));
 }
 
 #[test]

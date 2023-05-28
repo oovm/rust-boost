@@ -27,7 +27,9 @@ pub use level::Level;
 pub use payload::{
     ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, LabelPayload, LocationPayload, MessagePayload, SourceRefPayload,
 };
-pub use runtime::{clear_global_sink, dropped_events, emit, flush_global_sink, reset_dropped_events, set_global_filter, set_global_sink, with_scope};
+pub use runtime::{
+    clear_global_sink, dropped_events, emit, flush_global_sink, reset_dropped_events, set_global_filter, set_global_sink, with_scope,
+};
 pub use sink::{FilteredSink, FlushOutcome, LogSink, VecSink};
 pub use span::{LogSpan, SpanGuard, SpanId, current_span_id};
 pub use task::{TaskContext, TaskId, TaskRef};

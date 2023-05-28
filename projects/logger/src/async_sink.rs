@@ -44,10 +44,8 @@ impl AsyncSink {
         }
         let (sender, receiver) = mpsc::sync_channel(capacity);
         let dropped = Arc::new(AtomicU64::new(0));
-        let worker = thread::Builder::new()
-            .name("logger-backend".to_string())
-            .spawn(move || run(sink, receiver))
-            .map_err(AsyncSinkError::Spawn)?;
+        let worker =
+            thread::Builder::new().name("logger-backend".to_string()).spawn(move || run(sink, receiver)).map_err(AsyncSinkError::Spawn)?;
         Ok(Self { sender, dropped, worker: Some(worker) })
     }
 

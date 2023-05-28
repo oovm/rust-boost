@@ -4,7 +4,11 @@ use std::{
     path::Path,
 };
 
-use crate::{event::LogEvent, json::JsonLinesSink, sink::{FlushOutcome, LogSink}};
+use crate::{
+    event::LogEvent,
+    json::JsonLinesSink,
+    sink::{FlushOutcome, LogSink},
+};
 
 /// Appends structured log events to a file as JSON lines.
 pub struct FileSink {
