@@ -10,6 +10,24 @@ fn render_plain_log_event() {
 }
 
 #[test]
+fn render_plain_log_event_with_structured_fields() {
+    let event = LogEvent::log(Level::Info, "hs_problems::progress")
+        .field("message", FieldValue::str("progress"))
+        .field("phase", FieldValue::str("golden_full"))
+        .field("current", FieldValue::from_value(3_u64))
+        .field("total", FieldValue::from_value(10_u64))
+        .field("pct", FieldValue::from_value(30_u64))
+        .build();
+    assert_eq!(render_plain(&event), "[info] hs_problems::progress: progress phase=golden_full current=3 total=10 pct=30");
+}
+
+#[test]
+fn render_plain_log_event_without_message() {
+    let event = LogEvent::log(Level::Debug, "worker").field("attempt", FieldValue::from_value(2_u64)).build();
+    assert_eq!(render_plain(&event), "[debug] worker: attempt=2");
+}
+
+#[test]
 fn render_plain_diagnostic_event() {
     let payload = DiagnosticPayload::new("oak.syntax.unexpected-token", "error", MessagePayload::new("oak.unexpected"));
     let event = LogEvent::diagnostic(payload);

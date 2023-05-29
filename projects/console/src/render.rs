@@ -42,12 +42,22 @@ fn summary_text(event: &LogEvent) -> String {
         EventKind::Diagnostic(payload) => {
             format!("diagnostic {} [{}] {}", payload.severity(), payload.code(), payload.message().key())
         }
-        EventKind::Log | EventKind::Progress | EventKind::Metric => event
-            .fields()
-            .iter()
-            .find(|field| field.name() == "message")
-            .map(|field| field.value().to_string())
-            .unwrap_or_else(|| kind_summary(event.kind())),
+        EventKind::Log | EventKind::Progress | EventKind::Metric => {
+            let mut out = String::new();
+            if let Some(message) = event.fields().iter().find(|field| field.name() == "message") {
+                let _ = write!(out, "{}", message.value());
+            }
+            for field in event.fields().iter().filter(|field| field.name() != "message") {
+                if !out.is_empty() {
+                    out.push(' ');
+                }
+                let _ = write!(out, "{}={}", field.name(), field.value());
+            }
+            if out.is_empty() {
+                out.push_str(&kind_summary(event.kind()));
+            }
+            out
+        }
     }
 }
 
