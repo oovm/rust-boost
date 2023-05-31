@@ -1,0 +1,18 @@
+[package]
+name = "testkit"
+version.workspace = true
+authors.workspace = true
+description = "Structured test identity, execution results, assertions, and text reports"
+repository = "https://github.com/oovm/rust-boost/tree/dev/projects/testkit"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+exclude = ["package.json", "tests/**"]
+
+[dependencies]
+
+[features]
+default = []
+
+[package.metadata.docs.rs]
+all-features = true

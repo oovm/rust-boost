@@ -8,6 +8,7 @@ default-members = [
     "projects/console",
     "projects/terminal",
     "projects/fs-tools",
+    "projects/testkit",
 ]
 exclude = [
     "projects/.DS_Store",
@@ -68,6 +69,7 @@ terminal = { path = "projects/terminal", version = "0.1.0" }
 logger = { path = "projects/logger", version = "0.1.0" }
 console = { path = "projects/console", version = "0.1.0" }
 diagnostic = { path = "projects/diagnostic", version = "0.1.0" }
+testkit = { path = "projects/testkit", version = "0.1.0" }
 
 [profile.release]
 lto = true
