@@ -6,6 +6,8 @@
 
 use core::fmt::{self, Display, Formatter};
 
+use crate::case::CaseId;
+
 /// A capability that a descriptor advertises.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Capability {
@@ -114,6 +116,7 @@ pub struct TestDescriptor {
     name: String,
     module: String,
     source: SourceLocation,
+    case: Option<CaseId>,
     expectation: Expectation,
     capabilities: Vec<Capability>,
 }
@@ -124,7 +127,14 @@ impl TestDescriptor {
     /// The initial capability set contains [`Capability::Test`] only. Use
     /// [`with_capability`](Self::with_capability) to advertise additional capabilities.
     pub fn new(name: impl Into<String>, module: impl Into<String>, source: SourceLocation) -> Self {
-        Self { name: name.into(), module: module.into(), source, expectation: Expectation::Pass, capabilities: vec![Capability::Test] }
+        Self {
+            name: name.into(),
+            module: module.into(),
+            source,
+            case: None,
+            expectation: Expectation::Pass,
+            capabilities: vec![Capability::Test],
+        }
     }
 
     /// Returns the declared name, without the module path.
@@ -142,6 +152,11 @@ impl TestDescriptor {
         &self.source
     }
 
+    /// Returns the stable case identity, when the entry belongs to a parameter table.
+    pub fn case(&self) -> Option<&CaseId> {
+        self.case.as_ref()
+    }
+
     /// Returns the expected outcome.
     pub fn expectation(&self) -> Expectation {
         self.expectation
@@ -152,9 +167,20 @@ impl TestDescriptor {
         &self.capabilities
     }
 
-    /// Returns the stable qualified name, which is `module::name` or just `name` for an empty module.
+    /// Returns the stable qualified name, which is `module::name`, `name` for an empty module, or
+    /// `module::name[case]` when a case identity is attached.
     pub fn qualified_name(&self) -> String {
-        if self.module.is_empty() { self.name.clone() } else { format!("{}::{}", self.module, self.name) }
+        let base = if self.module.is_empty() { self.name.clone() } else { format!("{}::{}", self.module, self.name) };
+        match &self.case {
+            Some(case) => format!("{base}[{case}]"),
+            None => base,
+        }
+    }
+
+    /// Attaches a stable case identity.
+    pub fn with_case(mut self, case: CaseId) -> Self {
+        self.case = Some(case);
+        self
     }
 
     /// Replaces the expected outcome.

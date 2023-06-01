@@ -13,7 +13,8 @@ use std::{
 use crate::{
     context::TestContext,
     descriptor::{Expectation, TestDescriptor},
-    result::{IntoTestFailure, TestFailure, TestOutcome, TestResult},
+    fixture::Fixture,
+    result::{IntoTestFailure, Phase, TestFailure, TestOutcome, TestResult},
 };
 
 /// Executes `body` and returns the structured result.
@@ -46,18 +47,83 @@ where
         Err(payload) => (TestOutcome::Failed, vec![panic_failure(payload)]),
     };
 
-    if outcome != TestOutcome::Skipped && expectation == Expectation::ExpectedFailure {
-        if outcome == TestOutcome::Failed {
-            outcome = TestOutcome::ExpectedFailure;
-        }
-        else {
-            outcome = TestOutcome::Failed;
-            failures.push(TestFailure::expectation(format!("expected failure for `{qualified_name}` but the body passed")));
-        }
-    }
+    outcome = apply_expectation(outcome, &mut failures, expectation, &qualified_name);
 
     let skip_reason = context.skip_reason().map(str::to_owned);
     TestResult::new(descriptor, outcome, failures, started.elapsed(), skip_reason)
+}
+
+/// Executes `body` with a fixture and returns the structured result.
+///
+/// The runner owns the phase order. Setup failure is recorded as a [`Phase::Setup`] failure and the
+/// body is not entered. A skipped context suppresses the body but still releases the fixture.
+/// Teardown runs after a passing, failing, or panicking body, and its failure is appended after the
+/// original body failure instead of replacing it.
+///
+/// A failure observed outside the body keeps the result failed even when the descriptor declares an
+/// expected failure: only body failures can satisfy that expectation.
+pub fn execute_with_fixture<F, B, E>(descriptor: TestDescriptor, body: B) -> TestResult
+where
+    F: Fixture,
+    B: FnOnce(&mut TestContext, &mut F::Value) -> Result<(), E>,
+    E: IntoTestFailure,
+{
+    let expectation = descriptor.expectation();
+    let qualified_name = descriptor.qualified_name();
+    let started = Instant::now();
+    let mut context = TestContext::new(descriptor.clone());
+    let mut failures = Vec::new();
+
+    let setup = catch_unwind(AssertUnwindSafe(|| F::setup(&mut context)));
+    let value = match setup {
+        Ok(Ok(value)) => Some(value),
+        Ok(Err(failure)) => {
+            failures.push(failure.with_phase(Phase::Setup));
+            None
+        }
+        Err(payload) => {
+            failures.push(panic_failure(payload).with_phase(Phase::Setup));
+            None
+        }
+    };
+
+    if let Some(mut value) = value {
+        if !context.is_skipped() {
+            match catch_unwind(AssertUnwindSafe(|| body(&mut context, &mut value))) {
+                Ok(Ok(())) => {}
+                Ok(Err(error)) => failures.push(error.into_test_failure().with_phase(Phase::Body)),
+                Err(payload) => failures.push(panic_failure(payload).with_phase(Phase::Body)),
+            }
+        }
+        match catch_unwind(AssertUnwindSafe(|| F::teardown(value))) {
+            Ok(Ok(())) => {}
+            Ok(Err(failure)) => failures.push(failure.with_phase(Phase::Teardown)),
+            Err(payload) => failures.push(panic_failure(payload).with_phase(Phase::Teardown)),
+        }
+    }
+
+    let mut outcome =
+        if failures.is_empty() { if context.is_skipped() { TestOutcome::Skipped } else { TestOutcome::Passed } } else { TestOutcome::Failed };
+    outcome = apply_expectation(outcome, &mut failures, expectation, &qualified_name);
+
+    let skip_reason = context.skip_reason().map(str::to_owned);
+    TestResult::new(descriptor, outcome, failures, started.elapsed(), skip_reason)
+}
+
+/// Executes `body` with a fixture for the standard test harness.
+///
+/// The function panics with the rendered report when the result is a failure, exactly like
+/// [`run`]. A passing, skipped, or expected-failure result returns normally.
+pub fn run_with_fixture<F, B, E>(descriptor: TestDescriptor, body: B)
+where
+    F: Fixture,
+    B: FnOnce(&mut TestContext, &mut F::Value) -> Result<(), E>,
+    E: IntoTestFailure,
+{
+    let result = execute_with_fixture::<F, B, E>(descriptor, body);
+    if !result.is_success() {
+        std::panic::panic_any(result.render_text());
+    }
 }
 
 /// Executes `body` for the standard test harness.
@@ -73,6 +139,24 @@ where
     let result = execute(descriptor, body);
     if !result.is_success() {
         std::panic::panic_any(result.render_text());
+    }
+}
+
+/// Applies the descriptor expectation to the observed outcome.
+///
+/// A skip keeps precedence. An expected failure is satisfied only by failures recorded in the body,
+/// so a setup or teardown failure cannot be hidden behind the declaration.
+fn apply_expectation(outcome: TestOutcome, failures: &mut Vec<TestFailure>, expectation: Expectation, qualified_name: &str) -> TestOutcome {
+    if outcome == TestOutcome::Skipped || expectation != Expectation::ExpectedFailure {
+        return outcome;
+    }
+    match outcome {
+        TestOutcome::Failed if failures.iter().all(|failure| failure.phase() == Phase::Body) => TestOutcome::ExpectedFailure,
+        TestOutcome::Failed => TestOutcome::Failed,
+        _ => {
+            failures.push(TestFailure::expectation(format!("expected failure for `{qualified_name}` but the body passed")));
+            TestOutcome::Failed
+        }
     }
 }
 

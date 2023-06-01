@@ -49,3 +49,12 @@ fn case_names_must_not_be_empty() {
     assert_eq!(case.as_str(), "input_is_empty");
     assert_eq!(case.to_string(), "input_is_empty");
 }
+
+#[test]
+fn descriptor_case_is_part_of_the_qualified_identity() {
+    let case = CaseId::new("input is empty").expect("a non-empty case name is valid");
+    let descriptor = descriptor().with_case(case);
+    assert_eq!(descriptor.case().map(CaseId::as_str), Some("input is empty"));
+    assert_eq!(descriptor.qualified_name(), "crate::math::adds[input is empty]");
+    assert_eq!(descriptor.to_string(), "crate::math::adds[input is empty]");
+}
