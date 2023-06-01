@@ -10,9 +10,11 @@ edition.workspace = true
 exclude = ["package.json", "tests/**"]
 
 [dependencies]
+testkit-macro = { workspace = true, optional = true }
 
 [features]
-default = []
+default = ["macros"]
+macros = ["dep:testkit-macro"]
 
 [package.metadata.docs.rs]
 all-features = true
