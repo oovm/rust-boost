@@ -51,6 +51,8 @@ jobs:
         run: cargo test -p diagnostic --features serde
       - name: Diagnostic logger
         run: cargo test -p diagnostic --features logger
+      - name: Testkit core without macros
+        run: cargo test -p testkit --no-default-features
       - name: Android must not reuse the Linux backend
         run: cargo check -p random --features system --target aarch64-linux-android
 
