@@ -11,7 +11,7 @@ pub mod result;
 pub mod runner;
 
 #[cfg(feature = "macros")]
-pub use testkit_macro::test;
+pub use testkit_macro::{case, fixture, test};
 
 pub use crate::{
     case::{CaseError, CaseId},

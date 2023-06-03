@@ -34,6 +34,12 @@ fn result_body_with_context_passes(context: &mut TestContext) -> Result<(), Stri
     Ok(())
 }
 
+#[testkit::test(case = "empty table")]
+fn case_labelled_body_passes(context: &mut TestContext) {
+    testkit::assert_eq!(context.descriptor().case().map(testkit::CaseId::as_str), Some("empty table"));
+    testkit::assert!(context.descriptor().qualified_name().ends_with("[empty table]"));
+}
+
 #[testkit::test(expected = "failure")]
 fn declared_failure_with_expected_attribute() -> Result<(), String> {
     Err("declared".to_owned())
