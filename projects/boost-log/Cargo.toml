@@ -1,0 +1,32 @@
+[package]
+name = "boost-log"
+version.workspace = true
+authors.workspace = true
+description = "Workspace-wide structured log event facade, sinks, spans, and filters"
+repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/boost-log"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+boost-fmt = { workspace = true, optional = true }
+
+[dev-dependencies]
+boost-fmt = { workspace = true }
+serial_test = { workspace = true }
+
+[features]
+default = ["std"]
+std = []
+console = ["dep:boost-fmt"]
+
+[[test]]
+name = "human_render"
+required-features = ["console"]
+
+[[test]]
+name = "human_subscriber"
+required-features = ["console"]
+
+[package.metadata.docs.rs]
+all-features = true

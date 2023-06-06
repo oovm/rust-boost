@@ -2,14 +2,19 @@
 resolver = "2"
 members = ["projects/*"]
 default-members = [
-    "projects/source",
-    "projects/diagnostic",
-    "projects/logger",
-    "projects/console",
-    "projects/terminal",
-    "projects/fs-tools",
-    "projects/testkit",
-    "projects/testkit-macro",
+    "projects/boost-source",
+    "projects/boost-random",
+    "projects/boost-fmt",
+    "projects/boost-terminal",
+    "projects/boost-fs",
+    "projects/boost-http",
+    "projects/boost-log",
+    "projects/boost-diagnostic",
+    "projects/boost-diagnostic-macro",
+    "projects/boost-diagnostic-lsp",
+    "projects/boost-diagnostic-svg",
+    "projects/boost-test",
+    "projects/boost-test-macro",
 ]
 exclude = [
     "projects/.DS_Store",
@@ -57,21 +62,25 @@ futures-core = "0.3.31"
 async-channel = "2.3.1"
 futures-lite = "2.6.0"
 pin-project-lite = "0.2.16"
-fs-tools = { path = "projects/fs-tools", version = "0.1.0" }
+boost-fs = { path = "projects/boost-fs", version = "0.1.0" }
 font-kit = "0.12.0"
 pathfinder = "0.6.5"
 image = "0.24.9"
 imageproc = "0.23.0"
 winreg = "0.52.0"
 serial_test = "3.2.0"
-source = { path = "projects/source", version = "0.1.0", default-features = false }
-random = { path = "projects/random", version = "0.1.0" }
-terminal = { path = "projects/terminal", version = "0.1.0" }
-logger = { path = "projects/logger", version = "0.1.0" }
-console = { path = "projects/console", version = "0.1.0" }
-diagnostic = { path = "projects/diagnostic", version = "0.1.0" }
-testkit = { path = "projects/testkit", version = "0.1.0" }
-testkit-macro = { path = "projects/testkit-macro", version = "0.1.0" }
+boost-source = { path = "projects/boost-source", version = "0.1.0", default-features = false }
+boost-random = { path = "projects/boost-random", version = "0.1.0" }
+boost-terminal = { path = "projects/boost-terminal", version = "0.1.0" }
+boost-log = { path = "projects/boost-log", version = "0.1.0" }
+boost-fmt = { path = "projects/boost-fmt", version = "0.1.0" }
+boost-http = { path = "projects/boost-http", version = "0.1.0" }
+boost-diagnostic = { path = "projects/boost-diagnostic", version = "0.1.0" }
+boost-diagnostic-macro = { path = "projects/boost-diagnostic-macro", version = "0.1.0" }
+boost-diagnostic-lsp = { path = "projects/boost-diagnostic-lsp", version = "0.1.0" }
+boost-diagnostic-svg = { path = "projects/boost-diagnostic-svg", version = "0.1.0" }
+boost-test = { path = "projects/boost-test", version = "0.1.0" }
+boost-test-macro = { path = "projects/boost-test-macro", version = "0.1.0" }
 
 [profile.release]
 lto = true

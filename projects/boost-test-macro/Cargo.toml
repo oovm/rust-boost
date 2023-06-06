@@ -1,0 +1,22 @@
+[package]
+name = "boost-test-macro"
+version.workspace = true
+authors.workspace = true
+description = "Procedural macros for structured `boost-test` entries"
+repository = "https://github.com/oovm/rust-boost/tree/dev/projects/boost-test-macro"
+documentation = "https://docs.rs/boost-test-macro"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+exclude = ["package.json", "tests/**"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { workspace = true, features = ["full"] }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
+
+[package.metadata.docs.rs]
+all-features = true

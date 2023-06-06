@@ -1,0 +1,22 @@
+[package]
+name = "boost-fmt"
+version.workspace = true
+authors.workspace = true
+description = "Human-visible logger subscriber and generic terminal styling"
+repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/boost-fmt"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+serial_test = { workspace = true }
+
+[features]
+default = ["std"]
+std = []
+concolor = []
+
+[package.metadata.docs.rs]
+all-features = true

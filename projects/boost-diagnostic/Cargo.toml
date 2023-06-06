@@ -1,0 +1,37 @@
+[package]
+name = "boost-diagnostic"
+version.workspace = true
+authors.workspace = true
+description = "Structured diagnostic data model with optional terminal rendering"
+repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/boost-diagnostic"
+documentation = "https://docs.rs/boost-diagnostic"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+exclude = ["package.json", "tests/**"]
+
+[dependencies]
+serde = { workspace = true, optional = true }
+unicode-width = { workspace = true, optional = true }
+boost-source = { workspace = true }
+boost-terminal = { workspace = true, optional = true }
+boost-log = { workspace = true, optional = true }
+boost-fmt = { workspace = true, optional = true }
+
+[dev-dependencies]
+boost-log = { workspace = true }
+serial_test = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[features]
+default = ["std"]
+std = []
+serde = ["dep:serde", "boost-source/serde"]
+log = ["dep:boost-log", "std"]
+fmt = ["dep:boost-fmt"]
+terminal = ["fmt", "dep:boost-terminal", "boost-source/std", "dep:unicode-width"]
+concolor = ["boost-fmt/concolor"]
+
+[package.metadata.docs.rs]
+all-features = true

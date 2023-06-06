@@ -1,0 +1,13 @@
+[package]
+name = "boost-diagnostic-svg"
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Structured diagnostic SVG preview rendering"
+homepage = "https://github.com/oovm/diagnostic-rs"
+repository = "https://github.com/oovm/diagnostic-rs"
+documentation = "https://docs.rs/boost-diagnostic-svg"
+edition.workspace = true
+
+[dependencies]
+boost-diagnostic = { workspace = true, features = ["terminal"] }

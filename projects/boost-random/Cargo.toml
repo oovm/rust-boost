@@ -1,0 +1,28 @@
+[package]
+name = "boost-random"
+version.workspace = true
+authors.workspace = true
+description = "Deterministic random streams with a frozen output profile, unbiased sampling, and owned host entropy backends"
+repository = "https://github.com/oovm/rust-boost/tree/dev/projects/boost-random"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+wasm-bindgen = { version = "0.2.95", optional = true }
+
+[features]
+default = []
+std = []
+system = []
+web = ["dep:wasm-bindgen"]
+
+# Comparison crates used only by the benchmarks, so the shipped graph stays free of them.
+[dev-dependencies]
+rand = "0.8"
+fastrand = "2"
+
+[package.metadata.docs.rs]
+all-features = true

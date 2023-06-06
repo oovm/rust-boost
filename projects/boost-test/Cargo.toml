@@ -1,0 +1,20 @@
+[package]
+name = "boost-test"
+version.workspace = true
+authors.workspace = true
+description = "Correctness tests, cases, fixtures, assertions, and structured results"
+repository = "https://github.com/oovm/rust-boost/tree/dev/projects/boost-test"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+exclude = ["package.json", "tests/**"]
+
+[dependencies]
+boost-test-macro = { workspace = true, optional = true }
+
+[features]
+default = ["macros"]
+macros = ["dep:boost-test-macro"]
+
+[package.metadata.docs.rs]
+all-features = true
