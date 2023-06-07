@@ -14,7 +14,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
@@ -24,80 +24,82 @@ jobs:
       - name: Tests
         run: cargo test --release --all-features
       - name: Random core
-        run: cargo test -p random
+        run: cargo test -p boost-random
       - name: Random host entropy
-        run: cargo test -p random --all-features
+        run: cargo test -p boost-random --all-features
 
   features:
     runs-on: ubuntu-latest
     steps:
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
           targets: aarch64-linux-android
       - name: Source default features
-        run: cargo test -p source
+        run: cargo test -p boost-source
       - name: Source serde
-        run: cargo test -p source --features serde
-      - name: Logger
-        run: cargo test -p logger
-      - name: Console
-        run: cargo test -p console
+        run: cargo test -p boost-source --features serde
+      - name: Log
+        run: cargo test -p boost-log
+      - name: Fmt
+        run: cargo test -p boost-fmt
+      - name: Log human console projection
+        run: cargo test -p boost-log --features console
       - name: Diagnostic core
-        run: cargo test -p diagnostic --no-default-features
+        run: cargo test -p boost-diagnostic --no-default-features
       - name: Diagnostic serde
-        run: cargo test -p diagnostic --features serde
-      - name: Diagnostic logger
-        run: cargo test -p diagnostic --features logger
-      - name: Testkit core without macros
-        run: cargo test -p testkit --no-default-features
+        run: cargo test -p boost-diagnostic --features serde
+      - name: Diagnostic log projection
+        run: cargo test -p boost-diagnostic --features log
+      - name: Test core without macros
+        run: cargo test -p boost-test --no-default-features
       - name: Android must not reuse the Linux backend
-        run: cargo check -p random --features system --target aarch64-linux-android
+        run: cargo check -p boost-random --features system --target aarch64-linux-android
 
   word-size:
     runs-on: windows-latest
     steps:
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
           targets: i686-pc-windows-msvc
       - name: Random core on a 32-bit host word
-        run: cargo test -p random --no-default-features --target i686-pc-windows-msvc
+        run: cargo test -p boost-random --no-default-features --target i686-pc-windows-msvc
       - name: Random host entropy on a 32-bit host word
-        run: cargo test -p random --all-features --target i686-pc-windows-msvc
+        run: cargo test -p boost-random --all-features --target i686-pc-windows-msvc
 
   byte-order:
     runs-on: ubuntu-latest
     steps:
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
           targets: s390x-unknown-linux-gnu
       - name: Compile-only check on a big-endian target
-        run: cargo check -p random --all-features --target s390x-unknown-linux-gnu
+        run: cargo check -p boost-random --all-features --target s390x-unknown-linux-gnu
 
   wasi:
     runs-on: ubuntu-latest
     steps:
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
           targets: wasm32-wasip1, wasm32-wasip2
       - uses: bytecodealliance/actions/wasmtime/setup@v1
       - name: WASI preview 1 host entropy
-        run: cargo test -p random --all-features --target wasm32-wasip1
+        run: cargo test -p boost-random --all-features --target wasm32-wasip1
         env:
           CARGO_TARGET_WASM32_WASIP1_RUNNER: wasmtime
       - name: WASI preview 2 host entropy
-        run: cargo test -p random --all-features --target wasm32-wasip2
+        run: cargo test -p boost-random --all-features --target wasm32-wasip2
         env:
           CARGO_TARGET_WASM32_WASIP2_RUNNER: wasmtime
 
@@ -105,30 +107,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
           targets: wasm32-unknown-unknown
       - name: Compile-only check of the Web Crypto bridge
-        run: cargo check -p random --features web --target wasm32-unknown-unknown
+        run: cargo check -p boost-random --features web --target wasm32-unknown-unknown
       - name: The shipped graph must stay free of comparison, platform-binding, and bridge crates
         run: |
-          if cargo tree -p random --all-features --edges normal | grep -qE '([^a-z]|^)(rand|rand_chacha|rand_core|getrandom|fastrand|libc|wasm-bindgen) v'; then
+          if cargo tree -p boost-random --all-features --edges normal | grep -qE '([^a-z]|^)(rand|rand_chacha|rand_core|getrandom|fastrand|libc|wasm-bindgen) v'; then
             echo "the shipped graph must not contain a comparison crate, a platform-binding crate, or wasm-bindgen" >&2
             exit 1
           fi
       - name: The default and system builds must stay free of the libc crate
         run: |
           for features in "" "--features system"; do
-            if cargo tree -p random $features --edges normal | grep -qE '([^a-z]|^)libc v'; then
+            if cargo tree -p boost-random $features --edges normal | grep -qE '([^a-z]|^)libc v'; then
               echo "the shipped graph must not contain the libc crate" >&2
               exit 1
             fi
           done
       - name: The browser target must stay free of `wasm-bindgen` by default
         run: |
-          if cargo tree -p random --target wasm32-unknown-unknown --edges normal | grep -q wasm-bindgen; then
+          if cargo tree -p boost-random --target wasm32-unknown-unknown --edges normal | grep -q wasm-bindgen; then
             echo "the default build must not depend on wasm-bindgen" >&2
             exit 1
           fi
