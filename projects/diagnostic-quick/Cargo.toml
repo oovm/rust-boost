@@ -1,54 +1,43 @@
 [package]
 name = "diagnostic-quick"
-version = "0.1.0"
-authors = ["Aster <192607617@qq.com>"]
+version.workspace = true
+authors.workspace = true
 description = "Quick error type for diagnostic"
 repository = "https://github.com/oovm/diagnostic-rs"
 documentation = "https://docs.rs/diagnostic-quick"
-readme = "Readme.md"
-license = "MPL-2.0"
-edition = "2024"
-
-[dependencies.diagnostic]
-#version = "0.5.0"
-path = "../diagnostic"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
 
 [dependencies]
-lsp-types = { version = "0.95.0", optional = true }
-ropey = { version = "1.6.1", optional = true }
-rust_decimal = { version = "1.34.3", optional = true }
-ucd-trie = { version = "0.1.6", optional = true }
-sled = { version = "0.34.7", optional = true }
-
-# serde
-serde = { version = "1.0.197", features = ["derive"] }
-toml = { version = "0.8.10", optional = true }
-serde_json = { version = "1.0.114", optional = true }
-serde-binary = { version = "0.5.0", optional = true }
-
-# parser
-url = { version = "2.5.0", optional = true, features = ["serde"] }
-num = { version = "0.4.1", optional = true, features = ["serde"] }
-email_address = { version = "0.2.4", optional = true, features = ["serde"] }
-semver = { version = "1.0.22", optional = true, features = ["serde"] }
-mime = { version = "0.3.17", optional = true, features = [] }
-peginator = { version = "0.7.0", optional = true }
-tl = { version = "0.7.8", optional = true }
-chrono = { version = "0.4.35", optional = true }
-
-# system
-globset = { version = "0.4.14", optional = true }
-walkdir = { version = "2.5.0", optional = true }
-async-walkdir = { version = "1.0.0", optional = true }
-
-# render
-font-kit = { version = "0.12.0", optional = true }
-pathfinder = { version = "0.6.5", optional = true }
-image = { version = "0.24.9", optional = true }
-imageproc = { version = "0.23.0", optional = true }
+diagnostic = { workspace = true }
+lsp-types = { workspace = true, optional = true }
+ropey = { workspace = true, optional = true }
+rust_decimal = { workspace = true, optional = true }
+ucd-trie = { workspace = true, optional = true }
+sled = { workspace = true, optional = true }
+serde = { workspace = true }
+toml = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+serde-binary = { workspace = true, optional = true }
+url = { workspace = true, optional = true, features = ["serde"] }
+num = { workspace = true, optional = true, features = ["serde"] }
+email_address = { workspace = true, optional = true, features = ["serde"] }
+semver = { workspace = true, optional = true, features = ["serde"] }
+mime = { workspace = true, optional = true, features = [] }
+peginator = { workspace = true, optional = true }
+tl = { workspace = true, optional = true }
+chrono = { workspace = true, optional = true }
+globset = { workspace = true, optional = true }
+walkdir = { workspace = true, optional = true }
+async-walkdir = { workspace = true, optional = true }
+font-kit = { workspace = true, optional = true }
+pathfinder = { workspace = true, optional = true }
+image = { workspace = true, optional = true }
+imageproc = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winreg = { version = "0.52.0", optional = true }
+winreg = { workspace = true, optional = true }
 
 [features]
 default = []

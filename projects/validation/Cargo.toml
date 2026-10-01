@@ -1,21 +1,21 @@
 [package]
 name = "validation"
-version = "0.1.0"
+version.workspace = true
 readme = "readme.md"
 license = "Apache-2.0"
-authors = ["Aster <192607617@qq.com>"]
+authors.workspace = true
 description = "Validator types, returns multiple tolerable errors at once"
 homepage = "https://github.com/oovm/diagnostic-rs"
 repository = "https://github.com/oovm/diagnostic-rs"
 documentation = "https://docs.rs/validation"
 exclude = ["tests/**"]
-edition = "2024"
+edition.workspace = true
 
 [dependencies]
-serde = { version = "1.0.197", optional = true }
+serde = { workspace = true, optional = true }
 
 [dev-dependencies]
-unindent = "0.2.3"
+unindent = { workspace = true }
 
 [features]
 default = []
