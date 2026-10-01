@@ -1,9 +1,6 @@
 use std::error::Error;
 
-#[cfg(feature = "async-walkdir")]
-pub use fs_tools::AsyncWalker as AsyncWalkDir;
-#[cfg(feature = "email_address")]
-pub use email_address::EmailAddress;
+#[cfg(feature = "email_address")]pub use email_address::EmailAddress;
 #[cfg(feature = "globset")]
 pub use globset::{Glob, GlobSet, GlobSetBuilder};
 #[cfg(feature = "mime")]
@@ -18,11 +15,8 @@ pub use serde_json::Value as Json;
 pub use toml::Value as Toml;
 #[cfg(feature = "url")]
 pub use url::Url;
-#[cfg(feature = "walkdir")]
-pub use fs_tools::Walker as WalkDir;
 
 use crate::{IOError, QError, QErrorKind, RuntimeError, SyntaxError};
-
 pub use self::for_ast::NodeLocation;
 #[cfg(feature = "rust_decimal")]
 pub use self::for_rust_decimal::*;
@@ -58,9 +52,8 @@ mod for_globset;
 #[cfg(feature = "serde")]
 mod for_serde;
 
-#[cfg(any(feature = "walkdir", feature = "async-walkdir"))]
-mod for_walkdir;
-
+#[cfg(any(feature = "walk", feature = "async-walk"))]
+mod for_walk;
 #[cfg(feature = "toml")]
 mod for_toml;
 
