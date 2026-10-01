@@ -1,4 +1,5 @@
 //! Utilities for translating from codespan types into Language Server Protocol (LSP) types
+#![deny(missing_docs)]
 
 // WARNING: Be extremely careful when adding new imports here, as it could break
 // the compatible version range that we claim in our `Cargo.toml`. This could

@@ -63,6 +63,7 @@ impl<T, E> Validation<T, E> {
     {
         Failure { fatal: error.into(), diagnostics: vec![] }
     }
+    /// Append a non-fatal diagnostic to this validation result.
     pub fn push<I>(&mut self, error: I)
     where
         I: Into<E>,

@@ -1,3 +1,4 @@
+#![deny(missing_docs)]
 //! Renders the preview SVG for the README.
 //!
 //! To update the preview, execute the following command from the top level of

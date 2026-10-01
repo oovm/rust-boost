@@ -1,3 +1,5 @@
+//! Procedural macro helpers for the `diagnostic` crate.
+#![deny(missing_docs)]
 // #![feature(proc_macro_span)]
 // #![feature(proc_macro_def_site)]
 // extern crate proc_macro;
