@@ -1,13 +1,13 @@
 [package]
 name = "diagnostic-quick"
-version = "0.3.0"
+version = "0.1.0"
 authors = ["Aster <192607617@qq.com>"]
 description = "Quick error type for diagnostic"
 repository = "https://github.com/oovm/diagnostic-rs"
 documentation = "https://docs.rs/diagnostic-quick"
 readme = "Readme.md"
 license = "MPL-2.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies.diagnostic]
 #version = "0.5.0"

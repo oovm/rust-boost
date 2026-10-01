@@ -7,7 +7,7 @@ description = "Conversions between codespan types and Language Server Protocol t
 homepage = "https://github.com/brendanzab/codespan"
 repository = "https://github.com/brendanzab/codespan"
 documentation = "https://docs.rs/codespan-lsp"
-edition = "2018"
+edition = "2024"
 
 [lib]
 proc-macro = true

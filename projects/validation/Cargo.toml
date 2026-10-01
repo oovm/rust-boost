@@ -1,15 +1,15 @@
 [package]
-name = "validatus"
-version = "0.0.6"
+name = "validation"
+version = "0.1.0"
 readme = "readme.md"
 license = "Apache-2.0"
 authors = ["Aster <192607617@qq.com>"]
 description = "Validator types, returns multiple tolerable errors at once"
 homepage = "https://github.com/oovm/diagnostic-rs"
 repository = "https://github.com/oovm/diagnostic-rs"
-documentation = "https://docs.rs/validatus"
+documentation = "https://docs.rs/validation"
 exclude = ["tests/**"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 serde = { version = "1.0.197", optional = true }
@@ -19,4 +19,4 @@ unindent = "0.2.3"
 
 [features]
 default = []
-#nightly = []
+nightly = []
