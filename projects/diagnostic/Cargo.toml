@@ -23,10 +23,11 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
-default = ["std", "terminal", "serde"]
+default = ["std", "console", "terminal", "serde"]
 std = []
+console = ["dep:console", "std"]
 serde = ["dep:serde"]
-terminal = ["dep:terminal", "dep:console", "dep:source-cache", "dep:unicode-width", "std"]
+terminal = ["console", "dep:terminal", "dep:source-cache", "dep:unicode-width"]
 concolor = ["console/concolor"]
 
 [package.metadata.docs.rs]
