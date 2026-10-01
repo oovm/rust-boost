@@ -24,10 +24,12 @@ pub use source::SourceLookup;
 pub use wire::{DiagnosticEnvelope, SCHEMA_VERSION};
 
 #[cfg(feature = "terminal")]
+pub use console::{Color, Console, Paint, Palette, Style};
+#[cfg(feature = "terminal")]
 pub use terminal::{
-    enable_ansi_color, eprint_structured_set, structured_to_terminal, BuiltinDrawer, Color, Config, Console,
+    enable_ansi_color, eprint_structured_set, structured_to_terminal, BuiltinDrawer, Config,
     Diagnostic as TerminalDiagnostic, DiagnosticBuilder as TerminalDiagnosticBuilder, DrawElements, Label,
-    LabelAttach, Paint, Palette, ReportKind, ReportLevel, SourceRegistry, StructuredRenderError, Style,
+    LabelAttach, ReportKind, ReportLevel, SourceRegistry, StructuredRenderError,
 };
 #[cfg(feature = "terminal")]
 pub use terminal::{SourceCache, SourceID, SourceSpan};
