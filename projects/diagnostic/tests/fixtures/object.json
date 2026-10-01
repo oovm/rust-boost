@@ -1,0 +1,39 @@
+{
+  "cause": null,
+  "code": "acorn.layout.offset-out-of-range",
+  "helps": [],
+  "message": {
+    "args": [],
+    "fallback": "offset out of range",
+    "key": "acorn.layout.offset-out-of-range"
+  },
+  "notes": [],
+  "origin": {
+    "component": "pdf",
+    "namespace": "acorn",
+    "stage": null
+  },
+  "primary": {
+    "location": {
+      "kind": "object",
+      "object": {
+        "id": "42",
+        "kind": "xref"
+      },
+      "source": {
+        "id": "sample.pdf",
+        "namespace": "acorn",
+        "revision": null
+      }
+    },
+    "message": {
+      "args": [],
+      "fallback": "object",
+      "key": "label.object"
+    },
+    "role": "primary"
+  },
+  "recovery": [],
+  "secondary": [],
+  "severity": "error"
+}

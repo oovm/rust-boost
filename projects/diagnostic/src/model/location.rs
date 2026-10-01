@@ -75,6 +75,14 @@ impl SourceRef {
     pub fn revision(&self) -> Option<&str> {
         self.revision.as_deref()
     }
+
+    /// Render a stable wire identifier for source lookup tables.
+    pub fn to_wire_id(&self) -> String {
+        match &self.revision {
+            Some(revision) => format!("{}:{}@{}", self.namespace(), self.id(), revision),
+            None => format!("{}:{}", self.namespace(), self.id()),
+        }
+    }
 }
 
 /// Address space reference for binary locations.
@@ -90,6 +98,16 @@ impl AddressSpaceRef {
     pub fn new(namespace: impl Into<String>, id: impl Into<String>) -> Self {
         Self { namespace: namespace.into(), id: id.into() }
     }
+
+    /// Returns the namespace.
+    pub fn namespace(&self) -> &str {
+        &self.namespace
+    }
+
+    /// Returns the address space identifier.
+    pub fn id(&self) -> &str {
+        &self.id
+    }
 }
 
 /// One segment in a container member path.
@@ -104,6 +122,16 @@ impl MemberSegment {
     /// Create a member path segment.
     pub fn new(kind: impl Into<String>, name: impl Into<String>) -> Self {
         Self { kind: kind.into(), name: name.into() }
+    }
+
+    /// Returns the segment kind.
+    pub fn kind(&self) -> &str {
+        &self.kind
+    }
+
+    /// Returns the segment name.
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }
 
@@ -139,6 +167,16 @@ impl ObjectRef {
     pub fn new(kind: impl Into<String>, id: impl Into<String>) -> Self {
         Self { kind: kind.into(), id: id.into() }
     }
+
+    /// Returns the object kind.
+    pub fn kind(&self) -> &str {
+        &self.kind
+    }
+
+    /// Returns the object identifier.
+    pub fn id(&self) -> &str {
+        &self.id
+    }
 }
 
 /// Document reference for semantic locations.
@@ -153,6 +191,16 @@ impl DocumentRef {
     /// Create a document reference.
     pub fn new(namespace: impl Into<String>, id: impl Into<String>) -> Self {
         Self { namespace: namespace.into(), id: id.into() }
+    }
+
+    /// Returns the namespace.
+    pub fn namespace(&self) -> &str {
+        &self.namespace
+    }
+
+    /// Returns the document identifier.
+    pub fn id(&self) -> &str {
+        &self.id
     }
 }
 
@@ -239,4 +287,18 @@ pub enum DiagnosticLocation {
         /// Byte range in the virtual address space.
         range: ByteRange,
     },
+}
+
+impl DiagnosticLocation {
+    /// Returns the wire kind string for this location variant.
+    pub fn kind_str(&self) -> &'static str {
+        match self {
+            Self::Text { .. } => "text",
+            Self::Binary { .. } => "binary",
+            Self::Member { .. } => "member",
+            Self::Object { .. } => "object",
+            Self::Semantic { .. } => "semantic",
+            Self::Virtual { .. } => "virtual",
+        }
+    }
 }

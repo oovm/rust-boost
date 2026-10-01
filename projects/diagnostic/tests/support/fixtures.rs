@@ -1,11 +1,10 @@
 use diagnostic::{
     AddressSpaceRef, ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin,
     DocumentRef, LabelRole, MappingPrecision, MemberPath, MemberSegment, Message, ObjectRef, SemanticPath, SourceRef,
-    json::{DiagnosticEnvelope, SCHEMA_VERSION},
 };
 use diagnostic::{DiagnosticSeverity, DiagnosticSet};
 
-fn text_diagnostic() -> Diagnostic {
+pub fn text_diagnostic() -> Diagnostic {
     Diagnostic::new(
         DiagnosticCode::new("oak.syntax.unexpected-token"),
         DiagnosticSeverity::Error,
@@ -22,7 +21,25 @@ fn text_diagnostic() -> Diagnostic {
     ))
 }
 
-fn member_diagnostic() -> Diagnostic {
+pub fn binary_diagnostic() -> Diagnostic {
+    Diagnostic::new(
+        DiagnosticCode::new("acorn.layout.offset-out-of-range"),
+        DiagnosticSeverity::Error,
+        DiagnosticOrigin::new("acorn", "bin"),
+        Message::new("acorn.layout.offset-out-of-range").with_fallback("offset out of range"),
+    )
+    .with_primary(DiagnosticLabel::new(
+        DiagnosticLocation::Binary {
+            source: SourceRef::new("acorn", "firmware.bin"),
+            address_space: AddressSpaceRef::new("acorn", "file"),
+            range: ByteRange::new(0x1000, 0x1004).unwrap(),
+        },
+        Message::new("label.binary").with_fallback("binary"),
+        LabelRole::Primary,
+    ))
+}
+
+pub fn member_diagnostic() -> Diagnostic {
     Diagnostic::new(
         DiagnosticCode::new("acorn.container.need-range"),
         DiagnosticSeverity::Warning,
@@ -44,7 +61,7 @@ fn member_diagnostic() -> Diagnostic {
     ))
 }
 
-fn object_diagnostic() -> Diagnostic {
+pub fn object_diagnostic() -> Diagnostic {
     Diagnostic::new(
         DiagnosticCode::new("acorn.layout.offset-out-of-range"),
         DiagnosticSeverity::Error,
@@ -61,7 +78,7 @@ fn object_diagnostic() -> Diagnostic {
     ))
 }
 
-fn semantic_diagnostic() -> Diagnostic {
+pub fn semantic_diagnostic() -> Diagnostic {
     Diagnostic::new(
         DiagnosticCode::new("notedown.semantic.unresolved-target"),
         DiagnosticSeverity::Error,
@@ -78,42 +95,12 @@ fn semantic_diagnostic() -> Diagnostic {
     ))
 }
 
-#[test]
-fn wire_envelope_roundtrip() {
+pub fn sample_set() -> DiagnosticSet {
     let mut set = DiagnosticSet::new();
     set.push(text_diagnostic());
+    set.push(binary_diagnostic());
     set.push(member_diagnostic());
     set.push(object_diagnostic());
     set.push(semantic_diagnostic());
-
-    let envelope = DiagnosticEnvelope::from_set(&set);
-    assert_eq!(envelope.schema_version, SCHEMA_VERSION);
-    assert_eq!(envelope.diagnostics.len(), 4);
-
-    let json = serde_json::to_string_pretty(&envelope).unwrap();
-    let decoded: DiagnosticEnvelope = serde_json::from_str(&json).unwrap();
-    assert_eq!(decoded.diagnostics.len(), 4);
-    assert_eq!(decoded.diagnostics[0].code().as_str(), "oak.syntax.unexpected-token");
-}
-
-#[test]
-fn binary_location_serializes() {
-    let diagnostic = Diagnostic::new(
-        DiagnosticCode::new("acorn.layout.offset-out-of-range"),
-        DiagnosticSeverity::Error,
-        DiagnosticOrigin::new("acorn", "bin"),
-        Message::new("acorn.layout.offset-out-of-range"),
-    )
-    .with_primary(DiagnosticLabel::new(
-        DiagnosticLocation::Binary {
-            source: SourceRef::new("acorn", "firmware.bin"),
-            address_space: AddressSpaceRef::new("acorn", "file"),
-            range: ByteRange::new(0x1000, 0x1004).unwrap(),
-        },
-        Message::new("label.binary"),
-        LabelRole::Primary,
-    ));
-
-    let json = serde_json::to_value(&diagnostic).unwrap();
-    assert_eq!(json["primary"]["location"]["kind"], "binary");
+    set
 }

@@ -1,0 +1,35 @@
+{
+  "cause": null,
+  "code": "notedown.semantic.unresolved-target",
+  "helps": [],
+  "message": {
+    "args": [],
+    "fallback": "unresolved target",
+    "key": "notedown.semantic.unresolved-target"
+  },
+  "notes": [],
+  "origin": {
+    "component": "ir",
+    "namespace": "notedown",
+    "stage": null
+  },
+  "primary": {
+    "location": {
+      "document": {
+        "id": "chapter-1",
+        "namespace": "notedown"
+      },
+      "kind": "semantic",
+      "path": "/blocks/17"
+    },
+    "message": {
+      "args": [],
+      "fallback": "semantic",
+      "key": "label.semantic"
+    },
+    "role": "primary"
+  },
+  "recovery": [],
+  "secondary": [],
+  "severity": "error"
+}
