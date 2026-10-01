@@ -11,3 +11,17 @@ edition.workspace = true
 
 [lib]
 proc-macro = true
+
+[dependencies]
+syn = { workspace = true, features = ["full"] }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
+diagnostic = { workspace = true }
+
+[dev-dependencies]
+diagnostic = { workspace = true }
+
+[[example]]
+name = "structured"
+path = "examples/structured.rs"
+required-features = []
