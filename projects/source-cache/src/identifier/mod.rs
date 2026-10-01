@@ -47,14 +47,6 @@ impl SourceID {
         path.source_id()
     }
 
-    /// Create a [`SourceID`] from a raw hash value.
-    ///
-    /// Prefer [`SourceID::from_path`] or [`SourceCache`] loaders for public construction.
-    #[deprecated(note = "use SourceID::from_path or SourceCache loaders instead of raw hash construction")]
-    pub unsafe fn new(id: u64) -> Self {
-        Self { hash: id }
-    }
-
     /// Create a new [`SourceID`] with the given ID.
     pub fn with_range(self, range: Range<u32>) -> SourceSpan {
         SourceSpan { start: range.start, end: range.end, file: self }
