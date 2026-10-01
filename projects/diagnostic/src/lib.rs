@@ -20,9 +20,9 @@ pub use set::{DiagnosticEmitter, DiagnosticSet, EmitStatus};
 
 #[cfg(feature = "terminal")]
 pub use terminal::{
-    enable_ansi_color, BuiltinDrawer, Color, Config, Console, Diagnostic as TerminalDiagnostic,
-    DiagnosticBuilder as TerminalDiagnosticBuilder, DrawElements, Label, LabelAttach, Paint, Palette, ReportKind,
-    ReportLevel, Style,
+    enable_ansi_color, eprint_structured_set, structured_to_terminal, BuiltinDrawer, Color, Config, Console,
+    Diagnostic as TerminalDiagnostic, DiagnosticBuilder as TerminalDiagnosticBuilder, DrawElements, Label,
+    LabelAttach, Paint, Palette, ReportKind, ReportLevel, SourceRegistry, StructuredRenderError, Style,
 };
 #[cfg(feature = "terminal")]
 pub use terminal::{SourceCache, SourceID, SourceSpan};
