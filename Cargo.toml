@@ -8,7 +8,6 @@ default-members = [
 ]
 exclude = [
     "projects/.DS_Store",
-    "projects/diagnostic-quick",
     "projects/syntax-error",
 ]
 
