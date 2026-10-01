@@ -1,6 +1,6 @@
 use std::{env::VarError, error::Error, sync::PoisonError};
 
-use diagnostic::DiagnosticLevel;
+use diagnostic::DiagnosticSeverity;
 
 use crate::{QError, QErrorKind, RuntimeError};
 
@@ -17,7 +17,7 @@ impl QError {
     pub(crate) fn wrap_runtime_error<E: Error + 'static>(error: E) -> Self {
         QError {
             error: Box::new(QErrorKind::Runtime(RuntimeError::from(&error))),
-            level: DiagnosticLevel::Error,
+            severity: DiagnosticSeverity::Error,
             source: Some(Box::new(error)),
         }
     }
@@ -31,7 +31,11 @@ impl From<std::fmt::Error> for QError {
 
 impl<T> From<PoisonError<T>> for QError {
     fn from(error: PoisonError<T>) -> Self {
-        QError { error: Box::new(QErrorKind::Runtime(RuntimeError::from(&error))), level: DiagnosticLevel::Error, source: None }
+        QError {
+            error: Box::new(QErrorKind::Runtime(RuntimeError::from(&error))),
+            severity: DiagnosticSeverity::Error,
+            source: None,
+        }
     }
 }
 
@@ -43,7 +47,6 @@ impl From<VarError> for QError {
 
 impl From<()> for QError {
     fn from(_: ()) -> Self {
-        // Self::unreachable()
-        todo!()
+        QError::runtime_error("unreachable unit error")
     }
 }

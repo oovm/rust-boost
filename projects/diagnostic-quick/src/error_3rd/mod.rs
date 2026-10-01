@@ -16,6 +16,8 @@ pub use toml::Value as Toml;
 #[cfg(feature = "url")]
 pub use url::Url;
 
+use diagnostic::DiagnosticSeverity;
+
 use crate::{IOError, QError, QErrorKind, RuntimeError, SyntaxError};
 pub use self::for_ast::NodeLocation;
 #[cfg(feature = "rust_decimal")]
@@ -85,7 +87,7 @@ impl QError {
     pub(crate) fn fast_runtime_error(error: impl Error + 'static) -> QError {
         QError {
             error: Box::new(QErrorKind::Runtime(RuntimeError::from(&error))),
-            level: Default::default(),
+            severity: DiagnosticSeverity::Error,
             source: Some(Box::new(error)),
         }
     }
@@ -93,7 +95,7 @@ impl QError {
     pub(crate) fn fast_syntax_error(error: impl Error + 'static) -> QError {
         QError {
             error: Box::new(QErrorKind::Syntax(SyntaxError::from(&error))),
-            level: Default::default(),
+            severity: DiagnosticSeverity::Error,
             source: Some(Box::new(error)),
         }
     }
@@ -101,7 +103,7 @@ impl QError {
     pub(crate) fn fast_io_error(error: impl Error + 'static) -> QError {
         QError {
             error: Box::new(QErrorKind::IO(IOError { message: error.to_string(), file: Default::default() })),
-            level: Default::default(),
+            severity: DiagnosticSeverity::Error,
             source: Some(Box::new(error)),
         }
     }
