@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use super::{Error, Entry, Iter};
 
-/// Configuration for a recursive directory walk.
+/// Configuration for a recursive folder walk.
 #[derive(Debug, Clone)]
 pub struct Walker {
     pub(crate) root: PathBuf,

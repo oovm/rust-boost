@@ -4,7 +4,7 @@ pub enum Filter {
     /// Skip the current entry.
     Ignore,
     /// Skip the current entry and do not traverse its children.
-    IgnoreDir,
+    IgnoreFolder,
     /// Keep the entry and continue traversal.
     Continue,
 }

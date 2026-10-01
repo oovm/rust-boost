@@ -1,4 +1,4 @@
-//! Recursive directory traversal beyond [`crate::read_dir`].
+//! Recursive folder traversal beyond [`crate::read_dir`].
 
 mod entry;
 mod error;

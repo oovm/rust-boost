@@ -14,9 +14,9 @@ use crate::walk::{Entry, Error, Walker as SyncWalker};
 use super::Filter;
 
 pin_project! {
-    /// A `Stream` of paths discovered by recursively walking a directory tree.
+    /// A `Stream` of paths discovered by recursively walking a folder tree.
     ///
-    /// The root directory itself is not yielded.
+    /// The root folder itself is not yielded.
     pub struct Walker {
         root: PathBuf,
         #[pin]
