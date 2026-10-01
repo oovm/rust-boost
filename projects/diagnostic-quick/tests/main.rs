@@ -1,3 +1,5 @@
+mod for_rust_decimal;
+
 use std::str::FromStr;
 
 use diagnostic_quick::QResult;

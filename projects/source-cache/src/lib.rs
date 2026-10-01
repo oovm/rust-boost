@@ -1,5 +1,5 @@
-#![doc = include_str!("../readme.md")]
-#![warn(missing_docs)]
+#![doc = include_str!("readme.md")]
+#![deny(missing_docs)]
 
 mod cache;
 mod identifier;

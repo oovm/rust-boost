@@ -7,18 +7,3 @@ impl From<Error> for QError {
         QError::wrap_syntax_error(error)
     }
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::QResult;
-    use std::str::FromStr;
-
-    #[test]
-    fn test() -> QResult {
-        println!("{}", Decimal::from_str("0")?);
-        println!("{}", Decimal::from_scientific("1e+10")?);
-        println!("{}", Decimal::from_scientific("1e-10")?);
-        Ok(())
-    }
-}
