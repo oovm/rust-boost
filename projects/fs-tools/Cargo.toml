@@ -1,0 +1,26 @@
+[package]
+name = "fs-tools"
+version.workspace = true
+authors.workspace = true
+description = "Filesystem traversal utilities with sync and async walkers"
+repository = "https://github.com/oovm/rust-boost/tree/dev/projects/fs-tools"
+documentation = "https://docs.rs/fs-tools"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+futures-core = { workspace = true, optional = true }
+async-channel = { workspace = true, optional = true }
+futures-lite = { workspace = true, optional = true }
+pin-project-lite = { workspace = true, optional = true }
+
+[dev-dependencies]
+futures-lite = { workspace = true }
+
+[features]
+default = []
+async = ["dep:futures-core", "dep:async-channel", "dep:futures-lite", "dep:pin-project-lite"]
+
+[package.metadata.docs.rs]
+all-features = true
