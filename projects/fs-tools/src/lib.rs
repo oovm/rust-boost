@@ -1,21 +1,31 @@
 #![doc = include_str!("readme.md")]
 #![deny(missing_docs)]
 
-mod error;
-mod walker;
+//! Extended filesystem API modeled after [`std::fs`].
+//!
+//! Standard operations are re-exported at the crate root. Recursive traversal lives in
+//! [`walk`] and [`async_walk`].
 
-pub use error::WalkError;
-pub use walker::{DirEntry, IntoIter, Walker};
+pub mod dir;
+pub mod file;
+pub mod link;
+pub mod metadata;
+pub mod permissions;
+pub mod read_write;
+pub mod remove;
+pub mod rename;
+pub mod walk;
 
 #[cfg(feature = "async")]
-mod async_walker;
+pub mod async_walk;
 
-#[cfg(feature = "async")]
-pub use async_walker::{AsyncWalker, Filtering};
-
-/// Compatibility alias for code migrating from `walkdir::WalkDir`.
-pub type WalkDir = Walker;
-
-#[cfg(feature = "async")]
-/// Compatibility alias for code migrating from `async_walkdir::WalkDir`.
-pub type AsyncWalkDir = AsyncWalker;
+pub use dir::{create_dir, create_dir_all, read_dir, DirEntry, ReadDir};
+pub use file::{exists, File, OpenOptions};
+pub use link::{canonicalize, hard_link, read_link};
+#[cfg(unix)]
+pub use link::symlink;
+pub use metadata::{metadata, symlink_metadata, FileType, Metadata};
+pub use permissions::{set_permissions, Permissions};
+pub use read_write::{copy, read, read_to_string, write};
+pub use remove::{remove_dir, remove_dir_all, remove_file};
+pub use rename::rename;
