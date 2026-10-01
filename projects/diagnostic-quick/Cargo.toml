@@ -29,8 +29,7 @@ peginator = { workspace = true, optional = true }
 tl = { workspace = true, optional = true }
 chrono = { workspace = true, optional = true }
 globset = { workspace = true, optional = true }
-walkdir = { workspace = true, optional = true }
-async-walkdir = { workspace = true, optional = true }
+fs-tools = { workspace = true, optional = true }
 font-kit = { workspace = true, optional = true }
 pathfinder = { workspace = true, optional = true }
 image = { workspace = true, optional = true }
@@ -41,6 +40,8 @@ winreg = { workspace = true, optional = true }
 
 [features]
 default = []
+walkdir = ["dep:fs-tools"]
+async-walkdir = ["dep:fs-tools", "fs-tools/async"]
 
 [package.metadata.docs.rs]
 all-features = true

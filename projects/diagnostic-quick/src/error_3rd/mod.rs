@@ -1,7 +1,7 @@
 use std::error::Error;
 
 #[cfg(feature = "async-walkdir")]
-pub use async_walkdir::WalkDir as AsyncWalkDir;
+pub use fs_tools::AsyncWalker as AsyncWalkDir;
 #[cfg(feature = "email_address")]
 pub use email_address::EmailAddress;
 #[cfg(feature = "globset")]
@@ -19,7 +19,7 @@ pub use toml::Value as Toml;
 #[cfg(feature = "url")]
 pub use url::Url;
 #[cfg(feature = "walkdir")]
-pub use walkdir::WalkDir;
+pub use fs_tools::Walker as WalkDir;
 
 use crate::{IOError, QError, QErrorKind, RuntimeError, SyntaxError};
 
@@ -58,11 +58,8 @@ mod for_globset;
 #[cfg(feature = "serde")]
 mod for_serde;
 
-#[cfg(feature = "walkdir")]
+#[cfg(any(feature = "walkdir", feature = "async-walkdir"))]
 mod for_walkdir;
-
-#[cfg(feature = "async-walkdir")]
-mod for_walkdir_async;
 
 #[cfg(feature = "toml")]
 mod for_toml;
