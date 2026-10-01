@@ -14,6 +14,7 @@ pub mod permissions;
 pub mod read_write;
 pub mod remove;
 pub mod rename;
+pub mod temp;
 pub mod walk;
 
 #[cfg(feature = "async")]
