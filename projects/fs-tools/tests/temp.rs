@@ -1,18 +1,18 @@
-use fs_tools::temp::{create_dir, create_dir_in, create_file, create_named, create_named_in, NamedFile};
+use fs_tools::temp::{create_file, create_folder, create_folder_in, create_named, create_named_in, NamedFile};
 use fs_tools::{read_to_string, write};
 
 #[test]
-fn temp_dir_is_writable() {
-    let dir = create_dir().unwrap();
-    let path = dir.path().join("note.txt");
+fn temp_folder_is_writable() {
+    let folder = create_folder().unwrap();
+    let path = folder.path().join("note.txt");
     write(&path, b"ok").unwrap();
     assert_eq!(read_to_string(path).unwrap(), "ok");
 }
 
 #[test]
-fn temp_dir_in_uses_explicit_base() {
-    let base = create_dir().unwrap();
-    let nested = create_dir_in(base.path()).unwrap();
+fn temp_folder_in_uses_explicit_base() {
+    let base = create_folder().unwrap();
+    let nested = create_folder_in(base.path()).unwrap();
     write(nested.path().join("child.txt"), b"nested").unwrap();
 }
 
@@ -38,21 +38,21 @@ fn named_temp_file_exposes_path() {
 }
 
 #[test]
-fn create_named_in_uses_explicit_directory() {
-    let base = create_dir().unwrap();
+fn create_named_in_uses_explicit_folder() {
+    let base = create_folder().unwrap();
     let nested = base.path().join("names");
-    fs_tools::create_dir_all(&nested).unwrap();
+    fs_tools::create_folder_all(&nested).unwrap();
     let file: NamedFile = create_named_in(&nested).unwrap();
     assert!(file.path().starts_with(&nested));
 }
 
 #[test]
-fn configure_dir_creates_missing_root() {
-    let base = create_dir().unwrap();
+fn configure_folder_creates_missing_root() {
+    let base = create_folder().unwrap();
     let custom = base.path().join("custom-temp-root");
     assert!(!custom.exists());
-    fs_tools::temp::configure_dir(&custom).unwrap();
+    fs_tools::temp::configure_folder(&custom).unwrap();
     assert!(custom.is_dir());
-    assert_eq!(fs_tools::temp::dir_path().unwrap(), custom);
-    fs_tools::temp::set_dir(std::env::temp_dir());
+    assert_eq!(fs_tools::temp::folder_path().unwrap(), custom);
+    fs_tools::temp::set_folder(std::env::temp_dir());
 }
