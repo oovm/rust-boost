@@ -1,0 +1,13 @@
+[package]
+name = "terminal"
+version.workspace = true
+authors.workspace = true
+description = "Platform terminal device capabilities for ANSI and virtual terminal support"
+repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/terminal"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+
+[features]
+default = ["std"]
+std = []
