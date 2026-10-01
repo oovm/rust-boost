@@ -33,7 +33,7 @@
     },
     "role": "primary"
   },
-  "recovery": [],
+  "actions": [],
   "secondary": [],
   "severity": "error"
 }

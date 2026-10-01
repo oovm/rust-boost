@@ -46,7 +46,7 @@
     },
     "role": "primary"
   },
-  "recovery": [],
+  "actions": [],
   "secondary": [],
   "severity": "warning"
 }

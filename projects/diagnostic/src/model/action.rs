@@ -2,16 +2,16 @@ use alloc::string::String;
 
 use super::DiagnosticCode;
 
-/// A structured recovery action declaration.
+/// A structured diagnostic action declaration.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct RecoveryAction {
+pub struct DiagnosticAction {
     id: String,
     args: Vec<(String, super::MessageArg)>,
 }
 
-impl RecoveryAction {
-    /// Create a recovery action identifier with typed arguments.
+impl DiagnosticAction {
+    /// Create a diagnostic action identifier with typed arguments.
     pub fn new(id: impl Into<String>) -> Self {
         Self { id: id.into(), args: Vec::new() }
     }
