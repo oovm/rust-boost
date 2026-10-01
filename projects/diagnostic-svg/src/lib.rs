@@ -1,12 +1,7 @@
-//! SVG diagnostic preview rendering.
-//!
-//! This crate is reserved for structured diagnostic SVG output and is not implemented yet.
+//! SVG diagnostic preview rendering for structured diagnostics.
 
 #![deny(missing_docs)]
 
-/// Placeholder error for unimplemented SVG rendering.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum RenderError {
-    /// SVG rendering is not implemented yet.
-    NotImplemented,
-}
+mod render;
+
+pub use render::{structured_set_to_svg, structured_to_svg, RenderError};
