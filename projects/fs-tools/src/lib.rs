@@ -28,5 +28,5 @@ pub use link::symlink;
 pub use metadata::{metadata, symlink_metadata, FileType, Metadata};
 pub use permissions::{set_permissions, Permissions};
 pub use read_write::{copy, read, read_to_string, write};
-pub use remove::{remove_dir, remove_dir_all, remove_file};
+pub use remove::{remove_file, remove_folder, remove_folder_all};
 pub use rename::rename;
