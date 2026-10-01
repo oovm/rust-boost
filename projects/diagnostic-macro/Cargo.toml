@@ -3,17 +3,11 @@ name = "diagnostic-macro"
 version.workspace = true
 license = "Apache-2.0"
 authors.workspace = true
-description = "Conversions between codespan types and Language Server Protocol types"
-homepage = "https://github.com/brendanzab/codespan"
-repository = "https://github.com/brendanzab/codespan"
-documentation = "https://docs.rs/codespan-lsp"
+description = "Procedural macro helpers for structured diagnostics"
+homepage = "https://github.com/oovm/diagnostic-rs"
+repository = "https://github.com/oovm/diagnostic-rs"
+documentation = "https://docs.rs/diagnostic-macro"
 edition.workspace = true
 
 [lib]
 proc-macro = true
-
-[dependencies]
-syn = { workspace = true }
-quote = { workspace = true }
-proc-macro2 = { workspace = true }
-diagnostic = { workspace = true }

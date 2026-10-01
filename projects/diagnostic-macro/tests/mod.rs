@@ -1,6 +1,5 @@
-use diagnostic_macro::real_macro;
-
+/// Verify the placeholder proc macro expands in tests.
 #[test]
-fn position() {
-    real_macro!("11")
+fn real_macro_expands() {
+    diagnostic_macro::real_macro!("11");
 }
