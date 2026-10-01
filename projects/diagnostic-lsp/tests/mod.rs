@@ -1,36 +1,36 @@
-use lsp_types::Position;
+use std::collections::BTreeMap;
 
-use diagnostic::{SourceCache, SourceSpan};
-use diagnostic_lsp::{byte_index_to_position, position_to_byte_index};
+use diagnostic::{
+    ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, LabelRole, Message,
+    SourceRef,
+};
+use diagnostic::DiagnosticSeverity;
+use diagnostic_lsp::{byte_index_to_position, position_to_byte_index, structured_to_lsp, SourceCache, SourceResolver};
+use lsp_types::{Position, Url};
+use source_cache::SourceID;
 
-const TEST_TEXT: &str = r#"
-let test = 2
-let test1 = ""
-test
-"#;
-#[test]
-fn position() {
-    let mut files = SourceSpan::default();
-    let file_id = files.anonymous(TEST_TEXT);
-    let pos = position_to_byte_index(&files, &file_id, &Position { line: 3, character: 2 }).unwrap();
-    assert_eq!(
-        Location {
-            // One-based
-            line_number: 3 + 1,
-            column_number: 2 + 1,
-        },
-        files.location(&file_id, pos).unwrap()
-    );
+const UNICODE: &str = "åä t𐐀b";
+
+struct TestResolver(BTreeMap<String, SourceID>);
+
+impl TestResolver {
+    fn new(source: &SourceRef, id: SourceID) -> Self {
+        let mut map = BTreeMap::new();
+        map.insert(source.to_wire_id(), id);
+        Self(map)
+    }
 }
 
-// The protocol specifies that each `character` in position is a UTF-16 character.
-// This means that `å` and `ä` here counts as 1 while `𐐀` counts as 2.
-const UNICODE: &str = "åä t𐐀b";
+impl SourceResolver for TestResolver {
+    fn resolve(&self, source: &SourceRef) -> Option<&SourceID> {
+        self.0.get(&source.to_wire_id())
+    }
+}
 
 #[test]
 fn unicode_get_byte_index() {
     let mut files = SourceCache::default();
-    let file_id = files.anonymous(UNICODE);
+    let file_id = files.load_text(UNICODE, "unicode");
 
     let result = position_to_byte_index(&files, &file_id, &Position { line: 0, character: 3 });
     assert_eq!(result.unwrap(), 5);
@@ -42,8 +42,8 @@ fn unicode_get_byte_index() {
 #[test]
 fn unicode_get_position() {
     let mut files = SourceCache::default();
-    let file_id = files.anonymous(UNICODE.to_string());
-    let file_id2 = files.anonymous("\n".to_string() + UNICODE);
+    let file_id = files.load_text(UNICODE, "unicode");
+    let file_id2 = files.load_text(format!("\n{UNICODE}"), "unicode2");
 
     let result = byte_index_to_position(&files, &file_id, 5);
     assert_eq!(result.unwrap(), Position { line: 0, character: 3 });
@@ -53,4 +53,67 @@ fn unicode_get_position() {
 
     let result = byte_index_to_position(&files, &file_id2, 11);
     assert_eq!(result.unwrap(), Position { line: 1, character: 6 });
+}
+
+#[test]
+fn structured_text_diagnostic_to_lsp() {
+    let mut cache = SourceCache::default();
+    let source_ref = SourceRef::new("oak", "sample.tao");
+    let file_id = cache.load_text("let value = 1", "sample.tao");
+    let resolver = TestResolver::new(&source_ref, file_id);
+
+    let diagnostic = Diagnostic::new(
+        DiagnosticCode::new("oak.syntax.unexpected-token"),
+        DiagnosticSeverity::Error,
+        DiagnosticOrigin::new("oak", "xml"),
+        Message::new("oak.syntax.unexpected-token").with_fallback("unexpected token"),
+    )
+    .with_primary(DiagnosticLabel::new(
+        DiagnosticLocation::Text {
+            source: source_ref,
+            range: ByteRange::new(4, 9).unwrap(),
+        },
+        Message::new("label.token").with_fallback("token"),
+        LabelRole::Primary,
+    ));
+
+    let lsp = structured_to_lsp(
+        &diagnostic,
+        &cache,
+        &resolver,
+        &|_| Some(Url::parse("file:///sample.tao").unwrap()),
+    )
+    .unwrap();
+
+    assert_eq!(lsp.message, "unexpected token");
+    assert_eq!(lsp.severity, Some(lsp_types::DiagnosticSeverity::ERROR));
+    assert_eq!(lsp.range.start.line, 0);
+}
+
+#[test]
+fn structured_member_diagnostic_uses_related_information() {
+    use diagnostic::{MappingPrecision, MemberPath, MemberSegment};
+
+    let cache = SourceCache::default();
+    let resolver = TestResolver::new(&SourceRef::new("acorn", "docx.zip"), SourceID::default());
+    let diagnostic = Diagnostic::new(
+        DiagnosticCode::new("acorn.container.need-range"),
+        DiagnosticSeverity::Warning,
+        DiagnosticOrigin::new("acorn", "zip"),
+        Message::new("acorn.container.need-range").with_fallback("need range"),
+    )
+    .with_primary(DiagnosticLabel::new(
+        DiagnosticLocation::Member {
+            container: SourceRef::new("acorn", "docx.zip"),
+            member: MemberPath::new(vec![MemberSegment::new("zip", "word/document.xml")]),
+            range: None,
+            precision: MappingPrecision::Container,
+        },
+        Message::new("label.member").with_fallback("member"),
+        LabelRole::Primary,
+    ));
+
+    let lsp = structured_to_lsp(&diagnostic, &cache, &resolver, &|_| None).unwrap();
+    let related = lsp.related_information.expect("member location should become related info");
+    assert!(related[0].message.contains("docx.zip"));
 }

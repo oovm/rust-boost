@@ -3,13 +3,17 @@ name = "diagnostic-lsp"
 version.workspace = true
 license = "Apache-2.0"
 authors.workspace = true
-description = "Conversions between codespan types and Language Server Protocol types"
+description = "UTF-16 position mapping and structured diagnostic conversion for LSP clients"
 homepage = "https://github.com/oovm/diagnostic-rs"
 repository = "https://github.com/oovm/diagnostic-rs"
-documentation = "https://docs.rs/codespan-lsp"
+documentation = "https://docs.rs/diagnostic-lsp"
 edition.workspace = true
 
 [dependencies]
 lsp-types = { workspace = true }
 url = { workspace = true }
-diagnostic = { workspace = true }
+diagnostic = { workspace = true, features = ["serde"] }
+source-cache = { workspace = true }
+
+[dev-dependencies]
+diagnostic = { workspace = true, features = ["serde"] }
