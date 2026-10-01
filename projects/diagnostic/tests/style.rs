@@ -1,5 +1,5 @@
-use diagnostic::Color::*;
-use diagnostic::{Paint, Style};
+use diagnostic::terminal::Color::*;
+use diagnostic::terminal::{Paint, Style};
 use serial_test::serial;
 
 macro_rules! assert_renders {
