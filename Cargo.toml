@@ -8,6 +8,10 @@ default-members = [
 ]
 exclude = [
     "projects/.DS_Store",
+    "projects/diagnostic-lsp",
+    "projects/diagnostic-quick",
+    "projects/diagnostic-svg",
+    "projects/syntax-error",
 ]
 
 [profile.release]
