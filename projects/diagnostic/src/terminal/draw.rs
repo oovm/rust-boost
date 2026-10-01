@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 use super::*;
 
 /// Output stream to check for whether color is enabled.

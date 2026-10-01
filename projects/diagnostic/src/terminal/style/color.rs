@@ -1,4 +1,4 @@
-use crate::{Paint, Style};
+use super::{paint::Paint, style::Style};
 
 /// An enum representing an ANSI color code.
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]

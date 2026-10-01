@@ -1,10 +1,13 @@
-use crate::SourceID;
+use source_cache::SourceID;
 use source_cache::{SourceCache, SourceText};
 use std::ops::Range;
 
+use std::io::Write;
+
 use super::{
+    display::Show,
     draw::{StreamAwareFmt, StreamType},
-    Diagnostic, Label, LabelAttach, Show, Write,
+    Diagnostic, Label, LabelAttach,
 };
 
 // A WARNING, FOR ALL YE WHO VENTURE IN HERE

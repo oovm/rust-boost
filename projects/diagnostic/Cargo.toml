@@ -2,7 +2,7 @@
 name = "diagnostic"
 version.workspace = true
 authors.workspace = true
-description = "Pretty diagnostic report"
+description = "Structured diagnostic data model with optional terminal rendering"
 repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/diagnostic"
 documentation = "https://docs.rs/diagnostic"
 readme = "readme.md"
@@ -12,15 +12,19 @@ exclude = ["package.json", "tests/**"]
 
 [dependencies]
 serde = { workspace = true, optional = true }
-unicode-width = { workspace = true }
-source-cache = { workspace = true }
+unicode-width = { workspace = true, optional = true }
+source-cache = { workspace = true, optional = true }
 
 [dev-dependencies]
 serial_test = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 
 [features]
-default = []
-serde = ["dep:serde", "source-cache/serde"]
+default = ["std", "terminal", "serde"]
+std = []
+serde = ["dep:serde"]
+terminal = ["dep:source-cache", "dep:unicode-width", "std"]
 concolor = []
 
 [package.metadata.docs.rs]
