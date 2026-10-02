@@ -13,6 +13,7 @@ Extended `std::fs` for the rust-boost workspace.
 | `read_write`  | `read`, `write`, `read_to_string`, `copy`                             |
 | `remove`      | `remove_file`, `remove_folder`, `remove_folder_all`                   |
 | `rename`      | `rename`                                                              |
+| `publish`     | `AtomicPublisher`, `publish_bytes`, overwrite policy, staging cleanup |
 | `permissions` | `set_permissions`, `Permissions`                                      |
 | `temp`        | `create_folder`, `create_file`, `NamedFile`, `configure_folder`       |
 | `walk`        | `Walker`, `Entry`, `Error`, `Iter`                                    |
