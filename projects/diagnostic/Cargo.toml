@@ -19,6 +19,7 @@ logger = { workspace = true, optional = true }
 console = { workspace = true, optional = true }
 
 [dev-dependencies]
+logger = { workspace = true }
 serial_test = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

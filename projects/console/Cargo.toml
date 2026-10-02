@@ -2,7 +2,7 @@
 name = "console"
 version.workspace = true
 authors.workspace = true
-description = "Structured console event facade, sinks, spans, and generic terminal styling"
+description = "Human-visible logger subscriber and generic terminal styling"
 repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/console"
 readme = "readme.md"
 license.workspace = true
@@ -13,6 +13,7 @@ logger = { workspace = true }
 terminal = { workspace = true }
 
 [dev-dependencies]
+logger = { workspace = true }
 serial_test = { workspace = true }
 
 [features]
