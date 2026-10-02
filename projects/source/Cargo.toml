@@ -1,0 +1,23 @@
+[package]
+name = "source"
+version.workspace = true
+authors.workspace = true
+description = "Stable source identity, immutable snapshots, byte access, and UTF-8 line coordinates"
+repository = "https://github.com/oovm/diagnostic-rs/tree/dev/projects/source"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { workspace = true, optional = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+
+[features]
+default = ["std"]
+std = []
+serde = ["dep:serde"]
+
+[package.metadata.docs.rs]
+all-features = true
