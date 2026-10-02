@@ -6,41 +6,29 @@ mod macros;
 
 mod color;
 mod draw;
-mod event;
-mod field;
-mod file;
-mod json;
-mod level;
 mod paint;
-mod payload;
-mod runtime;
 mod sink;
-mod span;
 mod style;
 
 pub use color::Color;
 pub use draw::{Background, Console, Foreground, Palette, StreamAwareFmt, StreamType};
-pub use event::{ConsoleEvent, ConsoleEventBuilder, EventKind};
-pub use file::{FileSink, install_global_file_sink};
-pub use field::{Field, FieldValue, Fields};
-pub use json::{event_to_json, JsonLinesSink};
-pub use level::Level;
 pub use paint::Paint;
-pub use payload::{
-    ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, LabelPayload, LocationPayload,
-    MessagePayload, SourceRefPayload,
-};
-pub use runtime::{clear_global_sink, emit, set_global_filter, set_global_sink, with_scope};
-pub use sink::{ConsoleSink, Filter, FilteredSink, StderrFallbackSink, VecSink};
-pub use span::{ConsoleSpan, SpanGuard, SpanId, current_span_id};
+pub use sink::StderrFallbackSink;
 pub use style::Style;
 
-/// Enter a span and return a guard that exits it on drop.
-pub fn enter(span: ConsoleSpan) -> SpanGuard {
-    SpanGuard::enter(span)
-}
+pub use logger::{
+    ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, EventKind, Field, FieldValue,
+    Fields, FileSink, Filter, FilteredSink, JsonLinesSink, LabelPayload, Level, LocationPayload,
+    LogEvent as ConsoleEvent, LogEventBuilder as ConsoleEventBuilder, LogSink as ConsoleSink,
+    LogSpan as ConsoleSpan, MessagePayload, SourceRefPayload, SpanGuard, SpanId, VecSink,
+    clear_global_sink, dropped_events, emit, enter, exit, reset_dropped_events, set_global_filter,
+    set_global_sink, with_scope,
+};
+pub use logger::{current_span_id, event_to_json, install_global_file_sink};
 
-/// Exit a span guard explicitly.
-pub fn exit(guard: SpanGuard) {
-    drop(guard);
-}
+/// Emit a structured console event through the shared logger facade.
+pub use logger::event;
+/// Create a console span through the shared logger facade.
+pub use logger::span;
+/// Convert supported literal types into [`FieldValue`].
+pub use logger::field_value;
