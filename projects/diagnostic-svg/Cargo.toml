@@ -11,4 +11,3 @@ edition.workspace = true
 
 [dependencies]
 diagnostic = { workspace = true, features = ["terminal"] }
-source-cache = { workspace = true }

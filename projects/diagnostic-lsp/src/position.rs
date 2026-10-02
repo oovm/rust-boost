@@ -1,10 +1,13 @@
+use diagnostic::terminal::{SourceID, SourceProvider, SourceSpan, SourceView};
 use lsp_types::{Position, Range};
-use source_cache::{SourceID, SourceProvider, SourceSpan, SourceText};
 
 use crate::DiagnosticError;
 
-fn provider_error(error: source_cache::ProviderError) -> DiagnosticError {
-    DiagnosticError::Provider(error.to_string())
+fn line_text(source: &SourceView<'_>, line_index: usize) -> Result<String, DiagnosticError> {
+    source
+        .get_line(line_index)
+        .map(|line| line.text)
+        .ok_or_else(|| DiagnosticError::IndexTooLarge { given: line_index, max: source.line_count().saturating_sub(1) })
 }
 
 fn location_to_position(
@@ -25,20 +28,13 @@ fn location_to_position(
     }
 }
 
-fn line_text(source: &SourceText, line_index: usize) -> Result<&str, DiagnosticError> {
-    let line = source
-        .get_line(line_index)
-        .ok_or_else(|| DiagnosticError::IndexTooLarge { given: line_index, max: source.lines().len().saturating_sub(1) })?;
-    Ok(line.text.as_str())
-}
-
 /// Convert a UTF-8 byte index into an LSP position.
 pub fn byte_index_to_position(
     provider: &impl SourceProvider,
     file_id: &SourceID,
     byte_index: usize,
 ) -> Result<Position, DiagnosticError> {
-    let source = provider.fetch(file_id).map_err(provider_error)?;
+    let source = provider.fetch(file_id).map_err(|error| DiagnosticError::Provider(error.to_string()))?;
     let byte_index = u32::try_from(byte_index).map_err(|_| DiagnosticError::IndexTooLarge {
         given: byte_index,
         max: source.get_length().saturating_sub(1),
@@ -49,8 +45,8 @@ pub fn byte_index_to_position(
         max: source.get_length().saturating_sub(1),
     })?;
 
-    let line_str = line_text(source, line_index)?;
-    location_to_position(line_str, line_index, column as usize, byte_index as usize)
+    let line_str = line_text(&source, line_index)?;
+    location_to_position(&line_str, line_index, column as usize, byte_index as usize)
 }
 
 /// Convert a [`SourceSpan`] into an LSP range.
@@ -89,12 +85,14 @@ pub fn position_to_byte_index(
     file_id: &SourceID,
     position: &Position,
 ) -> Result<usize, DiagnosticError> {
-    let source = provider.fetch(file_id).map_err(provider_error)?;
-    let line = source
-        .get_line(position.line as usize)
-        .ok_or_else(|| DiagnosticError::IndexTooLarge { given: position.line as usize, max: source.lines().len().saturating_sub(1) })?;
-    let byte_offset = character_to_line_offset(&line.text, position.character)?;
-    Ok(line.offset as usize + byte_offset)
+    let source = provider.fetch(file_id).map_err(|error| DiagnosticError::Provider(error.to_string()))?;
+    let line_index = position.line as usize;
+    let line = line_text(&source, line_index)?;
+    let line_offset = source
+        .line_start(line_index)
+        .ok_or_else(|| DiagnosticError::IndexTooLarge { given: line_index, max: source.line_count().saturating_sub(1) })?;
+    let byte_offset = character_to_line_offset(&line, position.character)?;
+    Ok(line_offset as usize + byte_offset)
 }
 
 /// Convert an LSP range into a UTF-8 byte span.

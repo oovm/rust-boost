@@ -12,9 +12,8 @@ edition.workspace = true
 [dependencies]
 lsp-types = { workspace = true }
 url = { workspace = true }
-diagnostic = { workspace = true, features = ["serde"] }
-source-cache = { workspace = true }
+diagnostic = { workspace = true, features = ["serde", "terminal"] }
 
 [dev-dependencies]
-diagnostic = { workspace = true, features = ["serde"] }
+diagnostic = { workspace = true, features = ["serde", "terminal"] }
 serde_json = { workspace = true }

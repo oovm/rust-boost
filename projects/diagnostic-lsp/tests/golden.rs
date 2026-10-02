@@ -4,24 +4,24 @@ use diagnostic::{
     ByteRange, Diagnostic, DiagnosticCode, DiagnosticLabel, DiagnosticLocation, DiagnosticOrigin, DiagnosticSet, LabelRole,
     Message, SourceRef,
 };
+use diagnostic::terminal::SourceID;
 use diagnostic::DiagnosticSeverity;
 use diagnostic_lsp::{structured_set_to_lsp, structured_to_lsp, SourceCache, SourceResolver};
 use lsp_types::Url;
-use source_cache::SourceID;
 
 struct TestResolver(BTreeMap<String, SourceID>);
 
 impl TestResolver {
     fn new(source: &SourceRef, id: SourceID) -> Self {
         let mut map = BTreeMap::new();
-        map.insert(source.to_wire_id(), id);
+        map.insert(source.wire_id(), id);
         Self(map)
     }
 }
 
 impl SourceResolver for TestResolver {
     fn resolve(&self, source: &SourceRef) -> Option<&SourceID> {
-        self.0.get(&source.to_wire_id())
+        self.0.get(&source.wire_id())
     }
 }
 
@@ -45,7 +45,7 @@ fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
 #[test]
 fn lsp_text_diagnostic_matches_golden_json() {
     let mut cache = SourceCache::default();
-    let source_ref = SourceRef::new("oak", "sample.tao");
+    let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
     let file_id = cache.load_text("let value = 1", "sample.tao");
     let resolver = TestResolver::new(&source_ref, file_id);
 
@@ -65,7 +65,7 @@ fn lsp_text_diagnostic_matches_golden_json() {
 #[test]
 fn lsp_set_conversion_preserves_order() {
     let mut cache = SourceCache::default();
-    let source_ref = SourceRef::new("oak", "sample.tao");
+    let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
     let file_id = cache.load_text("let value = 1", "sample.tao");
     let resolver = TestResolver::new(&source_ref, file_id);
 
@@ -86,7 +86,7 @@ fn write_lsp_golden_fixture() {
     use std::path::PathBuf;
 
     let mut cache = SourceCache::default();
-    let source_ref = SourceRef::new("oak", "sample.tao");
+    let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
     let file_id = cache.load_text("let value = 1", "sample.tao");
     let resolver = TestResolver::new(&source_ref, file_id);
 

@@ -5,9 +5,9 @@ use diagnostic::{
     SourceRef,
 };
 use diagnostic::DiagnosticSeverity;
+use diagnostic::terminal::SourceID;
 use diagnostic_lsp::{byte_index_to_position, position_to_byte_index, structured_to_lsp, SourceCache, SourceResolver};
 use lsp_types::{Position, Url};
-use source_cache::SourceID;
 
 const UNICODE: &str = "åä t𐐀b";
 
@@ -16,14 +16,14 @@ struct TestResolver(BTreeMap<String, SourceID>);
 impl TestResolver {
     fn new(source: &SourceRef, id: SourceID) -> Self {
         let mut map = BTreeMap::new();
-        map.insert(source.to_wire_id(), id);
+        map.insert(source.wire_id(), id);
         Self(map)
     }
 }
 
 impl SourceResolver for TestResolver {
     fn resolve(&self, source: &SourceRef) -> Option<&SourceID> {
-        self.0.get(&source.to_wire_id())
+        self.0.get(&source.wire_id())
     }
 }
 
@@ -58,7 +58,7 @@ fn unicode_get_position() {
 #[test]
 fn structured_text_diagnostic_to_lsp() {
     let mut cache = SourceCache::default();
-    let source_ref = SourceRef::new("oak", "sample.tao");
+    let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
     let file_id = cache.load_text("let value = 1", "sample.tao");
     let resolver = TestResolver::new(&source_ref, file_id);
 
@@ -95,7 +95,7 @@ fn structured_member_diagnostic_uses_related_information() {
     use diagnostic::{MappingPrecision, MemberPath, MemberSegment};
 
     let cache = SourceCache::default();
-    let resolver = TestResolver::new(&SourceRef::new("acorn", "docx.zip"), SourceID::default());
+    let resolver = TestResolver::new(&SourceRef::new("acorn", "docx.zip").unwrap(), SourceID::default());
     let diagnostic = Diagnostic::new(
         DiagnosticCode::new("acorn.container.need-range"),
         DiagnosticSeverity::Warning,
@@ -104,7 +104,7 @@ fn structured_member_diagnostic_uses_related_information() {
     )
     .with_primary(DiagnosticLabel::new(
         DiagnosticLocation::Member {
-            container: SourceRef::new("acorn", "docx.zip"),
+            container: SourceRef::new("acorn", "docx.zip").unwrap(),
             member: MemberPath::new(vec![MemberSegment::new("zip", "word/document.xml")]),
             range: None,
             precision: MappingPrecision::Container,
