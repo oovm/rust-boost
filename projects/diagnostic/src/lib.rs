@@ -24,7 +24,10 @@ pub use render::{diagnostic_message, message_fallback};
 pub use source::SourceLookup;
 
 #[cfg(feature = "console")]
-pub use console_projection::{diagnostic_to_event, diagnostic_to_payload, emit_diagnostic, emit_diagnostic_set};
+pub use console_projection::{
+    diagnostic_to_event, diagnostic_to_log_event, diagnostic_to_payload, emit_diagnostic, emit_diagnostic_log,
+    emit_diagnostic_set,
+};
 
 #[cfg(feature = "serde")]
 pub use wire::{DiagnosticEnvelope, SCHEMA_VERSION};

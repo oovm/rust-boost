@@ -1,8 +1,8 @@
-//! Project structured diagnostics into `console` events without reversing the dependency edge.
+//! Project structured diagnostics into `logger` events without reversing the dependency edge.
 
-use console::{
-    ActionPayload, ByteRangePayload, CausePayload, ConsoleEvent, DiagnosticPayload, FieldValue, LabelPayload,
-    LocationPayload, MessagePayload, SourceRefPayload,
+use logger::{
+    ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, FieldValue, LabelPayload, LocationPayload,
+    LogEvent, MessagePayload, SourceRefPayload,
 };
 
 use crate::collect::DiagnosticSet;
@@ -11,24 +11,34 @@ use crate::model::{
     MessageArg, SourceRef,
 };
 
-/// Project a diagnostic record into a console event with `EventKind::Diagnostic`.
-pub fn diagnostic_to_event(diagnostic: &Diagnostic) -> ConsoleEvent {
-    ConsoleEvent::diagnostic(diagnostic_to_payload(diagnostic))
+/// Project a diagnostic record into a log event with `EventKind::Diagnostic`.
+pub fn diagnostic_to_log_event(diagnostic: &Diagnostic) -> LogEvent {
+    LogEvent::diagnostic(diagnostic_to_payload(diagnostic))
 }
 
-/// Emit one diagnostic through the global console facade.
+/// Project a diagnostic record into a log event with `EventKind::Diagnostic`.
+pub fn diagnostic_to_event(diagnostic: &Diagnostic) -> LogEvent {
+    diagnostic_to_log_event(diagnostic)
+}
+
+/// Emit one diagnostic through the global logger facade.
+pub fn emit_diagnostic_log(diagnostic: &Diagnostic) {
+    logger::emit(diagnostic_to_log_event(diagnostic));
+}
+
+/// Emit one diagnostic through the global logger facade.
 pub fn emit_diagnostic(diagnostic: &Diagnostic) {
-    console::emit(diagnostic_to_event(diagnostic));
+    emit_diagnostic_log(diagnostic);
 }
 
-/// Emit every diagnostic in a set through the global console facade.
+/// Emit every diagnostic in a set through the global logger facade.
 pub fn emit_diagnostic_set(set: &DiagnosticSet) {
     for diagnostic in set.diagnostics() {
-        emit_diagnostic(diagnostic);
+        emit_diagnostic_log(diagnostic);
     }
 }
 
-/// Project a diagnostic record into a console-owned payload.
+/// Project a diagnostic record into a logger-owned payload.
 pub fn diagnostic_to_payload(diagnostic: &Diagnostic) -> DiagnosticPayload {
     let mut payload = DiagnosticPayload::new(
         diagnostic.code().as_str(),
