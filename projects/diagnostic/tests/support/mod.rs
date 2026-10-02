@@ -3,6 +3,9 @@ pub mod fixtures;
 #[cfg(feature = "console")]
 pub mod console_projection;
 
+#[cfg(feature = "console")]
+pub mod console_emit;
+
 #[cfg(feature = "serde")]
 pub mod on_disk;
 
