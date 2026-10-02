@@ -2,13 +2,18 @@
 resolver = "2"
 members = ["projects/*"]
 default-members = [
-    "projects/validation",
-    "projects/source-cache",
+    "projects/source",
     "projects/diagnostic",
+    "projects/logger",
+    "projects/console",
+    "projects/terminal",
+    "projects/fs-tools",
 ]
 exclude = [
     "projects/.DS_Store",
+    "projects/source-cache",
     "projects/syntax-error",
+    "projects/validation",
 ]
 
 [workspace.package]
@@ -56,7 +61,6 @@ imageproc = "0.23.0"
 winreg = "0.52.0"
 serial_test = "3.2.0"
 source = { path = "projects/source", version = "0.1.0" }
-source-cache = { path = "projects/source-cache", version = "0.1.0" }
 terminal = { path = "projects/terminal", version = "0.1.0" }
 logger = { path = "projects/logger", version = "0.1.0" }
 console = { path = "projects/console", version = "0.1.0" }
