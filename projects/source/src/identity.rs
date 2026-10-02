@@ -103,6 +103,11 @@ impl SourceRef {
     pub fn span(self, range: ByteRange) -> SourceSpan {
         SourceSpan { source: self, range }
     }
+
+    /// Encode the reference into a reversible wire identifier.
+    pub fn wire_id(&self) -> String {
+        crate::wire::encode_source_ref(self)
+    }
 }
 
 impl Display for SourceRef {
