@@ -1,4 +1,4 @@
-use super::sources::{SourceCache, SourceID, SourceLine, SourcePath, SourceView};
+use super::sources::{SourceCache, SourceID, SourceView};
 use std::ops::Range;
 
 use std::io::Write;
