@@ -1,6 +1,6 @@
 use console::{
-    event_to_json, ConsoleEvent, ConsoleSink, DiagnosticPayload, FieldValue, JsonLinesSink, Level,
-    MessagePayload,
+    event_to_json, ByteRangePayload, ConsoleEvent, ConsoleSink, DiagnosticPayload, FieldValue,
+    JsonLinesSink, LabelPayload, Level, LocationPayload, MessagePayload, SourceRefPayload,
 };
 
 #[test]
@@ -27,6 +27,26 @@ fn event_to_json_serializes_diagnostic_payload() {
     assert!(json.contains("\"code\":\"panduck.adapter.not-implemented\""));
     assert!(json.contains("\"severity\":\"error\""));
     assert!(json.contains("\"fallback\":\"not implemented\""));
+}
+
+#[test]
+fn event_to_json_serializes_text_span_revision() {
+    let payload = DiagnosticPayload::new(
+        "oak.syntax.unexpected-token",
+        "error",
+        MessagePayload::new("oak.syntax.unexpected-token"),
+    )
+        .with_primary(
+            LabelPayload::new(
+                LocationPayload::TextSpan {
+                    source: SourceRefPayload::new("oak", "sample.xml").with_revision("1"),
+                    range: ByteRangePayload { start: 12, end: 13 },
+                },
+                "primary",
+            ),
+        );
+    let json = event_to_json(&ConsoleEvent::diagnostic(payload));
+    assert!(json.contains("\"revision\":\"1\""));
 }
 
 #[test]
