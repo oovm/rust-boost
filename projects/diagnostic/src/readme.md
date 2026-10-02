@@ -19,7 +19,16 @@ terminal  optional text rendering via `console` and `terminal`
 - `DiagnosticLocation`, `DiagnosticLabel`, `Message`, `DiagnosticAction`
 - `DiagnosticSet`, `DiagnosticSink`
 
-Enable the `serde` feature for JSON wire encoding via `diagnostic::wire`.
+Enable optional features explicitly:
+
+| Feature | Purpose |
+|---|---|
+| `serde` | JSON wire encoding via `diagnostic::wire` |
+| `logger` | Project diagnostics into `LogEvent` |
+| `console` | Emit through the global logger facade |
+| `terminal` | Text rendering via `console` and `terminal` |
+
+The default feature set is `std` only. Parser cores, WASM builds, and binary kernels should not enable terminal or console unless they render to a TTY.
 
 ## Boundaries
 

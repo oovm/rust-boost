@@ -2,6 +2,7 @@
 
 mod support;
 
+#[cfg(feature = "terminal")]
 mod simple;
 
 #[test]
