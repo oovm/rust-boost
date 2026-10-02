@@ -42,6 +42,9 @@ impl Display for SnapshotRef {
 pub struct SnapshotHandle(u32);
 
 impl SnapshotHandle {
+    /// Sentinel handle that does not resolve until inserted into a store.
+    pub const INVALID: Self = Self(0);
+
     /// Create a handle from a raw index.
     #[cfg(feature = "std")]
     pub(crate) fn from_index(index: u32) -> Self {
