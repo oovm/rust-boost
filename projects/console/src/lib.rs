@@ -9,12 +9,14 @@ mod draw;
 mod paint;
 mod sink;
 mod style;
+mod subscriber;
 
 pub use color::Color;
 pub use draw::{Background, Console, Foreground, Palette, StreamAwareFmt, StreamType};
 pub use paint::Paint;
 pub use sink::StderrFallbackSink;
 pub use style::Style;
+pub use subscriber::install_global_subscriber;
 
 pub use logger::{
     ActionPayload, ByteRangePayload, CausePayload, DiagnosticPayload, EventKind, Field, FieldValue,
