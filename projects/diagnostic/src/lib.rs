@@ -6,6 +6,7 @@ extern crate alloc;
 
 pub mod collect;
 pub mod model;
+pub mod provenance;
 pub mod render;
 pub mod source;
 
@@ -20,6 +21,9 @@ pub mod console_projection;
 
 pub use collect::{DiagnosticSet, DiagnosticSink, SinkStatus};
 pub use model::*;
+pub use provenance::{
+    AddressSpaceRef, DocumentRef, MappingPrecision, MemberPath, MemberSegment, ObjectRef, SemanticPath,
+};
 pub use render::{diagnostic_message, message_fallback};
 pub use source::SourceLookup;
 

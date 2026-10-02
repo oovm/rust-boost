@@ -121,7 +121,7 @@ fn action_to_payload(action: &DiagnosticAction) -> ActionPayload {
 fn source_ref_to_payload(source: &SourceRef) -> SourceRefPayload {
     let mut payload = SourceRefPayload::new(source.namespace(), source.id());
     if let Some(revision) = source.revision() {
-        payload = payload.with_revision(revision);
+        payload = payload.with_revision(revision.as_str());
     }
     payload
 }
@@ -130,7 +130,7 @@ fn location_to_payload(location: &DiagnosticLocation) -> LocationPayload {
     match location {
         DiagnosticLocation::Text { source, range } => LocationPayload::TextSpan {
             source: source_ref_to_payload(source),
-            range: ByteRangePayload { start: range.start, end: range.end },
+            range: ByteRangePayload { start: range.start(), end: range.end() },
         },
         other => LocationPayload::Opaque {
             kind: other.kind_str().to_string(),
@@ -146,8 +146,8 @@ fn location_opaque_fields(location: &DiagnosticLocation) -> Vec<(String, FieldVa
             ("source.id".into(), FieldValue::str(source.id())),
             ("address_space.namespace".into(), FieldValue::str(address_space.namespace())),
             ("address_space.id".into(), FieldValue::str(address_space.id())),
-            ("range.start".into(), FieldValue::U64(range.start)),
-            ("range.end".into(), FieldValue::U64(range.end)),
+            ("range.start".into(), FieldValue::U64(range.start())),
+            ("range.end".into(), FieldValue::U64(range.end())),
         ],
         DiagnosticLocation::Member { container, member, range, precision } => {
             let mut fields = vec![
@@ -160,8 +160,8 @@ fn location_opaque_fields(location: &DiagnosticLocation) -> Vec<(String, FieldVa
                 fields.push((format!("member.{index}.name"), FieldValue::str(segment.name())));
             }
             if let Some(range) = range {
-                fields.push(("range.start".into(), FieldValue::U64(range.start)));
-                fields.push(("range.end".into(), FieldValue::U64(range.end)));
+                fields.push(("range.start".into(), FieldValue::U64(range.start())));
+                fields.push(("range.end".into(), FieldValue::U64(range.end())));
             }
             fields
         }
@@ -179,8 +179,8 @@ fn location_opaque_fields(location: &DiagnosticLocation) -> Vec<(String, FieldVa
         DiagnosticLocation::Virtual { source, range } => vec![
             ("source.namespace".into(), FieldValue::str(source.namespace())),
             ("source.id".into(), FieldValue::str(source.id())),
-            ("range.start".into(), FieldValue::U64(range.start)),
-            ("range.end".into(), FieldValue::U64(range.end)),
+            ("range.start".into(), FieldValue::U64(range.start())),
+            ("range.end".into(), FieldValue::U64(range.end())),
         ],
         DiagnosticLocation::Text { .. } => Vec::new(),
     }

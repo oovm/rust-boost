@@ -1,4 +1,5 @@
 {
+  "actions": [],
   "cause": null,
   "code": "acorn.layout.offset-out-of-range",
   "helps": [],
@@ -25,8 +26,10 @@
         "start": 4096
       },
       "source": {
-        "id": "firmware.bin",
-        "namespace": "acorn",
+        "identity": {
+          "id": "firmware.bin",
+          "namespace": "acorn"
+        },
         "revision": null
       }
     },
@@ -37,7 +40,6 @@
     },
     "role": "primary"
   },
-  "actions": [],
   "secondary": [],
   "severity": "error"
 }

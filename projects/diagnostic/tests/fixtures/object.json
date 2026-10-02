@@ -1,4 +1,5 @@
 {
+  "actions": [],
   "cause": null,
   "code": "acorn.layout.offset-out-of-range",
   "helps": [],
@@ -21,8 +22,10 @@
         "kind": "xref"
       },
       "source": {
-        "id": "sample.pdf",
-        "namespace": "acorn",
+        "identity": {
+          "id": "sample.pdf",
+          "namespace": "acorn"
+        },
         "revision": null
       }
     },
@@ -33,7 +36,6 @@
     },
     "role": "primary"
   },
-  "actions": [],
   "secondary": [],
   "severity": "error"
 }

@@ -1,8 +1,6 @@
 //! Opaque source references used by diagnostic locations.
 
-pub use source_cache::provenance::{
-    AddressSpaceRef, DocumentRef, MemberPath, MemberSegment, ObjectRef, SemanticPath, SourceRef,
-};
+pub use source::{ByteRange, SourceRef};
 
 /// Resolve opaque source references for renderers and providers.
 ///

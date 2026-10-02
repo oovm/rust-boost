@@ -34,7 +34,7 @@ fn render_terminal_golden(diagnostic: &Diagnostic, cache: &SourceCache, registry
 fn terminal_text_diagnostic_matches_golden() {
     let mut cache = SourceCache::default();
     let source = cache.load_text(include_str!("../simple/sample.tao"), "sample.tao");
-    let source_ref = SourceRef::new("oak", "sample.tao");
+    let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
 
     let mut registry = SourceRegistry::new();
     registry.register(&source_ref, source);
@@ -52,7 +52,7 @@ fn write_terminal_golden_fixture() {
 
     let mut cache = SourceCache::default();
     let source = cache.load_text(include_str!("../simple/sample.tao"), "sample.tao");
-    let source_ref = SourceRef::new("oak", "sample.tao");
+    let source_ref = SourceRef::new("oak", "sample.tao").unwrap();
 
     let mut registry = SourceRegistry::new();
     registry.register(&source_ref, source);
