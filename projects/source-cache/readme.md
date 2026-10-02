@@ -1,6 +1,6 @@
 # `source-cache`
 
-Source identity, provenance primitives, and optional text cache.
+**Deprecated.** New code must use `source` for identity, snapshots, and byte access, and `diagnostic::terminal::SourceCache` for terminal rendering. This crate remains only until `diagnostic-lsp` and `diagnostic-svg` finish migration.
 
 ## Responsibilities
 
