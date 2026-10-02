@@ -4,7 +4,7 @@ use diagnostic::{
     SourceRef,
 };
 use diagnostic::DiagnosticSeverity;
-use source_cache::SourceCache;
+use diagnostic::terminal::SourceCache;
 
 #[test]
 fn structured_text_diagnostic_renders() {

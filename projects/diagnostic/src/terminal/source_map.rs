@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use source_cache::SourceID;
+use super::sources::SourceID;
 
 use crate::SourceRef;
 

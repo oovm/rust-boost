@@ -2,7 +2,7 @@ use alloc::string::{String, ToString};
 use core::fmt::{self, Display, Formatter};
 use core::ops::Range;
 
-use source_cache::{SourceCache, SourceID, SourceSpan};
+use super::sources::{SourceCache, SourceID, SourceSpan};
 
 use crate::{
     model::Diagnostic,

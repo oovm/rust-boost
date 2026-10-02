@@ -4,7 +4,7 @@ use diagnostic::{
     SourceRef,
 };
 use diagnostic::DiagnosticSeverity;
-use source_cache::SourceCache;
+use diagnostic::terminal::SourceCache;
 
 fn sample_text_diagnostic(source_ref: SourceRef) -> Diagnostic {
     Diagnostic::new(
