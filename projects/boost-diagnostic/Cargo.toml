@@ -15,8 +15,8 @@ serde = { workspace = true, optional = true }
 unicode-width = { workspace = true, optional = true }
 boost-source = { workspace = true }
 boost-terminal = { workspace = true, optional = true }
+boost-console = { workspace = true, optional = true, features = ["fmt"] }
 boost-log = { workspace = true, optional = true }
-boost-fmt = { workspace = true, optional = true }
 
 [dev-dependencies]
 boost-log = { workspace = true }
@@ -29,9 +29,9 @@ default = ["std"]
 std = []
 serde = ["dep:serde", "boost-source/serde"]
 log = ["dep:boost-log", "std"]
-fmt = ["dep:boost-fmt"]
+fmt = ["dep:boost-console"]
 terminal = ["fmt", "dep:boost-terminal", "boost-source/std", "dep:unicode-width"]
-concolor = ["boost-fmt/concolor"]
+concolor = ["boost-console/concolor"]
 
 [package.metadata.docs.rs]
 all-features = true

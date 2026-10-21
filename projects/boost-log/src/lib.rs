@@ -17,9 +17,6 @@ mod sink;
 mod span;
 mod task;
 
-#[cfg(feature = "console")]
-pub mod human;
-
 pub use async_sink::{AsyncSink, AsyncSinkError};
 pub use event::{EventKind, LogEvent, LogEventBuilder};
 pub use field::{Field, FieldValue, Fields, IntoFieldValue};
@@ -36,9 +33,6 @@ pub use runtime::{
 pub use sink::{FilteredSink, FlushOutcome, LogSink, VecSink};
 pub use span::{LogSpan, SpanGuard, SpanId, current_span_id};
 pub use task::{TaskContext, TaskId, TaskRef};
-
-#[cfg(feature = "console")]
-pub use human::{StderrFallbackSink, StderrSubscriberSink, install_global_subscriber, render, render_plain};
 
 /// Enter a span and return a guard that exits it on drop.
 pub fn enter(span: LogSpan) -> SpanGuard {

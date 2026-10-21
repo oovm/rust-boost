@@ -1,8 +1,8 @@
 use std::io::{self, Write};
 
-use crate::{LogEvent, LogSink};
+use boost_log::{LogEvent, LogSink};
 
-use super::render::{render, render_plain};
+use crate::render::{render, render_plain};
 
 /// Plain-text stderr sink without terminal styling.
 pub struct StderrFallbackSink;

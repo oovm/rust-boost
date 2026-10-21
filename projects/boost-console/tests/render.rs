@@ -1,8 +1,6 @@
+use boost_console::{fmt::Paint, render, render_plain};
 use boost_log::{DiagnosticPayload, FieldValue, Level, LogEvent, MessagePayload};
 use serial_test::serial;
-
-use boost_fmt::Paint;
-use boost_log::human::{render, render_plain};
 
 #[test]
 fn render_plain_log_event() {

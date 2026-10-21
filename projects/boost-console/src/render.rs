@@ -1,8 +1,7 @@
 use core::fmt::Write;
 
-use crate::{EventKind, Level, LogEvent};
-
-use boost_fmt::Paint;
+use crate::fmt::Paint;
+use boost_log::{EventKind, Level, LogEvent};
 
 /// Render one [`LogEvent`] as plain terminal output without styling.
 pub fn render_plain(event: &LogEvent) -> String {

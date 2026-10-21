@@ -2,7 +2,7 @@
 
 Workspace-wide structured log and event facade.
 
-`boost-log` owns `LogEvent`, span context, filters, sinks, and global dispatch. It does not depend on `boost-diagnostic`, `boost-fmt`, or `boost-terminal`. Domain crates can emit structured events through `boost_log::event!` without importing parser or diagnostic models.
+`boost-log` owns `LogEvent`, span context, filters, sinks, and global dispatch. It does not depend on `boost-diagnostic`, `boost-terminal`, or `boost-console`. Domain crates can emit structured events through `boost_log::event!` without importing parser or diagnostic models. Human-visible console rendering and the default stderr subscriber live in `boost-console`.
 
 When no global sink is installed, events are silently dropped and a drop counter is incremented. Sink callbacks never run while holding the global registration lock.
 

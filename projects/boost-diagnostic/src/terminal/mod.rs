@@ -8,9 +8,9 @@ mod structured;
 mod windows;
 mod write;
 
+use boost_console::fmt::Color;
 use characters::Draw;
 pub use characters::{BuiltinDrawer, DrawElements};
-use boost_fmt::Color;
 pub use source_map::SourceRegistry;
 pub use sources::{ProviderError, SourceCache, SourceID, SourceLine, SourcePath, SourceProvider, SourceSpan, SourceView};
 pub use structured::{StructuredRenderError, eprint_structured_set, structured_to_terminal};

@@ -34,7 +34,7 @@ pub use log_projection::{
 pub use wire::{DiagnosticEnvelope, SCHEMA_VERSION};
 
 #[cfg(feature = "terminal")]
-pub use boost_fmt::{Color, Console, Paint, Palette, Style};
+pub use boost_console::fmt::{Color, Console, Paint, Palette, Style};
 #[cfg(feature = "terminal")]
 pub use terminal::{
     BuiltinDrawer, Config, Diagnostic as TerminalDiagnostic, DiagnosticBuilder as TerminalDiagnosticBuilder, DrawElements, Label, LabelAttach,

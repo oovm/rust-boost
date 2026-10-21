@@ -1,4 +1,4 @@
-use boost_fmt::{Color::*, Paint, Style};
+use boost_console::fmt::{Color::*, Paint, Style};
 use serial_test::serial;
 
 macro_rules! assert_renders {

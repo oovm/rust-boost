@@ -2,25 +2,21 @@
 resolver = "2"
 members = ["projects/*"]
 default-members = [
+    "projects/boost",
     "projects/boost-source",
     "projects/boost-random",
-    "projects/boost-fmt",
+    "projects/boost-console",
     "projects/boost-terminal",
     "projects/boost-fs",
     "projects/boost-http",
     "projects/boost-log",
     "projects/boost-diagnostic",
     "projects/boost-diagnostic-macro",
-    "projects/boost-diagnostic-lsp",
-    "projects/boost-diagnostic-svg",
     "projects/boost-test",
     "projects/boost-test-macro",
 ]
 exclude = [
     "projects/.DS_Store",
-    "projects/source-cache",
-    "projects/syntax-error",
-    "projects/validation",
 ]
 
 [workspace.package]
@@ -73,12 +69,11 @@ boost-source = { path = "projects/boost-source", version = "0.1.0", default-feat
 boost-random = { path = "projects/boost-random", version = "0.1.0" }
 boost-terminal = { path = "projects/boost-terminal", version = "0.1.0" }
 boost-log = { path = "projects/boost-log", version = "0.1.0" }
-boost-fmt = { path = "projects/boost-fmt", version = "0.1.0" }
+boost = { path = "projects/boost", version = "0.1.0", default-features = false }
+boost-console = { path = "projects/boost-console", version = "0.1.0", default-features = false }
 boost-http = { path = "projects/boost-http", version = "0.1.0" }
 boost-diagnostic = { path = "projects/boost-diagnostic", version = "0.1.0" }
 boost-diagnostic-macro = { path = "projects/boost-diagnostic-macro", version = "0.1.0" }
-boost-diagnostic-lsp = { path = "projects/boost-diagnostic-lsp", version = "0.1.0" }
-boost-diagnostic-svg = { path = "projects/boost-diagnostic-svg", version = "0.1.0" }
 boost-test = { path = "projects/boost-test", version = "0.1.0" }
 boost-test-macro = { path = "projects/boost-test-macro", version = "0.1.0" }
 

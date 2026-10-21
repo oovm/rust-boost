@@ -4,7 +4,7 @@ use std::ops::Range;
 use std::io::Write;
 
 use super::{Diagnostic, Label, LabelAttach, display::Show};
-use boost_fmt::{StreamAwareFmt, StreamType};
+use boost_console::fmt::{StreamAwareFmt, StreamType};
 
 // A WARNING, FOR ALL YE WHO VENTURE IN HERE
 //

@@ -1,5 +1,4 @@
-#![doc = include_str!("readme.md")]
-#![deny(missing_docs)]
+//! Text styling, color, paint, and stream-aware formatting.
 
 #[macro_use]
 mod macros;

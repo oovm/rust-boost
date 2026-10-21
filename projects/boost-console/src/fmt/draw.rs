@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use crate::{Color, Paint};
+use super::{Color, Paint};
 
 /// Output stream to check for whether color is enabled.
 #[derive(Clone, Copy, Debug)]

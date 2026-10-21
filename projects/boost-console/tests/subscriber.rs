@@ -1,9 +1,8 @@
 use std::sync::{Arc, Mutex};
 
+use boost_console::install_global_subscriber;
 use boost_log::{LogEvent, LogSink, VecSink, clear_global_sink, event, set_global_sink};
 use serial_test::serial;
-
-use boost_log::human::install_global_subscriber;
 
 struct SharedSink(Arc<Mutex<VecSink>>);
 

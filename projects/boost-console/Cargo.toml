@@ -1,0 +1,27 @@
+[package]
+name = "boost-console"
+version.workspace = true
+authors.workspace = true
+description = "Terminal text styling and human-visible console output for structured log events"
+repository = "https://github.com/oovm/rust-boost/tree/dev/projects/boost-console"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+keywords = ["console", "logging", "terminal", "stderr", "style", "ansi"]
+categories = ["development-tools"]
+
+[dependencies]
+boost-log = { workspace = true, optional = true }
+boost-terminal = { workspace = true, optional = true }
+
+[dev-dependencies]
+serial_test = { workspace = true }
+
+[features]
+default = ["console"]
+fmt = []
+console = ["fmt", "dep:boost-log", "dep:boost-terminal"]
+concolor = []
+
+[package.metadata.docs.rs]
+all-features = true
