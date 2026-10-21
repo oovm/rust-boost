@@ -7,7 +7,10 @@ use syn::{
     token::Comma,
 };
 
-use super::signature::{is_context_type, is_mutable_reference, reject_unsupported_modifiers, typed_argument_type, unit_or_result};
+use super::{
+    runtime::RuntimePath,
+    signature::{is_context_type, is_mutable_reference, reject_unsupported_modifiers, typed_argument_type, unit_or_result},
+};
 
 /// Parsed `#[boost_test::test(...)]` attributes.
 #[derive(Default)]
@@ -27,8 +30,15 @@ struct SignatureShape {
 }
 
 /// Expands `#[boost_test::test]` into the original body plus a standard `#[test]` wrapper.
-pub(crate) fn expand_test(attributes: TokenStream, item: ItemFn) -> syn::Result<TokenStream> {
-    let options = parse_options(attributes)?;
+pub(crate) fn expand_test(attributes: TokenStream, item: ItemFn, default_runtime: RuntimePath) -> syn::Result<TokenStream> {
+    let mut metas = if attributes.is_empty() {
+        Punctuated::new()
+    }
+    else {
+        Punctuated::<Meta, Comma>::parse_terminated.parse2(attributes)?
+    };
+    let (runtime, metas) = RuntimePath::take_from_metas(metas, default_runtime)?;
+    let options = parse_options_from_metas(metas)?;
     let shape = validate_signature(&item.sig, options.fixture.is_some())?;
 
     let ident = item.sig.ident.clone();
@@ -36,17 +46,19 @@ pub(crate) fn expand_test(attributes: TokenStream, item: ItemFn) -> syn::Result<
     let wrapper_visibility = item.vis.clone();
     let name = options.name.unwrap_or_else(|| ident.to_string());
     let name_literal = LitStr::new(&name, ident.span());
+    let case_path = runtime.extend(&["case"]);
+    let descriptor_path = runtime.extend(&["descriptor"]);
     let case_attachment = match &options.case {
         Some(case) => quote! {
-            .with_case(::boost_test::case::CaseId::new(#case).expect("`#[boost_test::test]` validates a non-empty case name"))
+            .with_case(#case_path::CaseId::new(#case).expect("`#[boost_test::test]` validates a non-empty case name"))
         },
         None => TokenStream::new(),
     };
     let expectation = if options.expected_failure.unwrap_or(false) {
-        quote!(::boost_test::descriptor::Expectation::ExpectedFailure)
+        quote!(#descriptor_path::Expectation::ExpectedFailure)
     }
     else {
-        quote!(::boost_test::descriptor::Expectation::Pass)
+        quote!(#descriptor_path::Expectation::Pass)
     };
 
     let mut body = item;
@@ -95,24 +107,26 @@ pub(crate) fn expand_test(attributes: TokenStream, item: ItemFn) -> syn::Result<
         })
     };
 
+    let run_with_fixture = runtime.extend(&["run_with_fixture"]);
+    let run = runtime.extend(&["run"]);
     let descriptor = quote! {
-        ::boost_test::descriptor::TestDescriptor::new(
+        #descriptor_path::TestDescriptor::new(
             #name_literal,
             module_path!(),
-            ::boost_test::descriptor::SourceLocation::new(file!(), line!(), column!()),
+            #descriptor_path::SourceLocation::new(file!(), line!(), column!()),
         )
         #case_attachment
         .with_expectation(#expectation)
     };
     let entry = match &options.fixture {
         Some(fixture) => quote! {
-            ::boost_test::run_with_fixture::<#fixture, _, _>(
+            #run_with_fixture::<#fixture, _, _>(
                 #descriptor,
                 |#closure_parameters| #body_expression,
             );
         },
         None => quote! {
-            ::boost_test::run(
+            #run(
                 #descriptor,
                 |#closure_parameters| #body_expression,
             );
@@ -133,13 +147,8 @@ pub(crate) fn expand_test(attributes: TokenStream, item: ItemFn) -> syn::Result<
     })
 }
 
-/// Parses the attribute arguments.
-fn parse_options(attributes: TokenStream) -> syn::Result<TestOptions> {
-    if attributes.is_empty() {
-        return Ok(TestOptions::default());
-    }
-    let parser = Punctuated::<Meta, Comma>::parse_terminated;
-    let metas = parser.parse2(attributes)?;
+/// Parses the attribute arguments after `runtime = ...` has been removed.
+fn parse_options_from_metas(metas: Punctuated<Meta, Comma>) -> syn::Result<TestOptions> {
     let mut options = TestOptions::default();
     for meta in metas {
         match meta {
@@ -195,7 +204,7 @@ fn parse_options(attributes: TokenStream) -> syn::Result<TestOptions> {
             other => {
                 return Err(syn::Error::new(
                     other.span(),
-                    "unsupported `#[boost_test::test]` attribute, supported attributes are `name`, `case`, `fixture`, `expected`, and `expected_failure`",
+                    "unsupported `#[boost_test::test]` attribute, supported attributes are `runtime`, `name`, `case`, `fixture`, `expected`, and `expected_failure`",
                 ));
             }
         }

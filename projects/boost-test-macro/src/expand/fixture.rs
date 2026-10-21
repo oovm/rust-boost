@@ -4,7 +4,10 @@ use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, quote};
 use syn::{Expr, ExprLit, FnArg, ItemFn, Lit, LitStr, Meta, Path, parse::Parser, punctuated::Punctuated, spanned::Spanned, token::Comma};
 
-use super::signature::{FixtureReturn, fixture_return, is_context_type, reject_receiver, reject_unsupported_modifiers};
+use super::{
+    runtime::RuntimePath,
+    signature::{FixtureReturn, fixture_return, is_context_type, reject_receiver, reject_unsupported_modifiers},
+};
 
 /// Parsed `#[boost_test::fixture(...)]` attributes.
 #[derive(Default)]
@@ -14,9 +17,16 @@ struct FixtureOptions {
 }
 
 /// Expands `#[boost_test::fixture]` into the setup function, a marker type, and a `Fixture` implementation.
-pub(crate) fn expand_fixture(attributes: TokenStream, item: ItemFn) -> syn::Result<TokenStream> {
+pub(crate) fn expand_fixture(attributes: TokenStream, item: ItemFn, default_runtime: RuntimePath) -> syn::Result<TokenStream> {
     const ATTRIBUTE: &str = "#[boost_test::fixture]";
-    let options = parse_options(attributes)?;
+    let mut metas = if attributes.is_empty() {
+        Punctuated::new()
+    }
+    else {
+        Punctuated::<Meta, Comma>::parse_terminated.parse2(attributes)?
+    };
+    let (runtime, metas) = RuntimePath::take_from_metas(metas, default_runtime)?;
+    let options = parse_options_from_metas(metas)?;
     reject_unsupported_modifiers(&item.sig, ATTRIBUTE)?;
     reject_receiver(&item.sig, ATTRIBUTE)?;
 
@@ -50,13 +60,14 @@ pub(crate) fn expand_fixture(attributes: TokenStream, item: ItemFn) -> syn::Resu
     let visibility = item.vis.clone();
     let context_ident = syn::Ident::new("__testkit_context", Span::call_site());
     let setup_call = if takes_context { quote!(#ident(#context_ident)) } else { quote!(#ident()) };
+    let into_test_failure = runtime.extend(&["IntoTestFailure"]);
     let setup_body = match &returns {
         FixtureReturn::Value(_) => quote!(::core::result::Result::Ok(#setup_call)),
         FixtureReturn::Result { .. } => quote! {
             match #setup_call {
                 ::core::result::Result::Ok(value) => ::core::result::Result::Ok(value),
                 ::core::result::Result::Err(error) => {
-                    ::core::result::Result::Err(::boost_test::IntoTestFailure::into_test_failure(error))
+                    ::core::result::Result::Err(#into_test_failure::into_test_failure(error))
                 }
             }
         },
@@ -65,8 +76,9 @@ pub(crate) fn expand_fixture(attributes: TokenStream, item: ItemFn) -> syn::Resu
         FixtureReturn::Value(value) => value.to_token_stream(),
         FixtureReturn::Result { value } => value.to_token_stream(),
     };
+    let into_teardown = runtime.extend(&["fixture", "IntoTeardown"]);
     let teardown_body = match &options.teardown {
-        Some(path) => quote!(::boost_test::fixture::IntoTeardown::into_teardown(#path(value))),
+        Some(path) => quote!(#into_teardown::into_teardown(#path(value))),
         None => quote! {
             ::core::mem::drop(value);
             ::core::result::Result::Ok(())
@@ -84,6 +96,10 @@ pub(crate) fn expand_fixture(attributes: TokenStream, item: ItemFn) -> syn::Resu
     }
     body.attrs = body_attributes;
 
+    let fixture_path = runtime.extend(&["fixture"]);
+    let descriptor_path = runtime.extend(&["descriptor"]);
+    let test_context = runtime.extend(&["TestContext"]);
+    let test_failure = runtime.extend(&["TestFailure"]);
     Ok(quote! {
         #body
         #(#cfg_attributes)*
@@ -91,34 +107,29 @@ pub(crate) fn expand_fixture(attributes: TokenStream, item: ItemFn) -> syn::Resu
         #[doc = #marker_doc]
         #visibility struct #ident {}
         #(#cfg_attributes)*
-        impl ::boost_test::fixture::Fixture for #ident {
+        impl #fixture_path::Fixture for #ident {
             type Value = #value_type;
 
-            fn descriptor() -> ::boost_test::fixture::FixtureDescriptor {
-                ::boost_test::fixture::FixtureDescriptor::new(
+            fn descriptor() -> #fixture_path::FixtureDescriptor {
+                #fixture_path::FixtureDescriptor::new(
                     #name_literal,
-                    ::boost_test::descriptor::SourceLocation::new(file!(), line!(), column!()),
+                    #descriptor_path::SourceLocation::new(file!(), line!(), column!()),
                 )
             }
 
-            fn setup(#context_ident: &mut ::boost_test::TestContext) -> ::core::result::Result<Self::Value, ::boost_test::TestFailure> {
+            fn setup(#context_ident: &mut #test_context) -> ::core::result::Result<Self::Value, #test_failure> {
                 #setup_body
             }
 
-            fn teardown(value: Self::Value) -> ::core::result::Result<(), ::boost_test::TestFailure> {
+            fn teardown(value: Self::Value) -> ::core::result::Result<(), #test_failure> {
                 #teardown_body
             }
         }
     })
 }
 
-/// Parses the attribute arguments.
-fn parse_options(attributes: TokenStream) -> syn::Result<FixtureOptions> {
-    if attributes.is_empty() {
-        return Ok(FixtureOptions::default());
-    }
-    let parser = Punctuated::<Meta, Comma>::parse_terminated;
-    let metas = parser.parse2(attributes)?;
+/// Parses the attribute arguments after `runtime = ...` has been removed.
+fn parse_options_from_metas(metas: Punctuated<Meta, Comma>) -> syn::Result<FixtureOptions> {
     let mut options = FixtureOptions::default();
     for meta in metas {
         match meta {
@@ -145,7 +156,7 @@ fn parse_options(attributes: TokenStream) -> syn::Result<FixtureOptions> {
             other => {
                 return Err(syn::Error::new(
                     other.span(),
-                    "unsupported `#[boost_test::fixture]` attribute, supported attributes are `name` and `teardown`",
+                    "unsupported `#[boost_test::fixture]` attribute, supported attributes are `runtime`, `name`, and `teardown`",
                 ));
             }
         }

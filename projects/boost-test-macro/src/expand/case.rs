@@ -5,12 +5,15 @@ use std::collections::HashSet;
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{
-    Expr, Ident, ItemFn, LitStr, Token, Visibility,
+    Expr, ExprPath, Ident, ItemFn, LitStr, Token, Visibility,
     parse::{Parse, ParseStream},
     spanned::Spanned,
 };
 
-use super::signature::{reject_receiver, reject_unsupported_modifiers, unit_or_result};
+use super::{
+    runtime::RuntimePath,
+    signature::{reject_receiver, reject_unsupported_modifiers, unit_or_result},
+};
 
 /// One declared case: a stable name and the expression that supplies its arguments.
 struct CaseEntry {
@@ -38,10 +41,43 @@ impl Parse for CaseEntries {
     }
 }
 
+/// Parses an optional `runtime = path` prefix followed by case entries.
+fn parse_case_attributes(attributes: TokenStream, default_runtime: RuntimePath) -> syn::Result<(RuntimePath, Vec<CaseEntry>)> {
+    if attributes.is_empty() {
+        return Ok((default_runtime, Vec::new()));
+    }
+    syn::parse::Parser::parse2(
+        |input: ParseStream<'_>| {
+            let runtime = if input.peek(Ident) {
+                let fork = input.fork();
+                let ident: Ident = fork.parse()?;
+                if ident == "runtime" && fork.peek(Token![=]) {
+                    input.parse::<Ident>()?;
+                    input.parse::<Token![=]>()?;
+                    let path: ExprPath = input.parse()?;
+                    if input.peek(Token![,]) {
+                        input.parse::<Token![,]>()?;
+                    }
+                    RuntimePath::from_path(path.path)
+                }
+                else {
+                    default_runtime.clone()
+                }
+            }
+            else {
+                default_runtime.clone()
+            };
+            let entries = input.parse::<CaseEntries>()?.0;
+            Ok((runtime, entries))
+        },
+        attributes,
+    )
+}
+
 /// Expands `#[boost_test::case]` into one standard `#[test]` wrapper per declared case.
-pub(crate) fn expand_case(attributes: TokenStream, item: ItemFn) -> syn::Result<TokenStream> {
+pub(crate) fn expand_case(attributes: TokenStream, item: ItemFn, default_runtime: RuntimePath) -> syn::Result<TokenStream> {
     const ATTRIBUTE: &str = "#[boost_test::case]";
-    let entries = syn::parse2::<CaseEntries>(attributes)?.0;
+    let (runtime, entries) = parse_case_attributes(attributes, default_runtime)?;
     if entries.is_empty() {
         return Err(syn::Error::new(Span::call_site(), "`#[boost_test::case]` needs at least one `\"name\" => arguments` entry"));
     }
@@ -112,18 +148,21 @@ pub(crate) fn expand_case(attributes: TokenStream, item: ItemFn) -> syn::Result<
             })
         };
         let case_literal = &entry.name;
+        let run = runtime.extend(&["run"]);
+        let descriptor_path = runtime.extend(&["descriptor"]);
+        let case_path = runtime.extend(&["case"]);
         wrappers.push(quote! {
             #(#shared_attributes)*
             #[allow(non_snake_case)]
             #[test]
             fn #wrapper_ident() {
-                ::boost_test::run(
-                    ::boost_test::descriptor::TestDescriptor::new(
+                #run(
+                    #descriptor_path::TestDescriptor::new(
                         #name_literal,
                         module_path!(),
-                        ::boost_test::descriptor::SourceLocation::new(file!(), line!(), column!()),
+                        #descriptor_path::SourceLocation::new(file!(), line!(), column!()),
                     )
-                    .with_case(::boost_test::case::CaseId::new(#case_literal).expect("`#[boost_test::case]` validates non-empty names")),
+                    .with_case(#case_path::CaseId::new(#case_literal).expect("`#[boost_test::case]` validates non-empty names")),
                     |_testkit_context| #body_expression,
                 );
             }

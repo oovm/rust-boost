@@ -57,4 +57,5 @@ pub mod terminal {
 pub mod test {
     //! Correctness tests, cases, fixtures, and assertions.
     pub use boost_test::*;
+    pub use boost_test_macro::{facade_case as case, facade_fixture as fixture, facade_test as test};
 }

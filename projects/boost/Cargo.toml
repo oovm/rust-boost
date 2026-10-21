@@ -19,6 +19,7 @@ boost-random = { workspace = true, optional = true }
 boost-source = { workspace = true, optional = true }
 boost-terminal = { workspace = true, optional = true }
 boost-test = { workspace = true, optional = true }
+boost-test-macro = { workspace = true, optional = true }
 
 [features]
 default = []
@@ -30,7 +31,11 @@ log = ["dep:boost-log"]
 random = ["dep:boost-random"]
 source = ["dep:boost-source"]
 terminal = ["dep:boost-terminal"]
-test = ["dep:boost-test"]
+test = ["dep:boost-test", "dep:boost-test-macro", "boost-test/macros"]
+
+[[test]]
+name = "facade_test_macro"
+required-features = ["test"]
 
 [package.metadata.docs.rs]
 all-features = true
