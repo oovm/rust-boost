@@ -34,7 +34,7 @@ impl Color {
     /// foreground color set to the color `self`.
     ///
     /// ```rust
-    /// use boost_fmt::Color::Blue;
+    /// use boost_console::fmt::Color::Blue;
     ///
     /// println!("This is going to be blue: {}", Blue.paint("yay!"));
     /// ```
@@ -47,7 +47,7 @@ impl Color {
     /// color `self`.
     ///
     /// ```rust
-    /// use boost_fmt::Color::Green;
+    /// use boost_console::fmt::Color::Green;
     ///
     /// let success = Green.style().bold();
     /// println!("Hey! {}", success.paint("Success!"));

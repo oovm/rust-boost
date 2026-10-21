@@ -3,7 +3,7 @@ macro_rules! style_builder_for {
         #[doc = concat!(
             "Enables the _", stringify!($name), "_ style on `self`.\n",
             "```rust\n",
-            "use boost_fmt::Paint;\n",
+            "use boost_console::fmt::Paint;\n",
             "\n",
             "println!(\"Using ", stringify!($name), ": {}\", ",
                 "Paint::new(\"hi\").", stringify!($name), "());\n",
