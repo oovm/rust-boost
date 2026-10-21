@@ -43,10 +43,12 @@ jobs:
         run: cargo test -p boost-source --features serde
       - name: Log
         run: cargo test -p boost-log
-      - name: Fmt
-        run: cargo test -p boost-fmt
-      - name: Log human console projection
-        run: cargo test -p boost-log --features console
+      - name: Console fmt module
+        run: cargo test -p boost-console --no-default-features --features fmt
+      - name: Console projection
+        run: cargo test -p boost-console
+      - name: Boost facade
+        run: cargo test -p boost --features console,log,source,random,fmt,terminal,fs,diagnostic,test
       - name: Diagnostic core
         run: cargo test -p boost-diagnostic --no-default-features
       - name: Diagnostic serde
