@@ -1,0 +1,36 @@
+[package]
+name = "boost"
+version.workspace = true
+authors.workspace = true
+description = "Feature-gated facade for orthogonal Rust standard-library enhancements (log, console, diagnostic, test, source, …)"
+repository = "https://github.com/oovm/rust-boost/tree/dev/projects/boost"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+keywords = ["boost", "stdlib", "facade", "logging", "diagnostic", "testing"]
+categories = ["development-tools"]
+
+[dependencies]
+boost-console = { workspace = true, optional = true }
+boost-diagnostic = { workspace = true, optional = true }
+boost-fs = { workspace = true, optional = true }
+boost-log = { workspace = true, optional = true }
+boost-random = { workspace = true, optional = true }
+boost-source = { workspace = true, optional = true }
+boost-terminal = { workspace = true, optional = true }
+boost-test = { workspace = true, optional = true }
+
+[features]
+default = []
+console = ["dep:boost-console", "boost-console/console"]
+diagnostic = ["dep:boost-diagnostic"]
+fmt = ["dep:boost-console"]
+fs = ["dep:boost-fs"]
+log = ["dep:boost-log"]
+random = ["dep:boost-random"]
+source = ["dep:boost-source"]
+terminal = ["dep:boost-terminal"]
+test = ["dep:boost-test"]
+
+[package.metadata.docs.rs]
+all-features = true
