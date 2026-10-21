@@ -16,6 +16,7 @@ pub mod read_write;
 pub mod remove;
 pub mod rename;
 pub mod temp;
+pub mod vfs;
 pub mod walk;
 pub mod watch;
 
