@@ -59,3 +59,9 @@ pub mod test {
     pub use boost_test::*;
     pub use boost_test_macro::{facade_case as case, facade_fixture as fixture, facade_test as test};
 }
+
+#[cfg(feature = "benchmark")]
+pub mod benchmark {
+    //! Performance measurement with explicit samples and structured reports.
+    pub use boost_benchmark::*;
+}

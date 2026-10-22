@@ -49,7 +49,7 @@ impl Message {
 /// Typed message parameter values allowed on the wire.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(tag = "kind", rename_all = "kebab-case"))]
+#[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
 pub enum MessageArg {
     /// Boolean value.
     Bool(bool),

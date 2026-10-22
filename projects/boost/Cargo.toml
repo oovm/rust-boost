@@ -20,9 +20,11 @@ boost-source = { workspace = true, optional = true }
 boost-terminal = { workspace = true, optional = true }
 boost-test = { workspace = true, optional = true }
 boost-test-macro = { workspace = true, optional = true }
+boost-benchmark = { workspace = true, optional = true }
 
 [features]
 default = []
+benchmark = ["dep:boost-benchmark"]
 console = ["dep:boost-console", "boost-console/console"]
 diagnostic = ["dep:boost-diagnostic"]
 fmt = ["dep:boost-console"]
