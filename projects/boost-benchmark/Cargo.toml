@@ -1,0 +1,13 @@
+[package]
+name = "boost-benchmark"
+version.workspace = true
+authors.workspace = true
+description = "Performance measurement engine with explicit samples, warmup, and structured reports"
+repository = "https://github.com/oovm/rust-boost/tree/dev/projects/boost-benchmark"
+readme = "readme.md"
+license.workspace = true
+edition.workspace = true
+exclude = ["package.json", "tests/**"]
+
+[package.metadata.docs.rs]
+all-features = true
