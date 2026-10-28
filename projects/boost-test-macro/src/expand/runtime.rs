@@ -2,7 +2,7 @@
 
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
-use syn::{punctuated::Punctuated, spanned::Spanned, token::Comma, Expr, Meta, Path};
+use syn::{Expr, Meta, Path, punctuated::Punctuated, spanned::Spanned, token::Comma};
 
 /// Absolute path prefix for `boost-test` runtime items in generated code.
 #[derive(Clone)]
@@ -41,8 +41,12 @@ impl RuntimePath {
         for meta in metas {
             if let Meta::NameValue(name_value) = &meta {
                 if name_value.path.is_ident("runtime") {
-                    let Expr::Path(expr_path) = &name_value.value else {
-                        return Err(syn::Error::new(name_value.span(), "`runtime` must be an absolute path such as `::boost::test` or `::my_test`"));
+                    let Expr::Path(expr_path) = &name_value.value
+                    else {
+                        return Err(syn::Error::new(
+                            name_value.span(),
+                            "`runtime` must be an absolute path such as `::boost::test` or `::my_test`",
+                        ));
                     };
                     runtime = Self::from_path(expr_path.path.clone());
                     continue;

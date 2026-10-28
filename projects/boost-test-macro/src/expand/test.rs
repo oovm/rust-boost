@@ -31,12 +31,7 @@ struct SignatureShape {
 
 /// Expands `#[boost_test::test]` into the original body plus a standard `#[test]` wrapper.
 pub(crate) fn expand_test(attributes: TokenStream, item: ItemFn, default_runtime: RuntimePath) -> syn::Result<TokenStream> {
-    let mut metas = if attributes.is_empty() {
-        Punctuated::new()
-    }
-    else {
-        Punctuated::<Meta, Comma>::parse_terminated.parse2(attributes)?
-    };
+    let mut metas = if attributes.is_empty() { Punctuated::new() } else { Punctuated::<Meta, Comma>::parse_terminated.parse2(attributes)? };
     let (runtime, metas) = RuntimePath::take_from_metas(metas, default_runtime)?;
     let options = parse_options_from_metas(metas)?;
     let shape = validate_signature(&item.sig, options.fixture.is_some())?;
@@ -275,7 +270,9 @@ fn validate_signature(signature: &Signature, has_fixture: bool) -> syn::Result<S
         (_, true) => {
             return Err(syn::Error::new(
                 signature.inputs.span(),
-                format!("a `{ATTRIBUTE}` body with `fixture` takes the fixture as `&mut Value`, optionally after `&mut boost_test::TestContext`"),
+                format!(
+                    "a `{ATTRIBUTE}` body with `fixture` takes the fixture as `&mut Value`, optionally after `&mut boost_test::TestContext`"
+                ),
             ));
         }
         _ => {

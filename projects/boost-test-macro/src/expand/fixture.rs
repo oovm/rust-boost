@@ -19,12 +19,7 @@ struct FixtureOptions {
 /// Expands `#[boost_test::fixture]` into the setup function, a marker type, and a `Fixture` implementation.
 pub(crate) fn expand_fixture(attributes: TokenStream, item: ItemFn, default_runtime: RuntimePath) -> syn::Result<TokenStream> {
     const ATTRIBUTE: &str = "#[boost_test::fixture]";
-    let mut metas = if attributes.is_empty() {
-        Punctuated::new()
-    }
-    else {
-        Punctuated::<Meta, Comma>::parse_terminated.parse2(attributes)?
-    };
+    let mut metas = if attributes.is_empty() { Punctuated::new() } else { Punctuated::<Meta, Comma>::parse_terminated.parse2(attributes)? };
     let (runtime, metas) = RuntimePath::take_from_metas(metas, default_runtime)?;
     let options = parse_options_from_metas(metas)?;
     reject_unsupported_modifiers(&item.sig, ATTRIBUTE)?;

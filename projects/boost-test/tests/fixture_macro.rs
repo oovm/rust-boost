@@ -8,7 +8,9 @@
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use boost_test::{Fixture, FixtureDescriptor, Phase, SourceLocation, TestContext, TestDescriptor, TestFailure, TestOutcome, execute_with_fixture};
+use boost_test::{
+    Fixture, FixtureDescriptor, Phase, SourceLocation, TestContext, TestDescriptor, TestFailure, TestOutcome, execute_with_fixture,
+};
 
 static SKIPPED_TEARDOWN: AtomicUsize = AtomicUsize::new(0);
 static BROKEN_TEARDOWN: AtomicUsize = AtomicUsize::new(0);
