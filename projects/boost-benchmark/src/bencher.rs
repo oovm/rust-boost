@@ -1,10 +1,11 @@
 //! Per-function measurement harness.
 
-use std::hint::black_box;
-use std::time::{Duration, Instant};
+use std::{
+    hint::black_box,
+    time::{Duration, Instant},
+};
 
-use crate::config::BenchmarkConfig;
-use crate::report::BenchmarkStats;
+use crate::{config::BenchmarkConfig, report::BenchmarkStats};
 
 /// Measures one benchmark function within a group.
 pub struct Bencher {
@@ -16,11 +17,7 @@ pub struct Bencher {
 impl Bencher {
     /// Creates a bencher for `qualified_name` using `config`.
     pub(crate) fn new(qualified_name: String, config: BenchmarkConfig) -> Self {
-        Self {
-            qualified_name,
-            config,
-            samples: Vec::with_capacity(config.sample_size),
-        }
+        Self { qualified_name, config, samples: Vec::with_capacity(config.sample_size) }
     }
 
     /// Runs `routine` for warmup, then records `sample_size` timed iterations.

@@ -1,9 +1,6 @@
 //! Named benchmark groups.
 
-use crate::bencher::Bencher;
-use crate::config::BenchmarkConfig;
-use crate::report::BenchmarkStats;
-use crate::suite::BenchmarkSuite;
+use crate::{bencher::Bencher, config::BenchmarkConfig, report::BenchmarkStats, suite::BenchmarkSuite};
 
 /// A logical group of related benchmark functions.
 pub struct BenchmarkGroup<'a> {
@@ -15,17 +12,8 @@ pub struct BenchmarkGroup<'a> {
 
 impl<'a> BenchmarkGroup<'a> {
     /// Creates a group named `group_name` attached to `suite`.
-    pub(crate) fn new(
-        group_name: impl Into<String>,
-        config: BenchmarkConfig,
-        suite: &'a mut BenchmarkSuite,
-    ) -> Self {
-        Self {
-            group_name: group_name.into(),
-            config,
-            reports: Vec::new(),
-            suite,
-        }
+    pub(crate) fn new(group_name: impl Into<String>, config: BenchmarkConfig, suite: &'a mut BenchmarkSuite) -> Self {
+        Self { group_name: group_name.into(), config, reports: Vec::new(), suite }
     }
 
     /// Measures one function and records its statistics under this group.

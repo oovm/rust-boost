@@ -41,41 +41,21 @@ impl BenchmarkStats {
         let sample_count = samples.len();
         let total = samples.iter().copied().fold(Duration::ZERO, |acc, sample| acc + sample);
         let min = samples.iter().copied().min().unwrap_or(Duration::ZERO);
-        let mean = if sample_count == 0 {
-            Duration::ZERO
-        } else {
-            total / sample_count as u32
-        };
+        let mean = if sample_count == 0 { Duration::ZERO } else { total / sample_count as u32 };
         let median = median_duration(&samples);
         let std_dev = std_dev_duration(&samples, mean);
         let p95 = percentile_duration(&samples, 0.95);
         let p99 = percentile_duration(&samples, 0.99);
 
-        Self {
-            qualified_name: qualified_name.into(),
-            sample_count,
-            total,
-            min,
-            median,
-            mean,
-            std_dev,
-            p95,
-            p99,
-            samples,
-        }
+        Self { qualified_name: qualified_name.into(), sample_count, total, min, median, mean, std_dev, p95, p99, samples }
     }
 }
 
 /// Renders a stable text report for one benchmark function.
 pub fn render_text(stats: &BenchmarkStats) -> String {
     let mut text = String::new();
-    let _ = writeln!(
-        text,
-        "bench {} ... {} samples, total {:.3} ms",
-        stats.qualified_name,
-        stats.sample_count,
-        duration_to_millis(stats.total)
-    );
+    let _ =
+        writeln!(text, "bench {} ... {} samples, total {:.3} ms", stats.qualified_name, stats.sample_count, duration_to_millis(stats.total));
     let _ = writeln!(
         text,
         "  min {:.3} ms | median {:.3} ms | mean {:.3} ms",
@@ -93,12 +73,7 @@ pub fn render_text(stats: &BenchmarkStats) -> String {
     }
     match (stats.p95, stats.p99) {
         (Some(p95), Some(p99)) => {
-            let _ = writeln!(
-                text,
-                "  p95 {:.3} ms | p99 {:.3} ms",
-                duration_to_millis(p95),
-                duration_to_millis(p99)
-            );
+            let _ = writeln!(text, "  p95 {:.3} ms | p99 {:.3} ms", duration_to_millis(p95), duration_to_millis(p99));
         }
         _ => {
             let _ = writeln!(text, "  tail percentiles unavailable");
@@ -118,11 +93,7 @@ fn median_duration(samples: &[Duration]) -> Duration {
     let mut sorted = samples.to_vec();
     sorted.sort();
     let mid = sorted.len() / 2;
-    if sorted.len().is_multiple_of(2) {
-        (sorted[mid - 1] + sorted[mid]) / 2
-    } else {
-        sorted[mid]
-    }
+    if sorted.len().is_multiple_of(2) { (sorted[mid - 1] + sorted[mid]) / 2 } else { sorted[mid] }
 }
 
 fn std_dev_duration(samples: &[Duration], mean: Duration) -> Option<Duration> {
@@ -147,9 +118,11 @@ fn percentile_duration(samples: &[Duration], percentile: f64) -> Option<Duration
     }
     let min_samples = if percentile >= 0.99 {
         100
-    } else if percentile >= 0.95 {
+    }
+    else if percentile >= 0.95 {
         20
-    } else {
+    }
+    else {
         1
     };
     if samples.len() < min_samples {

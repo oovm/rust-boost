@@ -25,11 +25,7 @@ fn iter_batched_times_routine_only() {
     let mut suite = BenchmarkSuite::with_config(BenchmarkConfig::new(1, 3));
     let mut group = suite.benchmark_group("batch");
     group.bench_function("double_values", |b| {
-        b.iter_batched(
-            || vec![1_u32, 2, 3],
-            |values| values.into_iter().map(|v| v * 2).sum::<u32>(),
-            3,
-        );
+        b.iter_batched(|| vec![1_u32, 2, 3], |values| values.into_iter().map(|v| v * 2).sum::<u32>(), 3);
     });
     group.finish();
 

@@ -1,8 +1,10 @@
 //! Top-level benchmark suite and reporting.
 
-use crate::config::BenchmarkConfig;
-use crate::group::BenchmarkGroup;
-use crate::report::{BenchmarkStats, render_text};
+use crate::{
+    config::BenchmarkConfig,
+    group::BenchmarkGroup,
+    report::{BenchmarkStats, render_text},
+};
 
 /// Owns benchmark configuration and aggregated reports.
 #[derive(Debug, Default)]
@@ -19,10 +21,7 @@ impl BenchmarkSuite {
 
     /// Creates a suite with an explicit configuration.
     pub fn with_config(config: BenchmarkConfig) -> Self {
-        Self {
-            config,
-            reports: Vec::new(),
-        }
+        Self { config, reports: Vec::new() }
     }
 
     /// Opens a named benchmark group.
