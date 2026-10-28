@@ -1,12 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use super::{
-    content::FileContent,
-    disk::DiskFs,
-    error::VfsError,
-    overlay::Overlay,
-    version::FileVersion,
-};
+use super::{content::FileContent, disk::DiskFs, error::VfsError, overlay::Overlay, version::FileVersion};
 
 /// Disk access with an in-memory overlay for unsaved buffers.
 #[derive(Debug)]

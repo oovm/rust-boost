@@ -1,6 +1,8 @@
-use std::fmt::{self, Display, Formatter};
-use std::io;
-use std::path::PathBuf;
+use std::{
+    fmt::{self, Display, Formatter},
+    io,
+    path::PathBuf,
+};
 
 /// VFS access failure.
 #[derive(Debug)]

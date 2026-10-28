@@ -1,7 +1,9 @@
 use std::path::Path;
 
-use boost_fs::vfs::{LayeredFs, VfsError};
-use boost_fs::temp::create_folder;
+use boost_fs::{
+    temp::create_folder,
+    vfs::{LayeredFs, VfsError},
+};
 
 #[test]
 fn layered_read_prefers_overlay() {

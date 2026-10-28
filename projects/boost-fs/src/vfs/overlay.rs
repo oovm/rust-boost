@@ -1,7 +1,8 @@
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::AtomicU64;
-use std::sync::{RwLock, RwLockReadGuard};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::{RwLock, RwLockReadGuard, atomic::AtomicU64},
+};
 
 use super::{content::FileContent, version::FileVersion};
 
